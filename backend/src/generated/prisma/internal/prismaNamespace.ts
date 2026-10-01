@@ -5754,6 +5754,7 @@ export const OrderChatScalarFieldEnum = {
   orderId: 'orderId',
   vendorId: 'vendorId',
   customerId: 'customerId',
+  orderPartId: 'orderPartId',
   status: 'status',
   type: 'type',
   expiryAt: 'expiryAt',

@@ -3,6 +3,7 @@ import { Controller, Post, Body, Get, Param, UseGuards, Request, Query, Forbidde
 import { ChatService } from './chat.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ResourceAccessService } from '../common/authorization/resource-access.service';
+import { InitChatDto } from './dto/init-chat.dto';
 
 @Controller('chats')
 @UseGuards(JwtAuthGuard)
@@ -27,13 +28,13 @@ export class ChatController {
 
     @Post('init')
     async initiateChat(
-        @Body() body: { orderId: string; vendorId: string },
+        @Body() body: InitChatDto,
         @Request() req
     ) {
         if (req.user.role !== 'CUSTOMER') {
             throw new ForbiddenException('Only customers can initiate order chats.');
         }
-        return this.chatService.createOrGetChat(body.orderId, body.vendorId, req.user.id);
+        return this.chatService.createOrGetChat(body.orderId, body.vendorId, req.user.id, body.orderPartId);
     }
 
     @Post('support')

@@ -29,6 +29,7 @@ export type OrderChatMinAggregateOutputType = {
   orderId: string | null
   vendorId: string | null
   customerId: string | null
+  orderPartId: string | null
   status: string | null
   type: string | null
   expiryAt: Date | null
@@ -53,6 +54,7 @@ export type OrderChatMaxAggregateOutputType = {
   orderId: string | null
   vendorId: string | null
   customerId: string | null
+  orderPartId: string | null
   status: string | null
   type: string | null
   expiryAt: Date | null
@@ -77,6 +79,7 @@ export type OrderChatCountAggregateOutputType = {
   orderId: number
   vendorId: number
   customerId: number
+  orderPartId: number
   status: number
   type: number
   expiryAt: number
@@ -103,6 +106,7 @@ export type OrderChatMinAggregateInputType = {
   orderId?: true
   vendorId?: true
   customerId?: true
+  orderPartId?: true
   status?: true
   type?: true
   expiryAt?: true
@@ -127,6 +131,7 @@ export type OrderChatMaxAggregateInputType = {
   orderId?: true
   vendorId?: true
   customerId?: true
+  orderPartId?: true
   status?: true
   type?: true
   expiryAt?: true
@@ -151,6 +156,7 @@ export type OrderChatCountAggregateInputType = {
   orderId?: true
   vendorId?: true
   customerId?: true
+  orderPartId?: true
   status?: true
   type?: true
   expiryAt?: true
@@ -248,6 +254,7 @@ export type OrderChatGroupByOutputType = {
   orderId: string | null
   vendorId: string | null
   customerId: string | null
+  orderPartId: string | null
   status: string
   type: string
   expiryAt: Date | null
@@ -293,6 +300,7 @@ export type OrderChatWhereInput = {
   orderId?: Prisma.UuidNullableFilter<"OrderChat"> | string | null
   vendorId?: Prisma.UuidNullableFilter<"OrderChat"> | string | null
   customerId?: Prisma.UuidNullableFilter<"OrderChat"> | string | null
+  orderPartId?: Prisma.UuidNullableFilter<"OrderChat"> | string | null
   status?: Prisma.StringFilter<"OrderChat"> | string
   type?: Prisma.StringFilter<"OrderChat"> | string
   expiryAt?: Prisma.DateTimeNullableFilter<"OrderChat"> | Date | string | null
@@ -314,6 +322,7 @@ export type OrderChatWhereInput = {
   order?: Prisma.XOR<Prisma.OrderNullableScalarRelationFilter, Prisma.OrderWhereInput> | null
   vendor?: Prisma.XOR<Prisma.StoreNullableScalarRelationFilter, Prisma.StoreWhereInput> | null
   customer?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+  orderPart?: Prisma.XOR<Prisma.OrderPartNullableScalarRelationFilter, Prisma.OrderPartWhereInput> | null
 }
 
 export type OrderChatOrderByWithRelationInput = {
@@ -321,6 +330,7 @@ export type OrderChatOrderByWithRelationInput = {
   orderId?: Prisma.SortOrderInput | Prisma.SortOrder
   vendorId?: Prisma.SortOrderInput | Prisma.SortOrder
   customerId?: Prisma.SortOrderInput | Prisma.SortOrder
+  orderPartId?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   type?: Prisma.SortOrder
   expiryAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -342,17 +352,18 @@ export type OrderChatOrderByWithRelationInput = {
   order?: Prisma.OrderOrderByWithRelationInput
   vendor?: Prisma.StoreOrderByWithRelationInput
   customer?: Prisma.UserOrderByWithRelationInput
+  orderPart?: Prisma.OrderPartOrderByWithRelationInput
 }
 
 export type OrderChatWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  orderId_vendorId_type?: Prisma.OrderChatOrderIdVendorIdTypeCompoundUniqueInput
   AND?: Prisma.OrderChatWhereInput | Prisma.OrderChatWhereInput[]
   OR?: Prisma.OrderChatWhereInput[]
   NOT?: Prisma.OrderChatWhereInput | Prisma.OrderChatWhereInput[]
   orderId?: Prisma.UuidNullableFilter<"OrderChat"> | string | null
   vendorId?: Prisma.UuidNullableFilter<"OrderChat"> | string | null
   customerId?: Prisma.UuidNullableFilter<"OrderChat"> | string | null
+  orderPartId?: Prisma.UuidNullableFilter<"OrderChat"> | string | null
   status?: Prisma.StringFilter<"OrderChat"> | string
   type?: Prisma.StringFilter<"OrderChat"> | string
   expiryAt?: Prisma.DateTimeNullableFilter<"OrderChat"> | Date | string | null
@@ -374,13 +385,15 @@ export type OrderChatWhereUniqueInput = Prisma.AtLeast<{
   order?: Prisma.XOR<Prisma.OrderNullableScalarRelationFilter, Prisma.OrderWhereInput> | null
   vendor?: Prisma.XOR<Prisma.StoreNullableScalarRelationFilter, Prisma.StoreWhereInput> | null
   customer?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
-}, "id" | "orderId_vendorId_type">
+  orderPart?: Prisma.XOR<Prisma.OrderPartNullableScalarRelationFilter, Prisma.OrderPartWhereInput> | null
+}, "id">
 
 export type OrderChatOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   orderId?: Prisma.SortOrderInput | Prisma.SortOrder
   vendorId?: Prisma.SortOrderInput | Prisma.SortOrder
   customerId?: Prisma.SortOrderInput | Prisma.SortOrder
+  orderPartId?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   type?: Prisma.SortOrder
   expiryAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -411,6 +424,7 @@ export type OrderChatScalarWhereWithAggregatesInput = {
   orderId?: Prisma.UuidNullableWithAggregatesFilter<"OrderChat"> | string | null
   vendorId?: Prisma.UuidNullableWithAggregatesFilter<"OrderChat"> | string | null
   customerId?: Prisma.UuidNullableWithAggregatesFilter<"OrderChat"> | string | null
+  orderPartId?: Prisma.UuidNullableWithAggregatesFilter<"OrderChat"> | string | null
   status?: Prisma.StringWithAggregatesFilter<"OrderChat"> | string
   type?: Prisma.StringWithAggregatesFilter<"OrderChat"> | string
   expiryAt?: Prisma.DateTimeNullableWithAggregatesFilter<"OrderChat"> | Date | string | null
@@ -453,6 +467,7 @@ export type OrderChatCreateInput = {
   order?: Prisma.OrderCreateNestedOneWithoutOrderChatsInput
   vendor?: Prisma.StoreCreateNestedOneWithoutOrderChatsInput
   customer?: Prisma.UserCreateNestedOneWithoutOrderChatsInput
+  orderPart?: Prisma.OrderPartCreateNestedOneWithoutOrderChatsInput
 }
 
 export type OrderChatUncheckedCreateInput = {
@@ -460,6 +475,7 @@ export type OrderChatUncheckedCreateInput = {
   orderId?: string | null
   vendorId?: string | null
   customerId?: string | null
+  orderPartId?: string | null
   status?: string
   type?: string
   expiryAt?: Date | string | null
@@ -503,6 +519,7 @@ export type OrderChatUpdateInput = {
   order?: Prisma.OrderUpdateOneWithoutOrderChatsNestedInput
   vendor?: Prisma.StoreUpdateOneWithoutOrderChatsNestedInput
   customer?: Prisma.UserUpdateOneWithoutOrderChatsNestedInput
+  orderPart?: Prisma.OrderPartUpdateOneWithoutOrderChatsNestedInput
 }
 
 export type OrderChatUncheckedUpdateInput = {
@@ -510,6 +527,7 @@ export type OrderChatUncheckedUpdateInput = {
   orderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   vendorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
   expiryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -535,6 +553,7 @@ export type OrderChatCreateManyInput = {
   orderId?: string | null
   vendorId?: string | null
   customerId?: string | null
+  orderPartId?: string | null
   status?: string
   type?: string
   expiryAt?: Date | string | null
@@ -580,6 +599,7 @@ export type OrderChatUncheckedUpdateManyInput = {
   orderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   vendorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
   expiryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -609,17 +629,12 @@ export type OrderChatOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type OrderChatOrderIdVendorIdTypeCompoundUniqueInput = {
-  orderId: string
-  vendorId: string
-  type: string
-}
-
 export type OrderChatCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   orderId?: Prisma.SortOrder
   vendorId?: Prisma.SortOrder
   customerId?: Prisma.SortOrder
+  orderPartId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   type?: Prisma.SortOrder
   expiryAt?: Prisma.SortOrder
@@ -644,6 +659,7 @@ export type OrderChatMaxOrderByAggregateInput = {
   orderId?: Prisma.SortOrder
   vendorId?: Prisma.SortOrder
   customerId?: Prisma.SortOrder
+  orderPartId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   type?: Prisma.SortOrder
   expiryAt?: Prisma.SortOrder
@@ -668,6 +684,7 @@ export type OrderChatMinOrderByAggregateInput = {
   orderId?: Prisma.SortOrder
   vendorId?: Prisma.SortOrder
   customerId?: Prisma.SortOrder
+  orderPartId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   type?: Prisma.SortOrder
   expiryAt?: Prisma.SortOrder
@@ -818,6 +835,48 @@ export type OrderChatUncheckedUpdateManyWithoutOrderNestedInput = {
   deleteMany?: Prisma.OrderChatScalarWhereInput | Prisma.OrderChatScalarWhereInput[]
 }
 
+export type OrderChatCreateNestedManyWithoutOrderPartInput = {
+  create?: Prisma.XOR<Prisma.OrderChatCreateWithoutOrderPartInput, Prisma.OrderChatUncheckedCreateWithoutOrderPartInput> | Prisma.OrderChatCreateWithoutOrderPartInput[] | Prisma.OrderChatUncheckedCreateWithoutOrderPartInput[]
+  connectOrCreate?: Prisma.OrderChatCreateOrConnectWithoutOrderPartInput | Prisma.OrderChatCreateOrConnectWithoutOrderPartInput[]
+  createMany?: Prisma.OrderChatCreateManyOrderPartInputEnvelope
+  connect?: Prisma.OrderChatWhereUniqueInput | Prisma.OrderChatWhereUniqueInput[]
+}
+
+export type OrderChatUncheckedCreateNestedManyWithoutOrderPartInput = {
+  create?: Prisma.XOR<Prisma.OrderChatCreateWithoutOrderPartInput, Prisma.OrderChatUncheckedCreateWithoutOrderPartInput> | Prisma.OrderChatCreateWithoutOrderPartInput[] | Prisma.OrderChatUncheckedCreateWithoutOrderPartInput[]
+  connectOrCreate?: Prisma.OrderChatCreateOrConnectWithoutOrderPartInput | Prisma.OrderChatCreateOrConnectWithoutOrderPartInput[]
+  createMany?: Prisma.OrderChatCreateManyOrderPartInputEnvelope
+  connect?: Prisma.OrderChatWhereUniqueInput | Prisma.OrderChatWhereUniqueInput[]
+}
+
+export type OrderChatUpdateManyWithoutOrderPartNestedInput = {
+  create?: Prisma.XOR<Prisma.OrderChatCreateWithoutOrderPartInput, Prisma.OrderChatUncheckedCreateWithoutOrderPartInput> | Prisma.OrderChatCreateWithoutOrderPartInput[] | Prisma.OrderChatUncheckedCreateWithoutOrderPartInput[]
+  connectOrCreate?: Prisma.OrderChatCreateOrConnectWithoutOrderPartInput | Prisma.OrderChatCreateOrConnectWithoutOrderPartInput[]
+  upsert?: Prisma.OrderChatUpsertWithWhereUniqueWithoutOrderPartInput | Prisma.OrderChatUpsertWithWhereUniqueWithoutOrderPartInput[]
+  createMany?: Prisma.OrderChatCreateManyOrderPartInputEnvelope
+  set?: Prisma.OrderChatWhereUniqueInput | Prisma.OrderChatWhereUniqueInput[]
+  disconnect?: Prisma.OrderChatWhereUniqueInput | Prisma.OrderChatWhereUniqueInput[]
+  delete?: Prisma.OrderChatWhereUniqueInput | Prisma.OrderChatWhereUniqueInput[]
+  connect?: Prisma.OrderChatWhereUniqueInput | Prisma.OrderChatWhereUniqueInput[]
+  update?: Prisma.OrderChatUpdateWithWhereUniqueWithoutOrderPartInput | Prisma.OrderChatUpdateWithWhereUniqueWithoutOrderPartInput[]
+  updateMany?: Prisma.OrderChatUpdateManyWithWhereWithoutOrderPartInput | Prisma.OrderChatUpdateManyWithWhereWithoutOrderPartInput[]
+  deleteMany?: Prisma.OrderChatScalarWhereInput | Prisma.OrderChatScalarWhereInput[]
+}
+
+export type OrderChatUncheckedUpdateManyWithoutOrderPartNestedInput = {
+  create?: Prisma.XOR<Prisma.OrderChatCreateWithoutOrderPartInput, Prisma.OrderChatUncheckedCreateWithoutOrderPartInput> | Prisma.OrderChatCreateWithoutOrderPartInput[] | Prisma.OrderChatUncheckedCreateWithoutOrderPartInput[]
+  connectOrCreate?: Prisma.OrderChatCreateOrConnectWithoutOrderPartInput | Prisma.OrderChatCreateOrConnectWithoutOrderPartInput[]
+  upsert?: Prisma.OrderChatUpsertWithWhereUniqueWithoutOrderPartInput | Prisma.OrderChatUpsertWithWhereUniqueWithoutOrderPartInput[]
+  createMany?: Prisma.OrderChatCreateManyOrderPartInputEnvelope
+  set?: Prisma.OrderChatWhereUniqueInput | Prisma.OrderChatWhereUniqueInput[]
+  disconnect?: Prisma.OrderChatWhereUniqueInput | Prisma.OrderChatWhereUniqueInput[]
+  delete?: Prisma.OrderChatWhereUniqueInput | Prisma.OrderChatWhereUniqueInput[]
+  connect?: Prisma.OrderChatWhereUniqueInput | Prisma.OrderChatWhereUniqueInput[]
+  update?: Prisma.OrderChatUpdateWithWhereUniqueWithoutOrderPartInput | Prisma.OrderChatUpdateWithWhereUniqueWithoutOrderPartInput[]
+  updateMany?: Prisma.OrderChatUpdateManyWithWhereWithoutOrderPartInput | Prisma.OrderChatUpdateManyWithWhereWithoutOrderPartInput[]
+  deleteMany?: Prisma.OrderChatScalarWhereInput | Prisma.OrderChatScalarWhereInput[]
+}
+
 export type OrderChatCreateNestedOneWithoutMessagesInput = {
   create?: Prisma.XOR<Prisma.OrderChatCreateWithoutMessagesInput, Prisma.OrderChatUncheckedCreateWithoutMessagesInput>
   connectOrCreate?: Prisma.OrderChatCreateOrConnectWithoutMessagesInput
@@ -854,12 +913,14 @@ export type OrderChatCreateWithoutCustomerInput = {
   messages?: Prisma.OrderChatMessageCreateNestedManyWithoutChatInput
   order?: Prisma.OrderCreateNestedOneWithoutOrderChatsInput
   vendor?: Prisma.StoreCreateNestedOneWithoutOrderChatsInput
+  orderPart?: Prisma.OrderPartCreateNestedOneWithoutOrderChatsInput
 }
 
 export type OrderChatUncheckedCreateWithoutCustomerInput = {
   id?: string
   orderId?: string | null
   vendorId?: string | null
+  orderPartId?: string | null
   status?: string
   type?: string
   expiryAt?: Date | string | null
@@ -914,6 +975,7 @@ export type OrderChatScalarWhereInput = {
   orderId?: Prisma.UuidNullableFilter<"OrderChat"> | string | null
   vendorId?: Prisma.UuidNullableFilter<"OrderChat"> | string | null
   customerId?: Prisma.UuidNullableFilter<"OrderChat"> | string | null
+  orderPartId?: Prisma.UuidNullableFilter<"OrderChat"> | string | null
   status?: Prisma.StringFilter<"OrderChat"> | string
   type?: Prisma.StringFilter<"OrderChat"> | string
   expiryAt?: Prisma.DateTimeNullableFilter<"OrderChat"> | Date | string | null
@@ -955,12 +1017,14 @@ export type OrderChatCreateWithoutVendorInput = {
   messages?: Prisma.OrderChatMessageCreateNestedManyWithoutChatInput
   order?: Prisma.OrderCreateNestedOneWithoutOrderChatsInput
   customer?: Prisma.UserCreateNestedOneWithoutOrderChatsInput
+  orderPart?: Prisma.OrderPartCreateNestedOneWithoutOrderChatsInput
 }
 
 export type OrderChatUncheckedCreateWithoutVendorInput = {
   id?: string
   orderId?: string | null
   customerId?: string | null
+  orderPartId?: string | null
   status?: string
   type?: string
   expiryAt?: Date | string | null
@@ -1029,12 +1093,14 @@ export type OrderChatCreateWithoutOrderInput = {
   messages?: Prisma.OrderChatMessageCreateNestedManyWithoutChatInput
   vendor?: Prisma.StoreCreateNestedOneWithoutOrderChatsInput
   customer?: Prisma.UserCreateNestedOneWithoutOrderChatsInput
+  orderPart?: Prisma.OrderPartCreateNestedOneWithoutOrderChatsInput
 }
 
 export type OrderChatUncheckedCreateWithoutOrderInput = {
   id?: string
   vendorId?: string | null
   customerId?: string | null
+  orderPartId?: string | null
   status?: string
   type?: string
   expiryAt?: Date | string | null
@@ -1081,6 +1147,82 @@ export type OrderChatUpdateManyWithWhereWithoutOrderInput = {
   data: Prisma.XOR<Prisma.OrderChatUpdateManyMutationInput, Prisma.OrderChatUncheckedUpdateManyWithoutOrderInput>
 }
 
+export type OrderChatCreateWithoutOrderPartInput = {
+  id?: string
+  status?: string
+  type?: string
+  expiryAt?: Date | string | null
+  customerTranslationEnabledAt?: Date | string | null
+  vendorTranslationEnabledAt?: Date | string | null
+  adminTranslationEnabledAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  adminInitReason?: string | null
+  category?: string | null
+  guestName?: string | null
+  guestEmail?: string | null
+  guestPhone?: string | null
+  source?: string
+  isDeletedByAdmin?: boolean
+  adminJoinedAt?: Date | string | null
+  isAttachmentsEnabled?: boolean
+  messages?: Prisma.OrderChatMessageCreateNestedManyWithoutChatInput
+  order?: Prisma.OrderCreateNestedOneWithoutOrderChatsInput
+  vendor?: Prisma.StoreCreateNestedOneWithoutOrderChatsInput
+  customer?: Prisma.UserCreateNestedOneWithoutOrderChatsInput
+}
+
+export type OrderChatUncheckedCreateWithoutOrderPartInput = {
+  id?: string
+  orderId?: string | null
+  vendorId?: string | null
+  customerId?: string | null
+  status?: string
+  type?: string
+  expiryAt?: Date | string | null
+  customerTranslationEnabledAt?: Date | string | null
+  vendorTranslationEnabledAt?: Date | string | null
+  adminTranslationEnabledAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  adminInitReason?: string | null
+  category?: string | null
+  guestName?: string | null
+  guestEmail?: string | null
+  guestPhone?: string | null
+  source?: string
+  isDeletedByAdmin?: boolean
+  adminJoinedAt?: Date | string | null
+  isAttachmentsEnabled?: boolean
+  messages?: Prisma.OrderChatMessageUncheckedCreateNestedManyWithoutChatInput
+}
+
+export type OrderChatCreateOrConnectWithoutOrderPartInput = {
+  where: Prisma.OrderChatWhereUniqueInput
+  create: Prisma.XOR<Prisma.OrderChatCreateWithoutOrderPartInput, Prisma.OrderChatUncheckedCreateWithoutOrderPartInput>
+}
+
+export type OrderChatCreateManyOrderPartInputEnvelope = {
+  data: Prisma.OrderChatCreateManyOrderPartInput | Prisma.OrderChatCreateManyOrderPartInput[]
+  skipDuplicates?: boolean
+}
+
+export type OrderChatUpsertWithWhereUniqueWithoutOrderPartInput = {
+  where: Prisma.OrderChatWhereUniqueInput
+  update: Prisma.XOR<Prisma.OrderChatUpdateWithoutOrderPartInput, Prisma.OrderChatUncheckedUpdateWithoutOrderPartInput>
+  create: Prisma.XOR<Prisma.OrderChatCreateWithoutOrderPartInput, Prisma.OrderChatUncheckedCreateWithoutOrderPartInput>
+}
+
+export type OrderChatUpdateWithWhereUniqueWithoutOrderPartInput = {
+  where: Prisma.OrderChatWhereUniqueInput
+  data: Prisma.XOR<Prisma.OrderChatUpdateWithoutOrderPartInput, Prisma.OrderChatUncheckedUpdateWithoutOrderPartInput>
+}
+
+export type OrderChatUpdateManyWithWhereWithoutOrderPartInput = {
+  where: Prisma.OrderChatScalarWhereInput
+  data: Prisma.XOR<Prisma.OrderChatUpdateManyMutationInput, Prisma.OrderChatUncheckedUpdateManyWithoutOrderPartInput>
+}
+
 export type OrderChatCreateWithoutMessagesInput = {
   id?: string
   status?: string
@@ -1103,6 +1245,7 @@ export type OrderChatCreateWithoutMessagesInput = {
   order?: Prisma.OrderCreateNestedOneWithoutOrderChatsInput
   vendor?: Prisma.StoreCreateNestedOneWithoutOrderChatsInput
   customer?: Prisma.UserCreateNestedOneWithoutOrderChatsInput
+  orderPart?: Prisma.OrderPartCreateNestedOneWithoutOrderChatsInput
 }
 
 export type OrderChatUncheckedCreateWithoutMessagesInput = {
@@ -1110,6 +1253,7 @@ export type OrderChatUncheckedCreateWithoutMessagesInput = {
   orderId?: string | null
   vendorId?: string | null
   customerId?: string | null
+  orderPartId?: string | null
   status?: string
   type?: string
   expiryAt?: Date | string | null
@@ -1167,6 +1311,7 @@ export type OrderChatUpdateWithoutMessagesInput = {
   order?: Prisma.OrderUpdateOneWithoutOrderChatsNestedInput
   vendor?: Prisma.StoreUpdateOneWithoutOrderChatsNestedInput
   customer?: Prisma.UserUpdateOneWithoutOrderChatsNestedInput
+  orderPart?: Prisma.OrderPartUpdateOneWithoutOrderChatsNestedInput
 }
 
 export type OrderChatUncheckedUpdateWithoutMessagesInput = {
@@ -1174,6 +1319,7 @@ export type OrderChatUncheckedUpdateWithoutMessagesInput = {
   orderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   vendorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
   expiryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1197,6 +1343,7 @@ export type OrderChatCreateManyCustomerInput = {
   id?: string
   orderId?: string | null
   vendorId?: string | null
+  orderPartId?: string | null
   status?: string
   type?: string
   expiryAt?: Date | string | null
@@ -1238,12 +1385,14 @@ export type OrderChatUpdateWithoutCustomerInput = {
   messages?: Prisma.OrderChatMessageUpdateManyWithoutChatNestedInput
   order?: Prisma.OrderUpdateOneWithoutOrderChatsNestedInput
   vendor?: Prisma.StoreUpdateOneWithoutOrderChatsNestedInput
+  orderPart?: Prisma.OrderPartUpdateOneWithoutOrderChatsNestedInput
 }
 
 export type OrderChatUncheckedUpdateWithoutCustomerInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   vendorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
   expiryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1268,6 +1417,7 @@ export type OrderChatUncheckedUpdateManyWithoutCustomerInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   vendorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
   expiryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1291,6 +1441,7 @@ export type OrderChatCreateManyVendorInput = {
   id?: string
   orderId?: string | null
   customerId?: string | null
+  orderPartId?: string | null
   status?: string
   type?: string
   expiryAt?: Date | string | null
@@ -1332,12 +1483,14 @@ export type OrderChatUpdateWithoutVendorInput = {
   messages?: Prisma.OrderChatMessageUpdateManyWithoutChatNestedInput
   order?: Prisma.OrderUpdateOneWithoutOrderChatsNestedInput
   customer?: Prisma.UserUpdateOneWithoutOrderChatsNestedInput
+  orderPart?: Prisma.OrderPartUpdateOneWithoutOrderChatsNestedInput
 }
 
 export type OrderChatUncheckedUpdateWithoutVendorInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
   expiryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1362,6 +1515,7 @@ export type OrderChatUncheckedUpdateManyWithoutVendorInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   orderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
   expiryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1385,6 +1539,7 @@ export type OrderChatCreateManyOrderInput = {
   id?: string
   vendorId?: string | null
   customerId?: string | null
+  orderPartId?: string | null
   status?: string
   type?: string
   expiryAt?: Date | string | null
@@ -1426,12 +1581,14 @@ export type OrderChatUpdateWithoutOrderInput = {
   messages?: Prisma.OrderChatMessageUpdateManyWithoutChatNestedInput
   vendor?: Prisma.StoreUpdateOneWithoutOrderChatsNestedInput
   customer?: Prisma.UserUpdateOneWithoutOrderChatsNestedInput
+  orderPart?: Prisma.OrderPartUpdateOneWithoutOrderChatsNestedInput
 }
 
 export type OrderChatUncheckedUpdateWithoutOrderInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   vendorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
   expiryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1454,6 +1611,105 @@ export type OrderChatUncheckedUpdateWithoutOrderInput = {
 
 export type OrderChatUncheckedUpdateManyWithoutOrderInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  vendorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  orderPartId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.StringFieldUpdateOperationsInput | string
+  expiryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  customerTranslationEnabledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  vendorTranslationEnabledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminTranslationEnabledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  adminInitReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  guestName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  guestEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  guestPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  source?: Prisma.StringFieldUpdateOperationsInput | string
+  isDeletedByAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminJoinedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+}
+
+export type OrderChatCreateManyOrderPartInput = {
+  id?: string
+  orderId?: string | null
+  vendorId?: string | null
+  customerId?: string | null
+  status?: string
+  type?: string
+  expiryAt?: Date | string | null
+  customerTranslationEnabledAt?: Date | string | null
+  vendorTranslationEnabledAt?: Date | string | null
+  adminTranslationEnabledAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  adminInitReason?: string | null
+  category?: string | null
+  guestName?: string | null
+  guestEmail?: string | null
+  guestPhone?: string | null
+  source?: string
+  isDeletedByAdmin?: boolean
+  adminJoinedAt?: Date | string | null
+  isAttachmentsEnabled?: boolean
+}
+
+export type OrderChatUpdateWithoutOrderPartInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.StringFieldUpdateOperationsInput | string
+  expiryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  customerTranslationEnabledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  vendorTranslationEnabledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminTranslationEnabledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  adminInitReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  guestName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  guestEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  guestPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  source?: Prisma.StringFieldUpdateOperationsInput | string
+  isDeletedByAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminJoinedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messages?: Prisma.OrderChatMessageUpdateManyWithoutChatNestedInput
+  order?: Prisma.OrderUpdateOneWithoutOrderChatsNestedInput
+  vendor?: Prisma.StoreUpdateOneWithoutOrderChatsNestedInput
+  customer?: Prisma.UserUpdateOneWithoutOrderChatsNestedInput
+}
+
+export type OrderChatUncheckedUpdateWithoutOrderPartInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  orderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  vendorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  customerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.StringFieldUpdateOperationsInput | string
+  expiryAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  customerTranslationEnabledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  vendorTranslationEnabledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  adminTranslationEnabledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  adminInitReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  category?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  guestName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  guestEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  guestPhone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  source?: Prisma.StringFieldUpdateOperationsInput | string
+  isDeletedByAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  adminJoinedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isAttachmentsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messages?: Prisma.OrderChatMessageUncheckedUpdateManyWithoutChatNestedInput
+}
+
+export type OrderChatUncheckedUpdateManyWithoutOrderPartInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  orderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   vendorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1511,6 +1767,7 @@ export type OrderChatSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   orderId?: boolean
   vendorId?: boolean
   customerId?: boolean
+  orderPartId?: boolean
   status?: boolean
   type?: boolean
   expiryAt?: boolean
@@ -1532,6 +1789,7 @@ export type OrderChatSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   order?: boolean | Prisma.OrderChat$orderArgs<ExtArgs>
   vendor?: boolean | Prisma.OrderChat$vendorArgs<ExtArgs>
   customer?: boolean | Prisma.OrderChat$customerArgs<ExtArgs>
+  orderPart?: boolean | Prisma.OrderChat$orderPartArgs<ExtArgs>
   _count?: boolean | Prisma.OrderChatCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["orderChat"]>
 
@@ -1540,6 +1798,7 @@ export type OrderChatSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   orderId?: boolean
   vendorId?: boolean
   customerId?: boolean
+  orderPartId?: boolean
   status?: boolean
   type?: boolean
   expiryAt?: boolean
@@ -1560,6 +1819,7 @@ export type OrderChatSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   order?: boolean | Prisma.OrderChat$orderArgs<ExtArgs>
   vendor?: boolean | Prisma.OrderChat$vendorArgs<ExtArgs>
   customer?: boolean | Prisma.OrderChat$customerArgs<ExtArgs>
+  orderPart?: boolean | Prisma.OrderChat$orderPartArgs<ExtArgs>
 }, ExtArgs["result"]["orderChat"]>
 
 export type OrderChatSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1567,6 +1827,7 @@ export type OrderChatSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   orderId?: boolean
   vendorId?: boolean
   customerId?: boolean
+  orderPartId?: boolean
   status?: boolean
   type?: boolean
   expiryAt?: boolean
@@ -1587,6 +1848,7 @@ export type OrderChatSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   order?: boolean | Prisma.OrderChat$orderArgs<ExtArgs>
   vendor?: boolean | Prisma.OrderChat$vendorArgs<ExtArgs>
   customer?: boolean | Prisma.OrderChat$customerArgs<ExtArgs>
+  orderPart?: boolean | Prisma.OrderChat$orderPartArgs<ExtArgs>
 }, ExtArgs["result"]["orderChat"]>
 
 export type OrderChatSelectScalar = {
@@ -1594,6 +1856,7 @@ export type OrderChatSelectScalar = {
   orderId?: boolean
   vendorId?: boolean
   customerId?: boolean
+  orderPartId?: boolean
   status?: boolean
   type?: boolean
   expiryAt?: boolean
@@ -1613,23 +1876,26 @@ export type OrderChatSelectScalar = {
   isAttachmentsEnabled?: boolean
 }
 
-export type OrderChatOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderId" | "vendorId" | "customerId" | "status" | "type" | "expiryAt" | "customerTranslationEnabledAt" | "vendorTranslationEnabledAt" | "adminTranslationEnabledAt" | "createdAt" | "updatedAt" | "adminInitReason" | "category" | "guestName" | "guestEmail" | "guestPhone" | "source" | "isDeletedByAdmin" | "adminJoinedAt" | "isAttachmentsEnabled", ExtArgs["result"]["orderChat"]>
+export type OrderChatOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "orderId" | "vendorId" | "customerId" | "orderPartId" | "status" | "type" | "expiryAt" | "customerTranslationEnabledAt" | "vendorTranslationEnabledAt" | "adminTranslationEnabledAt" | "createdAt" | "updatedAt" | "adminInitReason" | "category" | "guestName" | "guestEmail" | "guestPhone" | "source" | "isDeletedByAdmin" | "adminJoinedAt" | "isAttachmentsEnabled", ExtArgs["result"]["orderChat"]>
 export type OrderChatInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   messages?: boolean | Prisma.OrderChat$messagesArgs<ExtArgs>
   order?: boolean | Prisma.OrderChat$orderArgs<ExtArgs>
   vendor?: boolean | Prisma.OrderChat$vendorArgs<ExtArgs>
   customer?: boolean | Prisma.OrderChat$customerArgs<ExtArgs>
+  orderPart?: boolean | Prisma.OrderChat$orderPartArgs<ExtArgs>
   _count?: boolean | Prisma.OrderChatCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type OrderChatIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   order?: boolean | Prisma.OrderChat$orderArgs<ExtArgs>
   vendor?: boolean | Prisma.OrderChat$vendorArgs<ExtArgs>
   customer?: boolean | Prisma.OrderChat$customerArgs<ExtArgs>
+  orderPart?: boolean | Prisma.OrderChat$orderPartArgs<ExtArgs>
 }
 export type OrderChatIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   order?: boolean | Prisma.OrderChat$orderArgs<ExtArgs>
   vendor?: boolean | Prisma.OrderChat$vendorArgs<ExtArgs>
   customer?: boolean | Prisma.OrderChat$customerArgs<ExtArgs>
+  orderPart?: boolean | Prisma.OrderChat$orderPartArgs<ExtArgs>
 }
 
 export type $OrderChatPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1639,12 +1905,14 @@ export type $OrderChatPayload<ExtArgs extends runtime.Types.Extensions.InternalA
     order: Prisma.$OrderPayload<ExtArgs> | null
     vendor: Prisma.$StorePayload<ExtArgs> | null
     customer: Prisma.$UserPayload<ExtArgs> | null
+    orderPart: Prisma.$OrderPartPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     orderId: string | null
     vendorId: string | null
     customerId: string | null
+    orderPartId: string | null
     status: string
     type: string
     expiryAt: Date | null
@@ -2060,6 +2328,7 @@ export interface Prisma__OrderChatClient<T, Null = never, ExtArgs extends runtim
   order<T extends Prisma.OrderChat$orderArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrderChat$orderArgs<ExtArgs>>): Prisma.Prisma__OrderClient<runtime.Types.Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   vendor<T extends Prisma.OrderChat$vendorArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrderChat$vendorArgs<ExtArgs>>): Prisma.Prisma__StoreClient<runtime.Types.Result.GetResult<Prisma.$StorePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   customer<T extends Prisma.OrderChat$customerArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrderChat$customerArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  orderPart<T extends Prisma.OrderChat$orderPartArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrderChat$orderPartArgs<ExtArgs>>): Prisma.Prisma__OrderPartClient<runtime.Types.Result.GetResult<Prisma.$OrderPartPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2093,6 +2362,7 @@ export interface OrderChatFieldRefs {
   readonly orderId: Prisma.FieldRef<"OrderChat", 'String'>
   readonly vendorId: Prisma.FieldRef<"OrderChat", 'String'>
   readonly customerId: Prisma.FieldRef<"OrderChat", 'String'>
+  readonly orderPartId: Prisma.FieldRef<"OrderChat", 'String'>
   readonly status: Prisma.FieldRef<"OrderChat", 'String'>
   readonly type: Prisma.FieldRef<"OrderChat", 'String'>
   readonly expiryAt: Prisma.FieldRef<"OrderChat", 'DateTime'>
@@ -2589,6 +2859,25 @@ export type OrderChat$customerArgs<ExtArgs extends runtime.Types.Extensions.Inte
    */
   include?: Prisma.UserInclude<ExtArgs> | null
   where?: Prisma.UserWhereInput
+}
+
+/**
+ * OrderChat.orderPart
+ */
+export type OrderChat$orderPartArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the OrderPart
+   */
+  select?: Prisma.OrderPartSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the OrderPart
+   */
+  omit?: Prisma.OrderPartOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.OrderPartInclude<ExtArgs> | null
+  where?: Prisma.OrderPartWhereInput
 }
 
 /**

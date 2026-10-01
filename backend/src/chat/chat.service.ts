@@ -35,79 +35,113 @@ export class ChatService {
         private platformSettings: PlatformSettingsService,
     ) { }
 
-    async createOrGetChat(orderId: string, vendorId: string, customerId: string) {
-        // 1. Check if Order exists and requirements
+    private async findOrderChat(orderId: string, vendorId: string, orderPartId: string | null) {
+        return this.prisma.orderChat.findFirst({
+            where: {
+                orderId,
+                vendorId,
+                type: 'order',
+                ...(orderPartId ? { orderPartId } : {}),
+            },
+            orderBy: { createdAt: 'asc' },
+        });
+    }
+
+    private async createOrderChatSafe(data: {
+        orderId: string;
+        vendorId: string;
+        customerId: string;
+        orderPartId: string | null;
+        status: string;
+        expiryAt: Date;
+    }) {
+        try {
+            return await this.prisma.orderChat.create({
+                data: { ...data, type: 'order' },
+            });
+        } catch (error: any) {
+            if (error?.code === 'P2002') {
+                const existing = await this.findOrderChat(data.orderId, data.vendorId, data.orderPartId);
+                if (existing) return existing;
+            }
+            throw error;
+        }
+    }
+
+    private async loadOrderChatDto(chatId: string) {
+        const fullChat = await this.prisma.orderChat.findUnique({
+            where: { id: chatId },
+            include: {
+                vendor: { select: { name: true, logo: true, storeCode: true } },
+                customer: { select: { name: true, avatar: true } },
+                order: { select: { orderNumber: true, partName: true } },
+                orderPart: { select: { name: true } },
+                messages: { orderBy: { createdAt: 'asc' } },
+            },
+        });
+        if (!fullChat) throw new NotFoundException('Chat not found');
+        return this.mapChatToDto(fullChat);
+    }
+
+    async createOrGetChat(orderId: string, vendorId: string, customerId: string, orderPartId?: string | null) {
+        const partId = orderPartId || null;
+
+        // 1. Order must exist and belong to the requesting customer
         const order = await this.prisma.order.findUnique({
             where: { id: orderId }
         });
         if (!order) throw new NotFoundException('Order not found');
+        if (order.customerId !== customerId) {
+            throw new ForbiddenException('You do not have access to this order.');
+        }
+
+        // 2. Vendor must have an offer on this order (and on this part when provided)
+        const vendorOffer = await this.prisma.offer.findFirst({
+            where: {
+                orderId,
+                storeId: vendorId,
+                ...(partId ? { orderPartId: partId } : {}),
+            },
+            select: { id: true },
+        });
+        if (!vendorOffer) {
+            throw new ForbiddenException('This merchant has no offer on this order.');
+        }
 
         // Rule: If an offer is already accepted, ONLY that vendor can chat
         if (order.acceptedOfferId) {
-            // Need to check if THIS vendor is the one accepted
-            // We can check offer ownership or if we have acceptedOfferId relation to Offer->storeId
             const acceptedOffer = await this.prisma.offer.findUnique({ where: { id: order.acceptedOfferId } });
             if (acceptedOffer && acceptedOffer.storeId !== vendorId) {
-                // Return existing chat but maybe marked as CLOSED or throw
-                // Per requirement: "Auto-close other chats". So we fetch existing, if closed good, if missing create CLOSED?
-                // Let's create it as CLOSED if it's new.
-                const existing = await this.prisma.orderChat.findUnique({
-                    where: { orderId_vendorId_type: { orderId, vendorId, type: 'order' } }
-                });
+                const existing = await this.findOrderChat(orderId, vendorId, partId);
                 if (existing) return existing; // likely closed
 
-                return this.prisma.orderChat.create({
-                    data: {
-                        orderId, vendorId, customerId, status: 'CLOSED', expiryAt: new Date()
-                    }
+                return this.createOrderChatSafe({
+                    orderId, vendorId, customerId, orderPartId: partId, status: 'CLOSED', expiryAt: new Date(),
                 });
             }
         }
 
         // Rule: Cancelled / completed / warranty — order chat must stay CLOSED (no reopen)
         if (shouldCloseOrderChat(order.status)) {
-            const existingClosed = await this.prisma.orderChat.findUnique({
-                where: { orderId_vendorId_type: { orderId, vendorId, type: 'order' } },
-            });
-            if (existingClosed) {
-                if (existingClosed.status === 'OPEN') {
+            let kept = await this.findOrderChat(orderId, vendorId, partId);
+            if (kept) {
+                if (kept.status === 'OPEN') {
                     await this.prisma.orderChat.update({
-                        where: { id: existingClosed.id },
+                        where: { id: kept.id },
                         data: { status: 'CLOSED' },
                     });
-                    this.chatGateway.server.to(existingClosed.id).emit('chatStatusChanged', {
-                        chatId: existingClosed.id,
+                    this.chatGateway.server.to(kept.id).emit('chatStatusChanged', {
+                        chatId: kept.id,
                         status: 'CLOSED',
                         reason: 'ORDER_COMPLETED',
                     });
                 }
             } else {
-                await this.prisma.orderChat.create({
-                    data: {
-                        orderId,
-                        vendorId,
-                        customerId,
-                        type: 'order',
-                        status: 'CLOSED',
-                        expiryAt: new Date(),
-                    },
+                kept = await this.createOrderChatSafe({
+                    orderId, vendorId, customerId, orderPartId: partId, status: 'CLOSED', expiryAt: new Date(),
                 });
             }
-            const kept = await this.prisma.orderChat.findUnique({
-                where: { orderId_vendorId_type: { orderId, vendorId, type: 'order' } },
-            });
-            if (!kept) throw new NotFoundException('Chat not found');
-            const fullKept = await this.prisma.orderChat.findUnique({
-                where: { id: kept.id },
-                include: {
-                    vendor: { select: { name: true, logo: true, storeCode: true } },
-                    customer: { select: { name: true, avatar: true } },
-                    order: { select: { orderNumber: true, partName: true } },
-                    messages: { orderBy: { createdAt: 'asc' } },
-                },
-            });
-            if (!fullKept) throw new NotFoundException('Chat not found');
-            return this.mapChatToDto(fullKept);
+            return this.loadOrderChatDto(kept.id);
         }
 
         // Rule: 24h / selection Expiry — ONLY while still in offer/selection phases
@@ -131,9 +165,7 @@ export class ChatService {
         }
 
         if (isExpired) {
-            const existing = await this.prisma.orderChat.findUnique({
-                where: { orderId_vendorId_type: { orderId, vendorId, type: 'order' } }
-            });
+            const existing = await this.findOrderChat(orderId, vendorId, partId);
             if (existing && existing.status !== 'EXPIRED') {
                 return this.prisma.orderChat.update({
                     where: { id: existing.id },
@@ -141,49 +173,25 @@ export class ChatService {
                 });
             }
             if (!existing) {
-                return this.prisma.orderChat.create({
-                    data: {
-                        orderId, vendorId, customerId, status: 'EXPIRED', expiryAt: new Date()
-                    }
+                return this.createOrderChatSafe({
+                    orderId, vendorId, customerId, orderPartId: partId, status: 'EXPIRED', expiryAt: new Date(),
                 });
             }
             return existing;
         }
 
         // Normal creation or retrieval
-        let chat = await this.prisma.orderChat.findUnique({
-            where: { orderId_vendorId_type: { orderId, vendorId, type: 'order' } }
-        });
+        let chat = await this.findOrderChat(orderId, vendorId, partId);
 
         if (!chat) {
             // Default expiry only meaningful during offer phase
             const expiryDate = new Date(orderCreated.getTime() + 24 * 60 * 60 * 1000);
-
-            chat = await this.prisma.orderChat.create({
-                data: {
-                    orderId,
-                    vendorId,
-                    customerId,
-                    type: 'order',
-                    status: 'OPEN',
-                    expiryAt: expiryDate
-                }
+            chat = await this.createOrderChatSafe({
+                orderId, vendorId, customerId, orderPartId: partId, status: 'OPEN', expiryAt: expiryDate,
             });
         }
 
-        // Refetch to get relations for UI
-        const fullChat = await this.prisma.orderChat.findUnique({
-            where: { id: chat.id },
-            include: {
-                vendor: { select: { name: true, logo: true, storeCode: true } },
-                customer: { select: { name: true, avatar: true } },
-                order: { select: { orderNumber: true, partName: true } },
-                messages: { orderBy: { createdAt: 'asc' } }
-            }
-        });
-
-        if (!fullChat) throw new NotFoundException('Chat not found');
-        return this.mapChatToDto(fullChat);
+        return this.loadOrderChatDto(chat.id);
     }
 
     async getChatById(id: string) {
@@ -193,6 +201,7 @@ export class ChatService {
                 vendor: { select: { name: true, logo: true, id: true, storeCode: true, ownerId: true } },
                 customer: { select: { name: true, avatar: true, id: true } },
                 order: { select: { orderNumber: true, partName: true, id: true, status: true } },
+                orderPart: { select: { name: true } },
                 messages: { orderBy: { createdAt: 'asc' } }
             }
         });
@@ -211,6 +220,7 @@ export class ChatService {
                     vendor: { select: { name: true, logo: true, id: true, storeCode: true, ownerId: true } },
                     customer: { select: { name: true, avatar: true, id: true } },
                     order: { select: { orderNumber: true, partName: true, id: true, status: true } },
+                    orderPart: { select: { name: true } },
                     messages: { orderBy: { createdAt: 'asc' } },
                 },
             });
@@ -233,6 +243,7 @@ export class ChatService {
             customer: { select: { id: true, name: true, avatar: true, email: true, phone: true } },
             vendor: { select: { id: true, name: true, logo: true, storeCode: true, ownerId: true } },
             order: { select: { orderNumber: true, partName: true, id: true, status: true } },
+            orderPart: { select: { name: true } },
             messages: { 
                 where: { isDeletedByAdmin: false },
                 orderBy: { createdAt: 'desc' as const }, 
@@ -380,7 +391,7 @@ export class ChatService {
             customerCode: chat.customerId ? `CUS-${chat.customerId.substring(0, 6).toUpperCase()}` : undefined,
             vendorCode: chat.vendor?.storeCode,
             orderNumber: chat.order?.orderNumber,
-            partName: chat.order?.partName,
+            partName: chat.orderPart?.name ?? chat.order?.partName,
             adminInitReason: chat.adminInitReason, // Explicitly included for 2026 support oversight
             category: chat.category || this.extractCategory(chat.messages?.[0]?.subject || chat.adminInitReason || ''),
             // Only keep the messages if they exist (we don't want to map over undefined if not selected)

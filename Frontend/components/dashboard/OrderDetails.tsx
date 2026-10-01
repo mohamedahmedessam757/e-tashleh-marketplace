@@ -933,7 +933,8 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
             }
 
             // Use the REAL backend API — creates/gets chat in order_chats table
-            const newChat = await fetchChat(String(order.id), String(vendorId));
+            const orderPartId = offer.orderPartId || offer.order_part_id || null;
+            const newChat = await fetchChat(String(order.id), String(vendorId), orderPartId ? String(orderPartId) : null);
             
             if (newChat && newChat.id) {
                 onNavigate('chats', newChat.id); // Explicitly pass the chat ID

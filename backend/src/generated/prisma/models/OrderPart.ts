@@ -264,6 +264,7 @@ export type OrderPartWhereInput = {
   offers?: Prisma.OfferListRelationFilter
   shippingAddress?: Prisma.XOR<Prisma.OrderShippingAddressNullableScalarRelationFilter, Prisma.OrderShippingAddressWhereInput> | null
   shippingWaybills?: Prisma.ShippingWaybillListRelationFilter
+  orderChats?: Prisma.OrderChatListRelationFilter
 }
 
 export type OrderPartOrderByWithRelationInput = {
@@ -282,6 +283,7 @@ export type OrderPartOrderByWithRelationInput = {
   offers?: Prisma.OfferOrderByRelationAggregateInput
   shippingAddress?: Prisma.OrderShippingAddressOrderByWithRelationInput
   shippingWaybills?: Prisma.ShippingWaybillOrderByRelationAggregateInput
+  orderChats?: Prisma.OrderChatOrderByRelationAggregateInput
 }
 
 export type OrderPartWhereUniqueInput = Prisma.AtLeast<{
@@ -303,6 +305,7 @@ export type OrderPartWhereUniqueInput = Prisma.AtLeast<{
   offers?: Prisma.OfferListRelationFilter
   shippingAddress?: Prisma.XOR<Prisma.OrderShippingAddressNullableScalarRelationFilter, Prisma.OrderShippingAddressWhereInput> | null
   shippingWaybills?: Prisma.ShippingWaybillListRelationFilter
+  orderChats?: Prisma.OrderChatListRelationFilter
 }, "id">
 
 export type OrderPartOrderByWithAggregationInput = {
@@ -356,6 +359,7 @@ export type OrderPartCreateInput = {
   offers?: Prisma.OfferCreateNestedManyWithoutOrderPartInput
   shippingAddress?: Prisma.OrderShippingAddressCreateNestedOneWithoutOrderPartInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutOrderPartInput
+  orderChats?: Prisma.OrderChatCreateNestedManyWithoutOrderPartInput
 }
 
 export type OrderPartUncheckedCreateInput = {
@@ -373,6 +377,7 @@ export type OrderPartUncheckedCreateInput = {
   offers?: Prisma.OfferUncheckedCreateNestedManyWithoutOrderPartInput
   shippingAddress?: Prisma.OrderShippingAddressUncheckedCreateNestedOneWithoutOrderPartInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutOrderPartInput
+  orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutOrderPartInput
 }
 
 export type OrderPartUpdateInput = {
@@ -390,6 +395,7 @@ export type OrderPartUpdateInput = {
   offers?: Prisma.OfferUpdateManyWithoutOrderPartNestedInput
   shippingAddress?: Prisma.OrderShippingAddressUpdateOneWithoutOrderPartNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutOrderPartNestedInput
+  orderChats?: Prisma.OrderChatUpdateManyWithoutOrderPartNestedInput
 }
 
 export type OrderPartUncheckedUpdateInput = {
@@ -407,6 +413,7 @@ export type OrderPartUncheckedUpdateInput = {
   offers?: Prisma.OfferUncheckedUpdateManyWithoutOrderPartNestedInput
   shippingAddress?: Prisma.OrderShippingAddressUncheckedUpdateOneWithoutOrderPartNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutOrderPartNestedInput
+  orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutOrderPartNestedInput
 }
 
 export type OrderPartCreateManyInput = {
@@ -580,6 +587,22 @@ export type OrderPartUpdateimagesInput = {
   push?: string | string[]
 }
 
+export type OrderPartCreateNestedOneWithoutOrderChatsInput = {
+  create?: Prisma.XOR<Prisma.OrderPartCreateWithoutOrderChatsInput, Prisma.OrderPartUncheckedCreateWithoutOrderChatsInput>
+  connectOrCreate?: Prisma.OrderPartCreateOrConnectWithoutOrderChatsInput
+  connect?: Prisma.OrderPartWhereUniqueInput
+}
+
+export type OrderPartUpdateOneWithoutOrderChatsNestedInput = {
+  create?: Prisma.XOR<Prisma.OrderPartCreateWithoutOrderChatsInput, Prisma.OrderPartUncheckedCreateWithoutOrderChatsInput>
+  connectOrCreate?: Prisma.OrderPartCreateOrConnectWithoutOrderChatsInput
+  upsert?: Prisma.OrderPartUpsertWithoutOrderChatsInput
+  disconnect?: Prisma.OrderPartWhereInput | boolean
+  delete?: Prisma.OrderPartWhereInput | boolean
+  connect?: Prisma.OrderPartWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.OrderPartUpdateToOneWithWhereWithoutOrderChatsInput, Prisma.OrderPartUpdateWithoutOrderChatsInput>, Prisma.OrderPartUncheckedUpdateWithoutOrderChatsInput>
+}
+
 export type OrderPartCreateNestedOneWithoutShippingAddressInput = {
   create?: Prisma.XOR<Prisma.OrderPartCreateWithoutShippingAddressInput, Prisma.OrderPartUncheckedCreateWithoutShippingAddressInput>
   connectOrCreate?: Prisma.OrderPartCreateOrConnectWithoutShippingAddressInput
@@ -626,6 +649,7 @@ export type OrderPartCreateWithoutOrderInput = {
   offers?: Prisma.OfferCreateNestedManyWithoutOrderPartInput
   shippingAddress?: Prisma.OrderShippingAddressCreateNestedOneWithoutOrderPartInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutOrderPartInput
+  orderChats?: Prisma.OrderChatCreateNestedManyWithoutOrderPartInput
 }
 
 export type OrderPartUncheckedCreateWithoutOrderInput = {
@@ -642,6 +666,7 @@ export type OrderPartUncheckedCreateWithoutOrderInput = {
   offers?: Prisma.OfferUncheckedCreateNestedManyWithoutOrderPartInput
   shippingAddress?: Prisma.OrderShippingAddressUncheckedCreateNestedOneWithoutOrderPartInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutOrderPartInput
+  orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutOrderPartInput
 }
 
 export type OrderPartCreateOrConnectWithoutOrderInput = {
@@ -701,6 +726,7 @@ export type OrderPartCreateWithoutOffersInput = {
   order: Prisma.OrderCreateNestedOneWithoutPartsInput
   shippingAddress?: Prisma.OrderShippingAddressCreateNestedOneWithoutOrderPartInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutOrderPartInput
+  orderChats?: Prisma.OrderChatCreateNestedManyWithoutOrderPartInput
 }
 
 export type OrderPartUncheckedCreateWithoutOffersInput = {
@@ -717,6 +743,7 @@ export type OrderPartUncheckedCreateWithoutOffersInput = {
   updatedAt?: Date | string
   shippingAddress?: Prisma.OrderShippingAddressUncheckedCreateNestedOneWithoutOrderPartInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutOrderPartInput
+  orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutOrderPartInput
 }
 
 export type OrderPartCreateOrConnectWithoutOffersInput = {
@@ -749,6 +776,7 @@ export type OrderPartUpdateWithoutOffersInput = {
   order?: Prisma.OrderUpdateOneRequiredWithoutPartsNestedInput
   shippingAddress?: Prisma.OrderShippingAddressUpdateOneWithoutOrderPartNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutOrderPartNestedInput
+  orderChats?: Prisma.OrderChatUpdateManyWithoutOrderPartNestedInput
 }
 
 export type OrderPartUncheckedUpdateWithoutOffersInput = {
@@ -763,6 +791,91 @@ export type OrderPartUncheckedUpdateWithoutOffersInput = {
   shippingClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  shippingAddress?: Prisma.OrderShippingAddressUncheckedUpdateOneWithoutOrderPartNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutOrderPartNestedInput
+  orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutOrderPartNestedInput
+}
+
+export type OrderPartCreateWithoutOrderChatsInput = {
+  id?: string
+  name: string
+  description?: string | null
+  notes?: string | null
+  images?: Prisma.OrderPartCreateimagesInput | string[]
+  video?: string | null
+  quantity?: number
+  shippingClass?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  order: Prisma.OrderCreateNestedOneWithoutPartsInput
+  offers?: Prisma.OfferCreateNestedManyWithoutOrderPartInput
+  shippingAddress?: Prisma.OrderShippingAddressCreateNestedOneWithoutOrderPartInput
+  shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutOrderPartInput
+}
+
+export type OrderPartUncheckedCreateWithoutOrderChatsInput = {
+  id?: string
+  orderId: string
+  name: string
+  description?: string | null
+  notes?: string | null
+  images?: Prisma.OrderPartCreateimagesInput | string[]
+  video?: string | null
+  quantity?: number
+  shippingClass?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  offers?: Prisma.OfferUncheckedCreateNestedManyWithoutOrderPartInput
+  shippingAddress?: Prisma.OrderShippingAddressUncheckedCreateNestedOneWithoutOrderPartInput
+  shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutOrderPartInput
+}
+
+export type OrderPartCreateOrConnectWithoutOrderChatsInput = {
+  where: Prisma.OrderPartWhereUniqueInput
+  create: Prisma.XOR<Prisma.OrderPartCreateWithoutOrderChatsInput, Prisma.OrderPartUncheckedCreateWithoutOrderChatsInput>
+}
+
+export type OrderPartUpsertWithoutOrderChatsInput = {
+  update: Prisma.XOR<Prisma.OrderPartUpdateWithoutOrderChatsInput, Prisma.OrderPartUncheckedUpdateWithoutOrderChatsInput>
+  create: Prisma.XOR<Prisma.OrderPartCreateWithoutOrderChatsInput, Prisma.OrderPartUncheckedCreateWithoutOrderChatsInput>
+  where?: Prisma.OrderPartWhereInput
+}
+
+export type OrderPartUpdateToOneWithWhereWithoutOrderChatsInput = {
+  where?: Prisma.OrderPartWhereInput
+  data: Prisma.XOR<Prisma.OrderPartUpdateWithoutOrderChatsInput, Prisma.OrderPartUncheckedUpdateWithoutOrderChatsInput>
+}
+
+export type OrderPartUpdateWithoutOrderChatsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  images?: Prisma.OrderPartUpdateimagesInput | string[]
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  order?: Prisma.OrderUpdateOneRequiredWithoutPartsNestedInput
+  offers?: Prisma.OfferUpdateManyWithoutOrderPartNestedInput
+  shippingAddress?: Prisma.OrderShippingAddressUpdateOneWithoutOrderPartNestedInput
+  shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutOrderPartNestedInput
+}
+
+export type OrderPartUncheckedUpdateWithoutOrderChatsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  orderId?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  images?: Prisma.OrderPartUpdateimagesInput | string[]
+  video?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  quantity?: Prisma.IntFieldUpdateOperationsInput | number
+  shippingClass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  offers?: Prisma.OfferUncheckedUpdateManyWithoutOrderPartNestedInput
   shippingAddress?: Prisma.OrderShippingAddressUncheckedUpdateOneWithoutOrderPartNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutOrderPartNestedInput
 }
@@ -781,6 +894,7 @@ export type OrderPartCreateWithoutShippingAddressInput = {
   order: Prisma.OrderCreateNestedOneWithoutPartsInput
   offers?: Prisma.OfferCreateNestedManyWithoutOrderPartInput
   shippingWaybills?: Prisma.ShippingWaybillCreateNestedManyWithoutOrderPartInput
+  orderChats?: Prisma.OrderChatCreateNestedManyWithoutOrderPartInput
 }
 
 export type OrderPartUncheckedCreateWithoutShippingAddressInput = {
@@ -797,6 +911,7 @@ export type OrderPartUncheckedCreateWithoutShippingAddressInput = {
   updatedAt?: Date | string
   offers?: Prisma.OfferUncheckedCreateNestedManyWithoutOrderPartInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedCreateNestedManyWithoutOrderPartInput
+  orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutOrderPartInput
 }
 
 export type OrderPartCreateOrConnectWithoutShippingAddressInput = {
@@ -829,6 +944,7 @@ export type OrderPartUpdateWithoutShippingAddressInput = {
   order?: Prisma.OrderUpdateOneRequiredWithoutPartsNestedInput
   offers?: Prisma.OfferUpdateManyWithoutOrderPartNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutOrderPartNestedInput
+  orderChats?: Prisma.OrderChatUpdateManyWithoutOrderPartNestedInput
 }
 
 export type OrderPartUncheckedUpdateWithoutShippingAddressInput = {
@@ -845,6 +961,7 @@ export type OrderPartUncheckedUpdateWithoutShippingAddressInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   offers?: Prisma.OfferUncheckedUpdateManyWithoutOrderPartNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutOrderPartNestedInput
+  orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutOrderPartNestedInput
 }
 
 export type OrderPartCreateWithoutShippingWaybillsInput = {
@@ -861,6 +978,7 @@ export type OrderPartCreateWithoutShippingWaybillsInput = {
   order: Prisma.OrderCreateNestedOneWithoutPartsInput
   offers?: Prisma.OfferCreateNestedManyWithoutOrderPartInput
   shippingAddress?: Prisma.OrderShippingAddressCreateNestedOneWithoutOrderPartInput
+  orderChats?: Prisma.OrderChatCreateNestedManyWithoutOrderPartInput
 }
 
 export type OrderPartUncheckedCreateWithoutShippingWaybillsInput = {
@@ -877,6 +995,7 @@ export type OrderPartUncheckedCreateWithoutShippingWaybillsInput = {
   updatedAt?: Date | string
   offers?: Prisma.OfferUncheckedCreateNestedManyWithoutOrderPartInput
   shippingAddress?: Prisma.OrderShippingAddressUncheckedCreateNestedOneWithoutOrderPartInput
+  orderChats?: Prisma.OrderChatUncheckedCreateNestedManyWithoutOrderPartInput
 }
 
 export type OrderPartCreateOrConnectWithoutShippingWaybillsInput = {
@@ -909,6 +1028,7 @@ export type OrderPartUpdateWithoutShippingWaybillsInput = {
   order?: Prisma.OrderUpdateOneRequiredWithoutPartsNestedInput
   offers?: Prisma.OfferUpdateManyWithoutOrderPartNestedInput
   shippingAddress?: Prisma.OrderShippingAddressUpdateOneWithoutOrderPartNestedInput
+  orderChats?: Prisma.OrderChatUpdateManyWithoutOrderPartNestedInput
 }
 
 export type OrderPartUncheckedUpdateWithoutShippingWaybillsInput = {
@@ -925,6 +1045,7 @@ export type OrderPartUncheckedUpdateWithoutShippingWaybillsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   offers?: Prisma.OfferUncheckedUpdateManyWithoutOrderPartNestedInput
   shippingAddress?: Prisma.OrderShippingAddressUncheckedUpdateOneWithoutOrderPartNestedInput
+  orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutOrderPartNestedInput
 }
 
 export type OrderPartCreateManyOrderInput = {
@@ -954,6 +1075,7 @@ export type OrderPartUpdateWithoutOrderInput = {
   offers?: Prisma.OfferUpdateManyWithoutOrderPartNestedInput
   shippingAddress?: Prisma.OrderShippingAddressUpdateOneWithoutOrderPartNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUpdateManyWithoutOrderPartNestedInput
+  orderChats?: Prisma.OrderChatUpdateManyWithoutOrderPartNestedInput
 }
 
 export type OrderPartUncheckedUpdateWithoutOrderInput = {
@@ -970,6 +1092,7 @@ export type OrderPartUncheckedUpdateWithoutOrderInput = {
   offers?: Prisma.OfferUncheckedUpdateManyWithoutOrderPartNestedInput
   shippingAddress?: Prisma.OrderShippingAddressUncheckedUpdateOneWithoutOrderPartNestedInput
   shippingWaybills?: Prisma.ShippingWaybillUncheckedUpdateManyWithoutOrderPartNestedInput
+  orderChats?: Prisma.OrderChatUncheckedUpdateManyWithoutOrderPartNestedInput
 }
 
 export type OrderPartUncheckedUpdateManyWithoutOrderInput = {
@@ -993,11 +1116,13 @@ export type OrderPartUncheckedUpdateManyWithoutOrderInput = {
 export type OrderPartCountOutputType = {
   offers: number
   shippingWaybills: number
+  orderChats: number
 }
 
 export type OrderPartCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   offers?: boolean | OrderPartCountOutputTypeCountOffersArgs
   shippingWaybills?: boolean | OrderPartCountOutputTypeCountShippingWaybillsArgs
+  orderChats?: boolean | OrderPartCountOutputTypeCountOrderChatsArgs
 }
 
 /**
@@ -1024,6 +1149,13 @@ export type OrderPartCountOutputTypeCountShippingWaybillsArgs<ExtArgs extends ru
   where?: Prisma.ShippingWaybillWhereInput
 }
 
+/**
+ * OrderPartCountOutputType without action
+ */
+export type OrderPartCountOutputTypeCountOrderChatsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.OrderChatWhereInput
+}
+
 
 export type OrderPartSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1041,6 +1173,7 @@ export type OrderPartSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   offers?: boolean | Prisma.OrderPart$offersArgs<ExtArgs>
   shippingAddress?: boolean | Prisma.OrderPart$shippingAddressArgs<ExtArgs>
   shippingWaybills?: boolean | Prisma.OrderPart$shippingWaybillsArgs<ExtArgs>
+  orderChats?: boolean | Prisma.OrderPart$orderChatsArgs<ExtArgs>
   _count?: boolean | Prisma.OrderPartCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["orderPart"]>
 
@@ -1094,6 +1227,7 @@ export type OrderPartInclude<ExtArgs extends runtime.Types.Extensions.InternalAr
   offers?: boolean | Prisma.OrderPart$offersArgs<ExtArgs>
   shippingAddress?: boolean | Prisma.OrderPart$shippingAddressArgs<ExtArgs>
   shippingWaybills?: boolean | Prisma.OrderPart$shippingWaybillsArgs<ExtArgs>
+  orderChats?: boolean | Prisma.OrderPart$orderChatsArgs<ExtArgs>
   _count?: boolean | Prisma.OrderPartCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type OrderPartIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1110,6 +1244,7 @@ export type $OrderPartPayload<ExtArgs extends runtime.Types.Extensions.InternalA
     offers: Prisma.$OfferPayload<ExtArgs>[]
     shippingAddress: Prisma.$OrderShippingAddressPayload<ExtArgs> | null
     shippingWaybills: Prisma.$ShippingWaybillPayload<ExtArgs>[]
+    orderChats: Prisma.$OrderChatPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1524,6 +1659,7 @@ export interface Prisma__OrderPartClient<T, Null = never, ExtArgs extends runtim
   offers<T extends Prisma.OrderPart$offersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrderPart$offersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OfferPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   shippingAddress<T extends Prisma.OrderPart$shippingAddressArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrderPart$shippingAddressArgs<ExtArgs>>): Prisma.Prisma__OrderShippingAddressClient<runtime.Types.Result.GetResult<Prisma.$OrderShippingAddressPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   shippingWaybills<T extends Prisma.OrderPart$shippingWaybillsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrderPart$shippingWaybillsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShippingWaybillPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  orderChats<T extends Prisma.OrderPart$orderChatsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.OrderPart$orderChatsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrderChatPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2029,6 +2165,30 @@ export type OrderPart$shippingWaybillsArgs<ExtArgs extends runtime.Types.Extensi
   take?: number
   skip?: number
   distinct?: Prisma.ShippingWaybillScalarFieldEnum | Prisma.ShippingWaybillScalarFieldEnum[]
+}
+
+/**
+ * OrderPart.orderChats
+ */
+export type OrderPart$orderChatsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the OrderChat
+   */
+  select?: Prisma.OrderChatSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the OrderChat
+   */
+  omit?: Prisma.OrderChatOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.OrderChatInclude<ExtArgs> | null
+  where?: Prisma.OrderChatWhereInput
+  orderBy?: Prisma.OrderChatOrderByWithRelationInput | Prisma.OrderChatOrderByWithRelationInput[]
+  cursor?: Prisma.OrderChatWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.OrderChatScalarFieldEnum | Prisma.OrderChatScalarFieldEnum[]
 }
 
 /**

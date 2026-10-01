@@ -840,6 +840,7 @@ model OrderPart {
   offers           Offer[]
   shippingAddress  OrderShippingAddress?
   shippingWaybills ShippingWaybill[]
+  orderChats       OrderChat[]
 
   @@map("order_parts")
 }
@@ -1057,6 +1058,7 @@ model OrderChat {
   orderId    String?   @map("order_id") @db.Uuid
   vendorId   String?   @map("vendor_id") @db.Uuid // Optional for support chats
   customerId String?   @map("customer_id") @db.Uuid
+  orderPartId String?  @map("order_part_id") @db.Uuid
   status     String    @default("OPEN") // OPEN, CLOSED, EXPIRED, RESOLVED (for support)
   type       String    @default("order") // order, support
   expiryAt   DateTime? @map("expiry_at") @db.Timestamptz // Optional for support
@@ -1088,9 +1090,10 @@ model OrderChat {
   order    Order? @relation(fields: [orderId], references: [id], onDelete: Cascade)
   vendor   Store? @relation(fields: [vendorId], references: [id], onDelete: Cascade)
   customer User?  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  orderPart OrderPart? @relation(fields: [orderPartId], references: [id], onDelete: SetNull)
 
-  // Modified uniqueness constraints to allow multiple support chats per order
-  @@unique([orderId, vendorId, type])
+  // Uniqueness is enforced by partial indexes (see supabase/migrations/20261002_order_chat_per_part.sql)
+  @@index([orderPartId])
   @@index([orderId])
   @@index([vendorId])
   @@index([customerId])
