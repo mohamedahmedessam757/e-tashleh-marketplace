@@ -244,7 +244,7 @@ export const OrderSummaryStep: React.FC = () => {
             </div>
 
             {/* Shipping Info & Order Meta Info Grid */}
-            <div className="grid lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
                 {/* Order Information Block (Blue) */}
                 <div className="bg-[#0b101e] border border-blue-900/40 rounded-2xl p-6 h-full flex flex-col items-end ltr:items-start text-right ltr:text-left">

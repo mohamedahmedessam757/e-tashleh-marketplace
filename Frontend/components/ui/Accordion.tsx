@@ -6,21 +6,24 @@ interface AccordionItemProps {
     title: string;
     children: React.ReactNode;
     defaultOpen?: boolean;
+    /** Replaces the default border/background colours. */
+    className?: string;
 }
 
-export const AccordionItem: React.FC<AccordionItemProps> = ({ title, children, defaultOpen = false }) => {
+export const AccordionItem: React.FC<AccordionItemProps> = ({ title, children, defaultOpen = false, className }) => {
     const [isOpen, setIsOpen] = useState(defaultOpen);
 
     return (
-        <div className="border border-white/5 rounded-xl bg-white/5 overflow-hidden">
+        <div className={`border rounded-xl overflow-hidden min-w-0 ${className || 'border-white/5 bg-white/5'}`}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full flex items-center justify-between p-4 text-left transition-colors hover:bg-white/5"
+                className="w-full flex items-center justify-between gap-3 p-4 text-start transition-colors hover:bg-white/5"
             >
-                <span className="font-bold text-white">{title}</span>
+                <span className="font-bold text-white min-w-0 break-words">{title}</span>
                 <motion.div
                     animate={{ rotate: isOpen ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
+                    className="shrink-0"
                 >
                     <ChevronDown size={20} className="text-white/50" />
                 </motion.div>

@@ -121,7 +121,7 @@ export const AddressStep: React.FC<{ showValidationErrors?: boolean; order?: any
                                 ? 'رقم الهاتف والبريد مرتبطان بحسابك ولا يمكن تغييرهما هنا.'
                                 : 'Phone and email are locked to your account and cannot be changed here.'}
                         </p>
-                        <div className="grid md:grid-cols-2 gap-6 text-right ltr:text-left">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-right ltr:text-left">
                             <InputField icon={User} label={tC.address.name} value={address.fullName} field="fullName" updateAddress={lockedUpdateAddress} isError={showValidationErrors && !address.fullName} />
                             <InputField icon={Phone} label={tC.address.phone} value={address.phone} field="phone" updateAddress={lockedUpdateAddress} isError={showValidationErrors && !address.phone} readOnly />
                             <InputField icon={Mail} label={tC.address.email || 'Email'} value={address.email} field="email" updateAddress={lockedUpdateAddress} isError={showValidationErrors && !address.email} readOnly />
@@ -133,7 +133,7 @@ export const AddressStep: React.FC<{ showValidationErrors?: boolean; order?: any
                         </div>
                     </div>
                 ) : (
-                    <div className={`grid md:grid-cols-2 gap-6 p-6 rounded-xl border transition-all ${showValidationErrors && isAddressInvalid ? 'bg-red-500/10 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]' : 'bg-[#1A1814] border-white/5'}`} dir={isAr ? 'rtl' : 'ltr'}>
+                    <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-xl border transition-all ${showValidationErrors && isAddressInvalid ? 'bg-red-500/10 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]' : 'bg-[#1A1814] border-white/5'}`} dir={isAr ? 'rtl' : 'ltr'}>
                         <div className="space-y-4 text-right ltr:text-left">
                             <div><span className="text-white/40 text-sm block mb-1">{tC.address.name}:</span> <span className="font-bold text-lg">{address.fullName || '-'}</span></div>
                             <div><span className="text-white/40 text-sm block mb-1">{tC.address.phone}:</span> <span className="font-bold font-mono tracking-wider">{address.phone || '-'}</span></div>
@@ -237,7 +237,7 @@ export const AddressStep: React.FC<{ showValidationErrors?: boolean; order?: any
                                 return (
                                     <div key={p.id} className="bg-white/5 rounded-xl border border-white/10 p-5">
                                         <h5 className="font-bold text-gold-400 mb-4">{p.name}</h5>
-                                        <div className="grid md:grid-cols-2 gap-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <InputField icon={User} label={tC.address.name} value={pAddr.fullName} field="fullName" updateAddress={updatePAddr} />
                                             <InputField icon={Phone} label={tC.address.phone} value={user?.phone || pAddr.phone} field="phone" updateAddress={updatePAddr} readOnly />
                                             <InputField icon={Mail} label={tC.address.email || 'Email'} value={user?.email || pAddr.email} field="email" updateAddress={updatePAddr} readOnly />

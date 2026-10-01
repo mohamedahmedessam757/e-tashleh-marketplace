@@ -159,7 +159,7 @@ export const CustomerDisputeDetails: React.FC<CustomerDisputeDetailsProps> = ({ 
          </div>
       </GlassCard>
 
-      <div className="grid lg:grid-cols-12 gap-4 md:gap-8 min-w-0">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8 min-w-0">
         <div className="lg:col-span-8 space-y-5 sm:space-y-8 min-w-0">
            <GlassCard className="p-4 md:p-8 space-y-6 md:space-y-8 border-white/5 relative group min-w-0">
               <div className="flex items-center gap-4 sm:gap-6 min-w-0">
@@ -184,7 +184,7 @@ export const CustomerDisputeDetails: React.FC<CustomerDisputeDetailsProps> = ({ 
                  </div>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-8 py-6 border-y border-white/5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-6 border-y border-white/5">
                  <div className="space-y-1">
                     <span className="text-[10px] font-black text-white/30 uppercase tracking-tight">{t.dashboard.resolution.details.primaryReason}</span>
                     <div className="text-md font-black text-white">

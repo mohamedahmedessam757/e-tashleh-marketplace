@@ -102,7 +102,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ onConfirm }) => {
                 </p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                 {/* Vehicle Information */}
                 <div className="md:col-span-2 space-y-3">

@@ -138,24 +138,24 @@ export const SupportPage: React.FC<SupportPageProps> = ({ onNavigate }) => {
                 ))}
             </div>
 
-            <div className="grid lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-8 min-w-0">
                 {/* Main Interaction Area */}
-                <div className="lg:col-span-2 space-y-6">
+                <div className="lg:col-span-2 space-y-6 min-w-0">
                     {/* Live Chat Bridge */}
                     <GlassCard
-                        className="p-6 flex items-center justify-between hover:bg-white/5 transition-all cursor-pointer border-blue-500/20 bg-blue-500/5 group"
+                        className="p-4 sm:p-6 flex items-center justify-between gap-3 hover:bg-white/5 transition-all cursor-pointer border-blue-500/20 bg-blue-500/5 group min-w-0"
                         onClick={() => onNavigate && onNavigate('chats')}
                     >
-                        <div className="flex items-center gap-5">
-                            <div className="p-4 rounded-2xl bg-blue-500/20 text-blue-400 group-hover:bg-blue-500/30 transition-colors">
+                        <div className="flex items-center gap-3 sm:gap-5 min-w-0">
+                            <div className="p-3 sm:p-4 rounded-2xl bg-blue-500/20 text-blue-400 group-hover:bg-blue-500/30 transition-colors shrink-0">
                                 <MessageSquare size={28} />
                             </div>
-                            <div>
-                                <h3 className="font-bold text-white text-xl">{t.dashboard.support.liveChat}</h3>
-                                <p className="text-white/50">{t.dashboard.support.liveChatDesc}</p>
+                            <div className="min-w-0">
+                                <h3 className="font-bold text-white text-lg sm:text-xl">{t.dashboard.support.liveChat}</h3>
+                                <p className="text-white/50 text-sm sm:text-base">{t.dashboard.support.liveChatDesc}</p>
                             </div>
                         </div>
-                        <div className="p-2 rounded-lg bg-white/5 text-white/30 group-hover:text-white transition-colors">
+                        <div className="p-2 rounded-lg bg-white/5 text-white/30 group-hover:text-white transition-colors shrink-0">
                             <ChevronRight size={24} className={language === 'ar' ? 'rotate-180' : ''} />
                         </div>
                     </GlassCard>
@@ -174,7 +174,7 @@ export const SupportPage: React.FC<SupportPageProps> = ({ onNavigate }) => {
                                     exit={{ opacity: 0, y: -20 }}
                                     transition={{ duration: 0.3 }}
                                 >
-                                    <h2 className="text-2xl font-bold text-white mb-8 flex items-center gap-3">
+                                    <h2 className="text-xl sm:text-2xl font-bold text-white mb-5 sm:mb-8 flex items-center gap-3">
                                         <History className="text-gold-500" />
                                         {t.dashboard.support.myTickets}
                                     </h2>
@@ -205,8 +205,8 @@ export const SupportPage: React.FC<SupportPageProps> = ({ onNavigate }) => {
                 </div>
 
                 {/* FAQ & Quick Links Area */}
-                <div className="lg:col-span-1 space-y-6">
-                    <GlassCard className="p-6 sticky top-6 border-white/5 bg-[#12110F]">
+                <div className="lg:col-span-1 space-y-6 min-w-0">
+                    <GlassCard className="p-4 sm:p-6 lg:sticky lg:top-6 border-white/5 bg-[#12110F] min-w-0">
                         <div className="flex items-center gap-3 mb-8 pb-4 border-b border-white/5">
                             <div className="p-2 rounded-lg bg-gold-500/10 text-gold-500">
                                 <HelpCircle size={24} />
@@ -229,14 +229,14 @@ export const SupportPage: React.FC<SupportPageProps> = ({ onNavigate }) => {
                         </div>
 
                         {/* Direct Contact Info */}
-                        <div className="mt-12 p-5 rounded-2xl bg-gold-500/5 border border-gold-500/10 min-w-0 overflow-hidden">
+                        <div className="mt-8 sm:mt-12 p-4 sm:p-5 rounded-2xl bg-gold-500/5 border border-gold-500/10 min-w-0">
                             <p className="text-xs text-gold-500/60 uppercase tracking-wider font-bold mb-3">
                                 {language === 'ar' ? 'اتصال مباشر' : 'Direct Contact'}
                             </p>
-                            <div className="space-y-3 min-w-0">
-                                <div className="flex items-center justify-between gap-3 text-sm min-w-0">
-                                    <span className="text-white/40 shrink-0">{language === 'ar' ? 'البريد الإلكتروني:' : 'Email:'}</span>
-                                    <a href={`mailto:${siteContacts.customer}`} className="text-white/80 font-medium tracking-tight hover:text-gold-500 transition-colors truncate min-w-0 text-end break-all">{siteContacts.customer}</a>
+                            <div className="space-y-3">
+                                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-sm min-w-0">
+                                    <span className="text-white/40">{language === 'ar' ? 'البريد الإلكتروني:' : 'Email:'}</span>
+                                    <a href={`mailto:${siteContacts.customer}`} dir="ltr" className="text-white/80 font-medium tracking-tight hover:text-gold-500 transition-colors break-all min-w-0">{siteContacts.customer}</a>
                                 </div>
                             </div>
                         </div>

@@ -89,7 +89,7 @@ export const InfoCenter: React.FC = () => {
                   <div className="prose prose-invert max-w-none text-white/80">
                     <p className="mb-4 text-white/90 font-medium">{t.about.description}</p>
 
-                    <div className="grid md:grid-cols-2 gap-6 my-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-8">
                       <div className="bg-white/5 p-4 rounded-xl border border-white/5">
                         <h3 className="text-gold-400 font-bold mb-2">{t.about.missionTitle}</h3>
                         <p className="text-sm">{t.about.missionDesc1}</p>

@@ -29,7 +29,7 @@ export const ProfileView: React.FC = () => {
     };
 
     return (
-        <div className="grid lg:grid-cols-4 gap-4 md:gap-8 min-w-0">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-8 min-w-0">
             {/* Sidebar Navigation — horizontal scroll chips on mobile */}
             <div className="lg:col-span-1 flex lg:flex-col gap-2 overflow-x-auto pb-1 lg:pb-0 -mx-1 px-1 scrollbar-thin">
                 {tabs.map((tab) => (
@@ -61,7 +61,7 @@ export const ProfileView: React.FC = () => {
                                 exit={{ opacity: 0, x: -20 }}
                                 className="space-y-8"
                             >
-                                <div className="grid md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {/* Order Quotas */}
                                     <GlassCard className="p-6 bg-white/[0.02] border-white/5 relative overflow-hidden group">
                                         <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">

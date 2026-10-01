@@ -165,7 +165,7 @@ export const ShipmentDetailsPage: React.FC<ShipmentDetailsPageProps> = ({ shipme
             </GlassCard>
 
             {/* Grid for Details, Billing, etc. */}
-            <div className="grid lg:grid-cols-3 gap-5 sm:gap-8 min-w-0">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-8 min-w-0">
                 
                 {/* Left Col: Metadata (2 cols on desktop) */}
                 <div className="lg:col-span-2 space-y-5 sm:space-y-8 min-w-0">
@@ -204,7 +204,7 @@ export const ShipmentDetailsPage: React.FC<ShipmentDetailsPageProps> = ({ shipme
                             {/* Overview Panel */}
                             {activeTab === 'overview' && (
                                 <div className="space-y-4 sm:space-y-6">
-                                    <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                                         {/* Order Info */}
                                         <GlassCard className="bg-[#151310] border-white/5 group hover:border-gold-500/20 transition-all p-4 sm:p-6 min-w-0">
                                             <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">

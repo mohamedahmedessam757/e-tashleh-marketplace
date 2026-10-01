@@ -39,7 +39,7 @@ export const ResolutionCenter: React.FC<ResolutionCenterProps> = ({ onNavigate }
       </div>
 
       {/* Stats / Overview */}
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-[#1A1814] p-6 rounded-xl border border-white/5 flex items-center justify-between">
               <div>
                   <div className="text-white/40 text-xs mb-1 font-bold">{t.dashboard.merchant.resolution.activeCases.toUpperCase()}</div>

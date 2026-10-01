@@ -250,7 +250,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigate }) => {
                 </motion.div>
             )}
 
-            <div className="grid lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <motion.div variants={itemVariants} className="lg:col-span-2 space-y-6">
                     <div className="flex items-center justify-between">
                         <h3 className="text-xl font-bold text-white flex items-center gap-2">

@@ -54,7 +54,7 @@ export const AddressesTab: React.FC = () => {
                         onSubmit={handleAddAddress}
                         className="bg-white/5 border border-white/10 rounded-xl p-4 mb-6 overflow-hidden"
                     >
-                        <div className="grid md:grid-cols-2 gap-4 mb-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <InputGroup
                                 label="Label (Home, Work)"
                                 value={newAddress.title}

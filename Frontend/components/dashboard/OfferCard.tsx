@@ -91,6 +91,9 @@ export const OfferCard: React.FC<OfferProps> = memo(({
     // Access 'offers' from 'dashboard' namespace if nested, or root if moved. 
     // Based on index.ts, it is inside dashboard.
     const offersT = (t.dashboard as any)?.offers || (t.offers as any);
+    const chatLabel = language === 'ar' ? 'محادثة مع التاجر' : 'Chat with merchant';
+    const statusPill =
+        'flex-1 sm:flex-none min-w-0 min-h-[48px] px-3 sm:px-6 rounded-xl border font-bold text-sm flex items-center justify-center gap-2 whitespace-nowrap';
 
     const conditionText = useMemo(() => {
         if (!condition) return '';
@@ -309,14 +312,15 @@ export const OfferCard: React.FC<OfferProps> = memo(({
                 )}
 
                 {/* Actions */}
-                <div className="flex justify-end items-center gap-3 mt-4">
-                    {/* Chat — locked when order closed OR this part's fulfillment was cancelled */}
+                <div className="flex items-stretch gap-2 sm:gap-3 mt-4 sm:justify-end min-w-0">
+                    {/* Chat — icon-only on phones so the decision buttons get the room; locked when order closed OR part cancelled */}
                     {status !== 'rejected' && (
                         chatLocked ? (
                             <button
                                 type="button"
                                 disabled
                                 aria-disabled="true"
+                                aria-label={chatLabel}
                                 title={
                                     language === 'ar'
                                         ? fulfillmentCancelled
@@ -326,20 +330,22 @@ export const OfferCard: React.FC<OfferProps> = memo(({
                                             ? 'Chat is closed because this part was cancelled'
                                             : 'Chat is closed for completed or warranty orders'
                                 }
-                                className="px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white/30 opacity-50 cursor-not-allowed pointer-events-none flex items-center gap-2"
+                                className="shrink-0 min-h-[48px] min-w-[48px] px-3 sm:px-5 rounded-xl bg-white/5 border border-white/10 text-white/30 opacity-50 cursor-not-allowed pointer-events-none flex items-center justify-center gap-2"
                             >
-                                <MessageSquare size={18} />
-                                <span>{offersT?.chat || 'Chat'}</span>
+                                <MessageSquare size={20} />
+                                <span className="hidden sm:inline">{chatLabel}</span>
                             </button>
                         ) : (
                             <button
                                 type="button"
                                 onClick={onChat}
                                 disabled={acceptLoading || disabled}
-                                className={`px-6 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white transition-colors flex items-center gap-2 ${acceptLoading || disabled ? 'opacity-50 pointer-events-none' : ''}`}
+                                aria-label={chatLabel}
+                                title={chatLabel}
+                                className={`shrink-0 min-h-[48px] min-w-[48px] px-3 sm:px-5 rounded-xl bg-blue-500/15 border border-blue-400/40 text-blue-300 hover:bg-blue-500/25 hover:text-blue-200 transition-colors flex items-center justify-center gap-2 ${acceptLoading || disabled ? 'opacity-50 pointer-events-none' : ''}`}
                             >
-                                <MessageSquare size={18} />
-                                <span>{offersT?.chat || 'Chat'}</span>
+                                <MessageSquare size={20} />
+                                <span className="hidden sm:inline font-bold text-sm">{chatLabel}</span>
                             </button>
                         )
                     )}
@@ -348,59 +354,63 @@ export const OfferCard: React.FC<OfferProps> = memo(({
                     {acceptLoading ? (
                          <button
                             disabled
-                            className="px-8 py-3 rounded-xl bg-gold-500 text-white font-bold shadow-lg shadow-gold-500/20 flex items-center gap-2 animate-pulse"
+                            className="flex-1 sm:flex-none min-w-0 min-h-[48px] px-4 sm:px-8 rounded-xl bg-gold-500 text-white font-bold text-sm sm:text-base shadow-lg shadow-gold-500/20 flex items-center justify-center gap-2 animate-pulse whitespace-nowrap"
                         >
-                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            <span>{language === 'ar' ? 'جاري القبول...' : 'Accepting...'}</span>
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" />
+                            <span className="truncate">{language === 'ar' ? 'جاري القبول...' : 'Accepting...'}</span>
                         </button>
                     ) : fulfillmentCancelled ? (
-                        <div className="px-6 py-3 rounded-xl bg-red-500/20 border border-red-500/40 text-red-300 font-bold text-sm flex items-center gap-2">
-                            <X size={18} />
-                            {language === 'ar' ? 'ملغى' : 'Cancelled'}
+                        <div className={`${statusPill} bg-red-500/20 border-red-500/40 text-red-300`}>
+                            <X size={18} className="shrink-0" />
+                            <span className="truncate">{language === 'ar' ? 'ملغى' : 'Cancelled'}</span>
                         </div>
                     ) : isAcceptedOfferStatus(status) ? (
-                        <div className="px-6 py-3 rounded-xl bg-green-500/20 border border-green-500/40 text-green-400 font-bold text-sm flex items-center gap-2">
-                            <CheckCircle2 size={18} />
-                            {language === 'ar' ? 'تم القبول' : 'Accepted'}
+                        <div className={`${statusPill} bg-green-500/20 border-green-500/40 text-green-400`}>
+                            <CheckCircle2 size={18} className="shrink-0" />
+                            <span className="truncate">{language === 'ar' ? 'تم القبول' : 'Accepted'}</span>
                         </div>
                     ) : isRejectedOfferStatus(status) ? (
-                        <div className="px-6 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 font-bold text-sm">
-                            {language === 'ar' ? 'تم الرفض' : 'Rejected'}
+                        <div className={`${statusPill} bg-red-500/10 border-red-500/20 text-red-400`}>
+                            <span className="truncate">{language === 'ar' ? 'تم الرفض' : 'Rejected'}</span>
                         </div>
                     ) : readOnly ? (
-                        <div className="px-6 py-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 font-bold text-sm flex items-center gap-2">
-                            <Clock size={18} />
-                            {status === 'in_chat'
-                                ? (language === 'ar' ? 'في محادثة' : 'In Chat')
-                                : orderStatus === 'AWAITING_SELECTION'
-                                    ? (language === 'ar' ? 'بانتظار اختيار العروض' : 'Awaiting selection')
-                                    : orderStatus === 'COLLECTING_OFFERS' || orderStatus === 'AWAITING_OFFERS'
-                                        ? (language === 'ar' ? 'جاري جمع العروض' : 'Collecting offers')
-                                        : (language === 'ar' ? 'قيد الانتظار' : 'Pending')}
+                        <div className={`${statusPill} bg-amber-500/10 border-amber-500/20 text-amber-400`}>
+                            <Clock size={18} className="shrink-0" />
+                            <span className="truncate">
+                                {status === 'in_chat'
+                                    ? (language === 'ar' ? 'في محادثة' : 'In Chat')
+                                    : orderStatus === 'AWAITING_SELECTION'
+                                        ? (language === 'ar' ? 'بانتظار اختيار العروض' : 'Awaiting selection')
+                                        : orderStatus === 'COLLECTING_OFFERS' || orderStatus === 'AWAITING_OFFERS'
+                                            ? (language === 'ar' ? 'جاري جمع العروض' : 'Collecting offers')
+                                            : (language === 'ar' ? 'قيد الانتظار' : 'Pending')}
+                            </span>
                         </div>
                     ) : disabled ? (
-                        <div className="px-6 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500/60 font-bold text-sm">
-                            {offersT?.orderClosed || 'Order Closed'}
+                        <div className={`${statusPill} bg-red-500/10 border-red-500/20 text-red-500/60`}>
+                            <span className="truncate">{offersT?.orderClosed || 'Order Closed'}</span>
                         </div>
                     ) : (
                         <>
                             {onReject && (
                                 <button
+                                    type="button"
                                     onClick={onReject}
                                     disabled={acceptLoading}
-                                    className={`px-6 py-3 rounded-xl bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 text-red-400 font-bold transition-all flex items-center gap-2 ${acceptLoading ? 'opacity-50 pointer-events-none' : ''}`}
+                                    className={`flex-1 sm:flex-none min-w-0 min-h-[48px] px-3 sm:px-6 rounded-xl bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 text-red-400 font-bold text-sm sm:text-base transition-all flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap ${acceptLoading ? 'opacity-50 pointer-events-none' : ''}`}
                                 >
-                                    <X size={18} />
-                                    <span>{language === 'ar' ? 'رفض العرض' : 'Reject'}</span>
+                                    <X size={18} className="shrink-0" />
+                                    <span className="truncate">{language === 'ar' ? 'رفض العرض' : 'Reject'}</span>
                                 </button>
                             )}
                             <button
+                                type="button"
                                 onClick={onAccept}
                                 disabled={acceptLoading}
-                                className={`px-8 py-3 rounded-xl bg-gold-500 hover:bg-gold-600 text-white font-bold shadow-lg shadow-gold-500/20 active:scale-95 transition-all flex items-center gap-2 ${acceptLoading ? 'opacity-50 pointer-events-none' : ''}`}
+                                className={`flex-1 sm:flex-none min-w-0 min-h-[48px] px-3 sm:px-8 rounded-xl bg-gold-500 hover:bg-gold-600 text-white font-bold text-sm sm:text-base shadow-lg shadow-gold-500/20 active:scale-95 transition-all flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap ${acceptLoading ? 'opacity-50 pointer-events-none' : ''}`}
                             >
-                                <CheckCircle2 size={18} />
-                                <span>{offersT?.acceptOffer || 'Accept Offer'}</span>
+                                <CheckCircle2 size={18} className="shrink-0" />
+                                <span className="truncate">{offersT?.acceptOffer || 'Accept Offer'}</span>
                             </button>
                         </>
                     )}

@@ -94,7 +94,7 @@ export const SettingsTab: React.FC = () => {
                     {t.dashboard.profile.settings?.global || 'Global Preferences'}
                 </h3>
 
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Language */}
                     <div className="p-4 bg-[#151310] rounded-xl border border-white/10 flex items-center justify-between">
                         <div>
