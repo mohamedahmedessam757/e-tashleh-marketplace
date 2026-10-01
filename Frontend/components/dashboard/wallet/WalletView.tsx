@@ -64,6 +64,21 @@ interface WalletViewProps {
     onNavigate?: (path: string, id?: any) => void;
 }
 
+const WalletStatCard = React.memo(({ label, value, unit, icon: Icon, colorClass, borderClass, bgClass }: any) => (
+    <GlassCard className={`p-4 sm:p-5 flex flex-col justify-between min-h-[100px] sm:min-h-[110px] ${borderClass || ''}`}>
+        <div className="flex justify-between items-start w-full">
+            <p className={`${colorClass || 'text-white/30'} text-[10px] font-black uppercase tracking-wider mb-1`}>{label}</p>
+            <div className={`p-1.5 ${bgClass || 'bg-white/5'} rounded-lg ${colorClass || 'text-white/40'} border border-white/10 shrink-0`}>
+                <Icon size={14} className="sm:size-[16px]" />
+            </div>
+        </div>
+        <h2 className="text-lg sm:text-xl font-bold text-white leading-none mt-2 truncate">
+            {value} <span className="text-[10px] text-white/30 font-medium">{unit}</span>
+        </h2>
+    </GlassCard>
+));
+WalletStatCard.displayName = 'WalletStatCard';
+
 export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
     const { language, t } = useLanguage();
     const isAr = language === 'ar';
@@ -143,7 +158,7 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
         };
         window.addEventListener('focus', refreshLimits);
         document.addEventListener('visibilitychange', onVisible);
-        const interval = window.setInterval(refreshLimits, 5_000);
+        const interval = window.setInterval(refreshLimits, 15_000);
         return () => {
             window.removeEventListener('focus', refreshLimits);
             document.removeEventListener('visibilitychange', onVisible);
@@ -530,19 +545,7 @@ export const WalletView: React.FC<WalletViewProps> = ({ onNavigate }) => {
     );
     const loyaltyPointsPending = pendingLoyaltyPoints > 0;
 
-    const StatCard = ({ label, value, unit, icon: Icon, colorClass, borderClass, bgClass }: any) => (
-        <GlassCard className={`p-4 sm:p-5 flex flex-col justify-between min-h-[100px] sm:min-h-[110px] ${borderClass || ''}`}>
-            <div className="flex justify-between items-start w-full">
-                <p className={`${colorClass || 'text-white/30'} text-[10px] font-black uppercase tracking-wider mb-1`}>{label}</p>
-                <div className={`p-1.5 ${bgClass || 'bg-white/5'} rounded-lg ${colorClass || 'text-white/40'} border border-white/10 shrink-0`}>
-                    <Icon size={14} className="sm:size-[16px]" />
-                </div>
-            </div>
-            <h2 className="text-lg sm:text-xl font-bold text-white leading-none mt-2 truncate">
-                {value} <span className="text-[10px] text-white/30 font-medium">{unit}</span>
-            </h2>
-        </GlassCard>
-    );
+    const StatCard = WalletStatCard;
 
     return (
         <div className="space-y-4 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12 px-2 sm:px-3 min-w-0 overflow-x-clip" dir={isAr ? 'rtl' : 'ltr'}>

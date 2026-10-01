@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '../services/supabase';
+import { getCurrentUserId } from '../utils/auth';
 
 export interface Transaction {
   id: string;
@@ -98,6 +99,7 @@ interface MerchantWalletState {
     }>;
   };
   isLoading: boolean;
+  walletLoadedFor: string | null;
 
   // Actions
   fetchWallet: (filters?: { startDate?: string; endDate?: string }) => Promise<void>;
@@ -159,9 +161,11 @@ export const useMerchantWalletStore = create<MerchantWalletState>((set, get) => 
   notifications: [],
   obligations: { totalDue: 0, lines: [] },
   isLoading: true,
+  walletLoadedFor: null,
 
   fetchWallet: async (filters) => {
-    set({ isLoading: true });
+    const currentUserId = getCurrentUserId();
+    if (get().walletLoadedFor !== currentUserId) set({ isLoading: true });
     try {
       const { client } = await import('../services/api/client');
       let url = '/payments/merchant/dashboard';
@@ -178,7 +182,8 @@ export const useMerchantWalletStore = create<MerchantWalletState>((set, get) => 
         transactions: transactions,
         notifications: notifications || [],
         ...(withdrawalLimits ? { withdrawalLimits } : {}),
-        isLoading: false
+        isLoading: false,
+        walletLoadedFor: currentUserId,
       });
       void get().fetchObligations();
     } catch (error) {
@@ -402,6 +407,22 @@ export const useMerchantWalletStore = create<MerchantWalletState>((set, get) => 
 
 // Real-time subscription outside the store so we can call it where needed
 let channel: ReturnType<typeof supabase.channel> | null = null;
+let walletRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+let pendingWithdrawalsRefresh = false;
+
+const scheduleWalletRefresh = (withWithdrawals = false) => {
+    if (withWithdrawals) pendingWithdrawalsRefresh = true;
+    if (walletRefreshTimer) clearTimeout(walletRefreshTimer);
+    walletRefreshTimer = setTimeout(() => {
+        walletRefreshTimer = null;
+        const state = useMerchantWalletStore.getState();
+        if (pendingWithdrawalsRefresh) {
+            pendingWithdrawalsRefresh = false;
+            void state.fetchWithdrawalData();
+        }
+        void state.fetchWallet();
+    }, 600);
+};
 
 export const subscribeToMerchantWalletUpdates = (userId: string, storeId?: string) => {
     if (channel) {
@@ -414,7 +435,7 @@ export const subscribeToMerchantWalletUpdates = (userId: string, storeId?: strin
             { event: '*', schema: 'public', table: 'wallet_transactions', filter: `user_id=eq.${userId}` },
             payload => {
 
-                useMerchantWalletStore.getState().fetchWallet();
+                scheduleWalletRefresh();
             }
         )
         .on(
@@ -422,14 +443,14 @@ export const subscribeToMerchantWalletUpdates = (userId: string, storeId?: strin
             { event: '*', schema: 'public', table: 'stores', filter: `owner_id=eq.${userId}` },
             payload => {
 
-                useMerchantWalletStore.getState().fetchWallet();
+                scheduleWalletRefresh();
             }
         )
         .on(
             'postgres_changes',
             { event: '*', schema: 'public', table: 'escrow_transactions' },
             () => {
-                useMerchantWalletStore.getState().fetchWallet();
+                scheduleWalletRefresh();
             },
         );
 
@@ -439,7 +460,7 @@ export const subscribeToMerchantWalletUpdates = (userId: string, storeId?: strin
             { event: '*', schema: 'public', table: 'orders', filter: `store_id=eq.${storeId}` },
             payload => {
 
-                useMerchantWalletStore.getState().fetchWallet();
+                scheduleWalletRefresh();
             }
         )
         .on(
@@ -447,8 +468,7 @@ export const subscribeToMerchantWalletUpdates = (userId: string, storeId?: strin
             { event: '*', schema: 'public', table: 'withdrawal_requests', filter: `store_id=eq.${storeId}` },
             payload => {
 
-                useMerchantWalletStore.getState().fetchWithdrawalData();
-                useMerchantWalletStore.getState().fetchWallet();
+                scheduleWalletRefresh(true);
             }
         );
     }
@@ -456,6 +476,10 @@ export const subscribeToMerchantWalletUpdates = (userId: string, storeId?: strin
     channel.subscribe();
 
     return () => {
+        if (walletRefreshTimer) {
+            clearTimeout(walletRefreshTimer);
+            walletRefreshTimer = null;
+        }
         if (channel) {
             supabase.removeChannel(channel);
             channel = null;

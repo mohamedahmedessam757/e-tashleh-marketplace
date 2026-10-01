@@ -112,6 +112,38 @@ interface AdminBillingProps {
     onNavigate?: (path: string, id: any) => void;
 }
 
+const BillingStatCard = React.memo(({ label, value, subValue, icon: Icon, color, trend }: any) => {
+    const amountsBlurred = useAdminPermissionsStore(s => s.isSectionBlurred('billing_amounts'));
+    return (
+        <GlassCard className="p-6 relative overflow-hidden group hover:scale-[1.02] transition-all duration-500 bg-gradient-to-br from-white/[0.04] to-transparent border-white/5">
+            <div className={`absolute top-0 right-0 w-24 h-24 blur-3xl opacity-10 rounded-full -mr-12 -mt-12 group-hover:opacity-20 transition-opacity duration-700`} style={{ backgroundColor: color }} />
+            <div className="relative z-10 flex flex-col justify-between h-full">
+                <div className="flex justify-between items-start">
+                    <p className="text-[10px] font-black text-white/30 uppercase ">{label}</p>
+                    <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 group-hover:border-white/20 transition-colors" style={{ color: color }}>
+                        <Icon size={18} />
+                    </div>
+                </div>
+                <div className="mt-4">
+                    <BlurredSection isBlurred={amountsBlurred}>
+                        <h3 className="text-2xl font-black text-white font-mono tracking-tight">{value}</h3>
+                    </BlurredSection>
+                    {subValue && <p className="text-[10px] font-bold text-white/40 mt-1 uppercase ">{subValue}</p>}
+                    {trend && (
+                        <div className="mt-3 flex items-center gap-2">
+                            <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden">
+                                <motion.div initial={{ width: 0 }} animate={{ width: trend }} className="h-full bg-cyan-400" />
+                            </div>
+                            <span className="text-[10px] font-black text-cyan-400">{trend}</span>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </GlassCard>
+    );
+});
+BillingStatCard.displayName = 'BillingStatCard';
+
 export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
     const { t, language } = useLanguage();
     const isAr = language === 'ar';
@@ -394,35 +426,7 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
 
 
 
-    // Helper for Premium Stat Card — React.memo used inside here to prevent flicker
-    const StatCard = React.memo(({ label, value, subValue, icon: Icon, color, trend }: any) => (
-        <GlassCard className="p-6 relative overflow-hidden group hover:scale-[1.02] transition-all duration-500 bg-gradient-to-br from-white/[0.04] to-transparent border-white/5">
-            <div className={`absolute top-0 right-0 w-24 h-24 blur-3xl opacity-10 rounded-full -mr-12 -mt-12 group-hover:opacity-20 transition-opacity duration-700`} style={{ backgroundColor: color }} />
-            <div className="relative z-10 flex flex-col justify-between h-full">
-                <div className="flex justify-between items-start">
-                    <p className="text-[10px] font-black text-white/30 uppercase ">{label}</p>
-                    <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 group-hover:border-white/20 transition-colors" style={{ color: color }}>
-                        <Icon size={18} />
-                    </div>
-                </div>
-                <div className="mt-4">
-                    <BlurredSection isBlurred={isSectionBlurred('billing_amounts')}>
-                        <h3 className="text-2xl font-black text-white font-mono tracking-tight">{value}</h3>
-                    </BlurredSection>
-                    {subValue && <p className="text-[10px] font-bold text-white/40 mt-1 uppercase ">{subValue}</p>}
-                    {trend && (
-                        <div className="mt-3 flex items-center gap-2">
-                            <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden">
-                                <motion.div initial={{ width: 0 }} animate={{ width: trend }} className="h-full bg-cyan-400" />
-                            </div>
-                            <span className="text-[10px] font-black text-cyan-400">{trend}</span>
-                        </div>
-                    )}
-                </div>
-            </div>
-        </GlassCard>
-    ));
-    StatCard.displayName = 'StatCard';
+    const StatCard = BillingStatCard;
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20" dir={isAr ? 'rtl' : 'ltr'}>

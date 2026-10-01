@@ -1968,7 +1968,7 @@ export const useAdminStore = create<AdminState>()(
       },
 
       fetchAdminCustomerInvoices: async (params) => {
-        set({ isLoadingCustomerInvoices: true });
+        if (get().adminCustomerInvoices.length === 0) set({ isLoadingCustomerInvoices: true });
         try {
           const token = getAccessToken();
           const query = new URLSearchParams();
@@ -1996,7 +1996,7 @@ export const useAdminStore = create<AdminState>()(
       },
 
       fetchAdminStoreInvoices: async (params) => {
-        set({ isLoadingStoreInvoices: true });
+        if (get().adminStoreInvoices.length === 0) set({ isLoadingStoreInvoices: true });
         try {
           const token = getAccessToken();
           const query = new URLSearchParams();
@@ -2023,7 +2023,7 @@ export const useAdminStore = create<AdminState>()(
       },
 
       fetchSellerAccounts: async (search) => {
-        set({ isLoadingSellerAccounts: true });
+        if (get().sellerAccounts.length === 0) set({ isLoadingSellerAccounts: true });
         try {
           const token = getAccessToken();
           const q = search ?? get().financialFilters.search ?? '';
@@ -2042,7 +2042,7 @@ export const useAdminStore = create<AdminState>()(
       },
 
       fetchCustomerAccounts: async (search) => {
-        set({ isLoadingCustomerAccounts: true });
+        if (get().customerAccounts.length === 0) set({ isLoadingCustomerAccounts: true });
         try {
           const token = getAccessToken();
           const q = search ?? get().financialFilters.search ?? '';
@@ -2061,7 +2061,7 @@ export const useAdminStore = create<AdminState>()(
       },
 
       fetchFinancialRefunds: async (search) => {
-        set({ isLoadingFinancialRefunds: true });
+        if (get().financialRefunds.length === 0) set({ isLoadingFinancialRefunds: true });
         try {
           const token = getAccessToken();
           const q = search ?? get().financialFilters.search ?? '';
@@ -2080,7 +2080,7 @@ export const useAdminStore = create<AdminState>()(
       },
 
       fetchSettlementSummary: async () => {
-        set({ isLoadingSettlement: true });
+        if (!get().settlementSummary) set({ isLoadingSettlement: true });
         try {
           const token = getAccessToken();
           const res = await fetch(`${API_URL}/payments/admin/settlement/summary`, {
@@ -2132,7 +2132,7 @@ export const useAdminStore = create<AdminState>()(
       },
 
       fetchFinancialPenalties: async (search) => {
-        set({ isLoadingFinancialPenalties: true });
+        if (get().financialPenalties.length === 0) set({ isLoadingFinancialPenalties: true });
         try {
           const token = getAccessToken();
           const q = search ?? get().financialFilters.search ?? '';
