@@ -1,5 +1,6 @@
 @import "tailwindcss" source(none);
 @import "./guest.css";
+@import "./readability.css";
 
 @font-face {
   font-family: "IBM Plex Sans Arabic";

@@ -1,0 +1,29 @@
+/* Platform-wide readability: lifts tiny fixed font sizes and very faint white text. */
+@theme {
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.15rem;
+}
+
+@layer utilities {
+  @media (max-width: 639.98px) {
+    .text-\[7px\], .text-\[8px\] { font-size: 10px; }
+    .text-\[9px\] { font-size: 11px; }
+    .text-\[10px\] { font-size: 12px; }
+    .text-\[11px\] { font-size: 12.5px; }
+    .text-white\/20 { color: rgb(255 255 255 / 0.45); }
+    .text-white\/30 { color: rgb(255 255 255 / 0.55); }
+    .text-white\/40 { color: rgb(255 255 255 / 0.65); }
+  }
+
+  /* Skip elements that already declare their own size/color at sm/md/lg. */
+  @media (min-width: 640px) {
+    .text-\[7px\]:where(:not([class*="sm:text-["],[class*="md:text-["],[class*="lg:text-["],[class*="md:text-xs"],[class*="md:text-sm"],[class*="sm:text-xs"],[class*="sm:text-sm"])),
+    .text-\[8px\]:where(:not([class*="sm:text-["],[class*="md:text-["],[class*="lg:text-["],[class*="md:text-xs"],[class*="md:text-sm"],[class*="sm:text-xs"],[class*="sm:text-sm"])) { font-size: 10px; }
+    .text-\[9px\]:where(:not([class*="sm:text-["],[class*="md:text-["],[class*="lg:text-["],[class*="md:text-xs"],[class*="md:text-sm"],[class*="sm:text-xs"],[class*="sm:text-sm"])) { font-size: 11px; }
+    .text-\[10px\]:where(:not([class*="sm:text-["],[class*="md:text-["],[class*="lg:text-["],[class*="md:text-xs"],[class*="md:text-sm"],[class*="sm:text-xs"],[class*="sm:text-sm"])) { font-size: 12px; }
+    .text-\[11px\]:where(:not([class*="sm:text-["],[class*="md:text-["],[class*="lg:text-["],[class*="md:text-xs"],[class*="md:text-sm"],[class*="sm:text-xs"],[class*="sm:text-sm"])) { font-size: 12.5px; }
+    .text-white\/20:where(:not([class*="sm:text-white"],[class*="md:text-white"],[class*="lg:text-white"])) { color: rgb(255 255 255 / 0.45); }
+    .text-white\/30:where(:not([class*="sm:text-white"],[class*="md:text-white"],[class*="lg:text-white"])) { color: rgb(255 255 255 / 0.55); }
+    .text-white\/40:where(:not([class*="sm:text-white"],[class*="md:text-white"],[class*="lg:text-white"])) { color: rgb(255 255 255 / 0.65); }
+  }
+}
