@@ -1,7 +1,8 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { validateUploadedFile, UploadProfile } from './upload-validation.util';
+import { validateUploadedFile, UploadProfile, sniffMime, COMPATIBLE } from './upload-validation.util';
+import { EXT_MIME } from './upload-policy';
 
 export const VERIFICATION_FIELD_PHOTOS_BUCKET = 'verification-field-photos';
 
@@ -121,6 +122,56 @@ export class UploadsService {
             throw new BadRequestException('Could not create signed URL');
         }
         return data.signedUrl;
+    }
+
+    /** Signed upload URL so the client streams the file straight to storage. */
+    async createSignedUpload(
+        bucket: string,
+        path: string,
+    ): Promise<{ signedUrl: string; path: string; publicUrl: string }> {
+        const { data, error } = await this.supabase.storage.from(bucket).createSignedUploadUrl(path);
+        if (error || !data?.signedUrl) {
+            console.error('Supabase signed upload error:', error?.message);
+            throw new BadRequestException('Could not prepare upload');
+        }
+        const { data: publicUrlData } = this.supabase.storage.from(bucket).getPublicUrl(path);
+        return { signedUrl: data.signedUrl, path: data.path, publicUrl: publicUrlData.publicUrl };
+    }
+
+    /** Verifies the uploaded object's magic bytes match its extension; deletes it otherwise. */
+    async confirmUpload(bucket: string, path: string): Promise<string> {
+        const ext = (path.split('.').pop() || '').toLowerCase();
+        const expected = EXT_MIME[ext];
+        if (!expected) throw new BadRequestException('File type not allowed');
+
+        const { data: publicUrlData } = this.supabase.storage.from(bucket).getPublicUrl(path);
+        const publicUrl = publicUrlData.publicUrl;
+
+        const readHead = async (url: string): Promise<Response | null> => {
+            try {
+                const res = await fetch(url, {
+                    headers: { Range: 'bytes=0-63' },
+                    signal: AbortSignal.timeout(10_000),
+                });
+                return res.ok ? res : null;
+            } catch {
+                return null;
+            }
+        };
+
+        let res = await readHead(publicUrl);
+        if (!res) {
+            const signed = await this.createSignedUrl(bucket, path, 60).catch(() => null);
+            if (signed) res = await readHead(signed);
+        }
+        if (!res) throw new BadRequestException('Upload not found');
+
+        const sniffed = sniffMime(Buffer.from(await res.arrayBuffer()));
+        if (!sniffed || !(COMPATIBLE[sniffed] || []).includes(expected)) {
+            await this.supabase.storage.from(bucket).remove([path]).catch(() => undefined);
+            throw new BadRequestException('File content does not match its declared type');
+        }
+        return publicUrl;
     }
 
     async uploadPlatformAsset(

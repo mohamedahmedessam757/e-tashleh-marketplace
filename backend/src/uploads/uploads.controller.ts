@@ -1,6 +1,10 @@
-import { Controller, Post, UseInterceptors, UploadedFile, Body, UseGuards, BadRequestException, Request } from '@nestjs/common';
+import { Controller, Post, UseInterceptors, UploadedFile, Body, UseGuards, BadRequestException, ForbiddenException, Request } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Throttle } from '@nestjs/throttler';
+import { randomUUID } from 'node:crypto';
 import { UploadsService } from './uploads.service';
+import { ConfirmUploadDto, SignUploadDto } from './dto/sign-upload.dto';
+import { MIME_EXT, UPLOAD_POLICIES, kindOfMime } from './upload-policy';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { multerMemoryOptions } from './multer.config';
 import { ResourceAccessService } from '../common/authorization/resource-access.service';
@@ -155,6 +159,82 @@ export class UploadsController {
 
         const url = await this.uploadsService.uploadFile(file, `appeals/${violationId}`, 'appeals');
         return { url };
+    }
+
+    @Post('sign')
+    @UseGuards(JwtAuthGuard)
+    @Throttle({ default: { limit: 60, ttl: 60_000 } })
+    async signUpload(@Request() req, @Body() dto: SignUploadDto) {
+        const kind = kindOfMime(dto.contentType);
+        const policy = UPLOAD_POLICIES[dto.purpose];
+        const limit = kind ? policy.limits[kind] : undefined;
+        if (!limit) throw new BadRequestException('File type not allowed');
+        if (dto.size > limit) throw new BadRequestException('File too large');
+
+        const prefix = await this.resolvePrefix(req, dto);
+        const path = `${prefix}/${req.user.id}/${randomUUID()}.${MIME_EXT[dto.contentType]}`;
+        const signed = await this.uploadsService.createSignedUpload(policy.bucket, path);
+        return { ...signed, bucket: policy.bucket };
+    }
+
+    @Post('confirm')
+    @UseGuards(JwtAuthGuard)
+    @Throttle({ default: { limit: 60, ttl: 60_000 } })
+    async confirmUpload(@Request() req, @Body() dto: ConfirmUploadDto) {
+        const re = new RegExp(`/${req.user.id}/[0-9a-f-]{36}\\.(jpg|png|webp|gif|pdf|mp4|mov|webm)$`);
+        if (!re.test(dto.path) || dto.path.includes('..')) throw new ForbiddenException();
+        const url = await this.uploadsService.confirmUpload(UPLOAD_POLICIES[dto.purpose].bucket, dto.path);
+        return { url };
+    }
+
+    private async resolvePrefix(req: any, dto: SignUploadDto): Promise<string> {
+        const userId: string = req.user.id;
+        const storeId: string | null | undefined = req.user.storeId;
+        const safe = (x: string) => x.replace(/[^a-zA-Z0-9/_-]/g, '').replace(/\.\./g, '').slice(0, 120);
+        const requireOrder = async () => {
+            if (!dto.orderId || !this.isUuid(dto.orderId)) throw new BadRequestException('Invalid order ID');
+            await this.resourceAccess.assertUserCanAccessOrder(this.actor(req), dto.orderId);
+            return dto.orderId;
+        };
+
+        switch (dto.purpose) {
+            case 'order-draft':
+                return `order-draft/${userId}/${safe(dto.folder || 'misc')}`;
+            case 'offer': {
+                if (!storeId) throw new ForbiddenException();
+                if (!dto.orderId || !this.isUuid(dto.orderId)) throw new BadRequestException('Invalid order ID');
+                return `offers/${storeId}/${dto.orderId}`;
+            }
+            case 'verification': {
+                const orderId = await requireOrder();
+                return `${safe(dto.folder || 'misc')}/${orderId}`;
+            }
+            case 'returns':
+                return `returns/${await requireOrder()}`;
+            case 'disputes':
+                return `disputes/${await requireOrder()}`;
+            case 'support': {
+                const f = dto.folder === 'customer-tickets' || dto.folder === 'merchant-tickets' ? dto.folder : 'support';
+                return `${f}/${userId}`;
+            }
+            case 'chat':
+                if (!dto.chatId) throw new BadRequestException('Chat ID is required');
+                await this.resourceAccess.assertUserCanAccessChat(this.actor(req), dto.chatId);
+                return `chat/${dto.chatId}`;
+            case 'appeals':
+                if (!dto.violationId) throw new BadRequestException('Violation ID is required');
+                await this.resourceAccess.assertUserCanAccessViolation(this.actor(req), dto.violationId);
+                return `appeals/${dto.violationId}`;
+            case 'avatar':
+                return `avatars/${userId}`;
+            case 'store-logo':
+                if (!storeId) throw new ForbiddenException();
+                return `stores/${storeId}`;
+            case 'vendor-document':
+                return `vendors/${userId}`;
+            default:
+                throw new BadRequestException('Invalid upload purpose');
+        }
     }
 
     private isUuid(value: string): boolean {

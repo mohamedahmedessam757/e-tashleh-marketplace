@@ -26,7 +26,7 @@ export type UploadProfile = 'default' | 'avatar' | 'verification' | 'platform-as
  * client-supplied mimetype/extension — those are attacker-controlled.
  * Returns a canonical mime string or null if unrecognized.
  */
-function sniffMime(buf: Buffer): string | null {
+export function sniffMime(buf: Buffer): string | null {
   if (buf.length < 12) return null;
 
   // JPEG: FF D8 FF
@@ -61,7 +61,7 @@ function sniffMime(buf: Buffer): string | null {
 }
 
 // Sniffed type -> the client mimes we consider compatible with it.
-const COMPATIBLE: Record<string, string[]> = {
+export const COMPATIBLE: Record<string, string[]> = {
   'image/jpeg': ['image/jpeg', 'image/jpg'],
   'image/png': ['image/png'],
   'image/gif': ['image/gif'],
