@@ -2608,6 +2608,24 @@ export class OrdersService {
                         data: { status: 'CLOSED' },
                     });
                 }
+
+                const acceptedPerPart = await this.prisma.offer.findMany({
+                    where: { orderId, status: 'accepted', orderPartId: { not: null } },
+                    select: { orderPartId: true, storeId: true },
+                });
+                for (const accepted of acceptedPerPart) {
+                    if (!accepted.orderPartId || !accepted.storeId) continue;
+                    await this.prisma.orderChat.updateMany({
+                        where: {
+                            orderId,
+                            type: 'order',
+                            status: 'OPEN',
+                            orderPartId: accepted.orderPartId,
+                            vendorId: { not: accepted.storeId },
+                        },
+                        data: { status: 'CLOSED' },
+                    });
+                }
             } catch (e) {
                 console.error('Failed to close losing merchant chats', e);
             }
