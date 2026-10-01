@@ -40,8 +40,8 @@ export class UsersController {
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions('customers', 'view')
   @Get('admin/customers/:id')
-  async getCustomerById(@Param('id') id: string) {
-    return this.usersService.adminFindCustomerById(id);
+  async getCustomerById(@Param('id') id: string, @Request() req) {
+    return this.usersService.adminFindCustomerById(id, req.user?.id);
   }
 
   @UseGuards(JwtAuthGuard, PermissionsGuard)

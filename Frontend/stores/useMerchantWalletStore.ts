@@ -480,6 +480,7 @@ export const subscribeToMerchantWalletUpdates = (userId: string, storeId?: strin
             clearTimeout(walletRefreshTimer);
             walletRefreshTimer = null;
         }
+        pendingWithdrawalsRefresh = false;
         if (channel) {
             supabase.removeChannel(channel);
             channel = null;

@@ -1,4 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
+import type { PrismaService } from '../prisma/prisma.service';
 
 export type PayoutVerificationStatus = 'NOT_LINKED' | 'PENDING_REVIEW' | 'VERIFIED';
 
@@ -155,6 +156,40 @@ export interface AdminPayoutMethodsDto {
         statusUpdatedAt: string | null;
     };
     readiness: { hasBank: boolean; hasStripe: boolean; hasAny: boolean };
+}
+
+export const ADMIN_BANK_DETAILS_SECTION = 'merchant_bank_details';
+
+/**
+ * Mirrors the dashboard blur rule: ADMIN / SUPER_ADMIN always see bank details,
+ * other staff only when `merchant_bank_details` is not in their blurred sections.
+ * Fails closed when the viewer cannot be resolved.
+ */
+export async function shouldHideFullIbanForViewer(
+    prisma: Pick<PrismaService, 'user' | 'adminPermission'>,
+    viewerId: string | null | undefined,
+): Promise<boolean> {
+    if (!viewerId) return true;
+    const viewer = await prisma.user.findUnique({
+        where: { id: viewerId },
+        select: { role: true },
+    });
+    const role = String(viewer?.role || '').toUpperCase();
+    if (role === 'SUPER_ADMIN' || role === 'ADMIN') return false;
+    const perm = await prisma.adminPermission.findUnique({
+        where: { userId: viewerId },
+        select: { blurredSections: true },
+    });
+    if (!perm) return true;
+    return (perm.blurredSections || []).includes(ADMIN_BANK_DETAILS_SECTION);
+}
+
+export function redactAdminPayoutMethods(
+    methods: AdminPayoutMethodsDto,
+    hideFullIban: boolean,
+): AdminPayoutMethodsDto {
+    if (!hideFullIban) return methods;
+    return { ...methods, bank: { ...methods.bank, iban: null } };
 }
 
 /** Admin payout summary: the Stripe account id is always masked. */

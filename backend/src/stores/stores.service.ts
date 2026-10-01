@@ -11,7 +11,11 @@ import { enrichSessionLocations } from '../common/ip/ip-geolocation.util';
 import { StripeService } from '../stripe/stripe.service';
 import { isStripeFullyReady, mapStripeAccountToStoreFields, stripeMerchantPhase } from './store-activation.policy';
 import { StoreStripeActivationService } from './store-stripe-activation.service';
-import { buildAdminPayoutMethods } from '../payments/payout-account.util';
+import {
+    buildAdminPayoutMethods,
+    redactAdminPayoutMethods,
+    shouldHideFullIbanForViewer,
+} from '../payments/payout-account.util';
 
 @Injectable()
 export class StoresService {
@@ -332,7 +336,7 @@ export class StoresService {
         });
     }
 
-    async findOne(id: string) {
+    async findOne(id: string, viewerId?: string) {
         const store = await this.prisma.store.findUnique({
             where: { id },
             include: {
@@ -556,8 +560,11 @@ export class StoresService {
 
         const operationalKpis = await this.computeOperationalKpis(id, store.rating);
 
+        const hideFullIban = await shouldHideFullIbanForViewer(this.prisma, viewerId);
+        const { bankIban: _bankIban, ...storeWithoutIban } = store;
+
         const enrichedStore = {
-            ...store,
+            ...storeWithoutIban,
             owner: s.owner ? {
                 ...s.owner,
                 sessions: ownerSessions,
@@ -572,7 +579,7 @@ export class StoresService {
             performanceScore: calculatedScore,
             operationalKpis,
             rating: Number(store.rating) || 0,
-            payoutMethods: buildAdminPayoutMethods(store),
+            payoutMethods: redactAdminPayoutMethods(buildAdminPayoutMethods(store), hideFullIban),
             offerGovernance: {
                 totalOffersSent: modTotal,
                 editCount: store.editCount || 0,

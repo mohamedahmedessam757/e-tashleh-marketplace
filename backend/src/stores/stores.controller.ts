@@ -46,8 +46,8 @@ export class StoresController {
     @Get(':id')
     @UseGuards(PermissionsGuard)
     @Permissions('users', 'view')
-    findOne(@Param('id') id: string) {
-        return this.storesService.findOne(id);
+    findOne(@Param('id') id: string, @Request() req) {
+        return this.storesService.findOne(id, req.user?.id);
     }
 
     @Patch(':id/status')

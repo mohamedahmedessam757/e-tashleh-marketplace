@@ -9,7 +9,11 @@ import { AccountAccessNotifyService } from '../notifications/account-access-noti
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { ActorType } from '@prisma/client';
 import { enrichSessionLocations } from '../common/ip/ip-geolocation.util';
-import { buildAdminPayoutMethods } from '../payments/payout-account.util';
+import {
+  buildAdminPayoutMethods,
+  redactAdminPayoutMethods,
+  shouldHideFullIbanForViewer,
+} from '../payments/payout-account.util';
 import {
   evaluateReferralSignupRisk,
   isValidReferralCodeFormat,
@@ -564,7 +568,7 @@ export class UsersService {
     return results.filter((v, i, a) => a.findIndex(t => (t.id === v.id)) === i);
   }
 
-  async adminFindCustomerById(id: string) {
+  async adminFindCustomerById(id: string, viewerId?: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
       include: {
@@ -590,7 +594,9 @@ export class UsersService {
         orders: {
           include: {
             acceptedOffer: {
-              include: { store: true }
+              include: {
+                store: { select: { id: true, name: true, logo: true, storeCode: true, status: true } },
+              },
             },
             parts: {
               include: {
@@ -674,9 +680,12 @@ export class UsersService {
       },
     });
 
-    const payoutMethods = buildAdminPayoutMethods(user);
+    const payoutMethods = redactAdminPayoutMethods(
+      buildAdminPayoutMethods(user),
+      await shouldHideFullIbanForViewer(this.prisma, viewerId),
+    );
     const safeUser: Record<string, unknown> = { ...user };
-    for (const secretKey of ['passwordHash', 'otpCode', 'otpExpiresAt', 'bankIban']) {
+    for (const secretKey of ['passwordHash', 'otpCode', 'otpExpiresAt', 'bankIban', 'stripeAccountId', 'stripeCustomerId']) {
       delete safeUser[secretKey];
     }
 
