@@ -170,8 +170,8 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigate }) => {
                         </h1>
                         <p className="text-white/80 text-sm md:text-base max-w-lg leading-relaxed">
                             {isAr
-                                ? 'أنشئ طلبك الآن وسنقوم بالبحث عن أفضل العروض لك من شبكة موردينا المعتمدين حول العالم.'
-                                : 'Create your request now and we will search for the best offers from our certified global suppliers.'}
+                                ? 'أنشئ طلبك الآن وسنقوم بالبحث عن أفضل العروض لك من شبكة موردينا المعتمدين في دولة الإمارات العربية المتحدة.'
+                                : 'Create your request now and we will search for the best offers from our network of certified suppliers in the United Arab Emirates.'}
                         </p>
                     </div>
 

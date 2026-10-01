@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState, startTransition, memo } from 'react';
-import { Package, Tag, ArrowUpDown, Shield, SlidersHorizontal, RotateCcw } from 'lucide-react';
+import { Package, Tag, ArrowUpDown, Shield, SlidersHorizontal, RotateCcw, ChevronDown } from 'lucide-react';
 import { CloseIconButton } from '../ui/CloseIconButton';
 import { OfferCard } from './OfferCard';
 import { OrderOffer } from '../../stores/useOrderStore';
@@ -23,6 +23,20 @@ const WARRANTY_OPTIONS: { id: OfferWarrantyFilter; ar: string; en: string }[] = 
     { id: '12', ar: '12+ شهر', en: '12+ mo' },
 ];
 
+const FILTERS_COLLAPSED_KEY = 'partOffers.filtersCollapsed';
+
+function readInitialFiltersCollapsed(): boolean {
+    if (typeof window === 'undefined') return false;
+    try {
+        const saved = window.localStorage.getItem(FILTERS_COLLAPSED_KEY);
+        if (saved === '1') return true;
+        if (saved === '0') return false;
+    } catch {
+        /* ignore */
+    }
+    return window.matchMedia?.('(max-width: 767px)').matches ?? false;
+}
+
 interface OfferFiltersBarProps {
     isAr: boolean;
     displayedCount: number;
@@ -45,7 +59,21 @@ const OfferFiltersBar: React.FC<OfferFiltersBarProps> = memo(({
     onWarrantyFilter,
     onReset,
     hasActiveFilters,
-}) => (
+}) => {
+    const [collapsed, setCollapsed] = useState<boolean>(readInitialFiltersCollapsed);
+    const toggleCollapsed = useCallback(() => {
+        setCollapsed((prev) => {
+            const next = !prev;
+            try {
+                window.localStorage.setItem(FILTERS_COLLAPSED_KEY, next ? '1' : '0');
+            } catch {
+                /* ignore */
+            }
+            return next;
+        });
+    }, []);
+
+    return (
     <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 border-b border-white/5 bg-gradient-to-b from-[#1A1814] to-[#13110E] shrink-0">
         <div className="max-w-4xl mx-auto space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
@@ -80,10 +108,22 @@ const OfferFiltersBar: React.FC<OfferFiltersBarProps> = memo(({
                             {isAr ? 'إعادة ضبط' : 'Reset'}
                         </button>
                     )}
+                    <button
+                        type="button"
+                        onClick={toggleCollapsed}
+                        aria-expanded={!collapsed}
+                        aria-controls="offer-filters-panel"
+                        aria-label={collapsed ? (isAr ? 'إظهار الفلاتر' : 'Show filters') : (isAr ? 'إخفاء الفلاتر' : 'Hide filters')}
+                        title={collapsed ? (isAr ? 'إظهار الفلاتر' : 'Show filters') : (isAr ? 'إخفاء الفلاتر' : 'Hide filters')}
+                        className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-white/[0.04] border border-white/10 text-white/60 hover:text-gold-300 hover:border-gold-500/30 transition-colors"
+                    >
+                        <ChevronDown size={16} className={`transition-transform duration-200 ${collapsed ? '' : 'rotate-180'}`} />
+                    </button>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {!collapsed && (
+            <div id="offer-filters-panel" className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="rounded-2xl bg-black/30 border border-white/[0.06] p-2.5 sm:p-3 min-w-0">
                     <div className="flex items-center gap-2 mb-2.5 px-0.5">
                         <ArrowUpDown size={12} className="text-gold-500/70 shrink-0" />
@@ -151,9 +191,11 @@ const OfferFiltersBar: React.FC<OfferFiltersBarProps> = memo(({
                     </div>
                 </div>
             </div>
+            )}
         </div>
     </div>
-));
+    );
+});
 
 OfferFiltersBar.displayName = 'OfferFiltersBar';
 
