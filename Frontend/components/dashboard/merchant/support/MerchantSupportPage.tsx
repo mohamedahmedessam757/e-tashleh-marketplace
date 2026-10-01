@@ -204,12 +204,14 @@ export const MerchantSupportPage: React.FC<MerchantSupportPageProps> = ({ onNavi
                             </p>
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between text-sm">
-                                    <span className="text-white/40">Email:</span>
-                                    <a href={`mailto:${siteContacts.contact}`} className="text-white/80 font-medium tracking-tight hover:text-gold-500 transition-colors">{siteContacts.contact}</a>
+                                    <span className="text-white/40">{language === 'ar' ? 'البريد الإلكتروني:' : 'Email:'}</span>
+                                    <a href={`mailto:${siteContacts.merchant}`} className="text-white/80 font-medium tracking-tight hover:text-gold-500 transition-colors">{siteContacts.merchant}</a>
                                 </div>
                                 <div className="flex items-center justify-between text-sm">
-                                    <span className="text-white/40">WhatsApp:</span>
-                                    <a href="tel:0525700525" className="text-white/80 font-medium hover:text-gold-500 transition-colors">0525700525</a>
+                                    <span className="text-white/40">{language === 'ar' ? 'واتساب:' : 'WhatsApp:'}</span>
+                                    <a href="https://wa.me/971525700525" target="_blank" rel="noopener noreferrer" className="text-white/80 font-medium hover:text-gold-500 transition-colors">
+                                        <span dir="ltr">+971 52 570 0525</span>
+                                    </a>
                                 </div>
                             </div>
                         </div>

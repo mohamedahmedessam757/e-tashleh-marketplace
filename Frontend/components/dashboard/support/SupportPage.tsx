@@ -235,12 +235,8 @@ export const SupportPage: React.FC<SupportPageProps> = ({ onNavigate }) => {
                             </p>
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between text-sm">
-                                    <span className="text-white/40">Email:</span>
-                                    <a href={`mailto:${siteContacts.contact}`} className="text-white/80 font-medium tracking-tight hover:text-gold-500 transition-colors">{siteContacts.contact}</a>
-                                </div>
-                                <div className="flex items-center justify-between text-sm">
-                                    <span className="text-white/40">WhatsApp:</span>
-                                    <a href="https://wa.me/966525700525" target="_blank" rel="noopener noreferrer" className="text-white/80 font-medium hover:text-gold-500 transition-colors">0525700525</a>
+                                    <span className="text-white/40">{language === 'ar' ? 'البريد الإلكتروني:' : 'Email:'}</span>
+                                    <a href={`mailto:${siteContacts.customer}`} className="text-white/80 font-medium tracking-tight hover:text-gold-500 transition-colors">{siteContacts.customer}</a>
                                 </div>
                             </div>
                         </div>
