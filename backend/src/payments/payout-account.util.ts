@@ -132,3 +132,93 @@ export function assertWithdrawalPayoutMethodReady(
         );
     }
 }
+
+export interface AdminPayoutMethodsDto {
+    bank: {
+        isLinked: boolean;
+        bankName: string | null;
+        accountHolder: string | null;
+        iban: string | null;
+        maskedIban: string | null;
+        swift: string | null;
+        verificationStatus: PayoutVerificationStatus;
+    };
+    stripe: {
+        isConnected: boolean;
+        onboarded: boolean;
+        maskedAccountId: string | null;
+        chargesEnabled: boolean | null;
+        payoutsEnabled: boolean | null;
+        detailsSubmitted: boolean | null;
+        requirementsDueCount: number | null;
+        disabledReason: string | null;
+        statusUpdatedAt: string | null;
+    };
+    readiness: { hasBank: boolean; hasStripe: boolean; hasAny: boolean };
+}
+
+/** Admin payout summary: the Stripe account id is always masked. */
+export function buildAdminPayoutMethods(input: {
+    bankName?: string | null;
+    bankAccountHolder?: string | null;
+    bankIban?: string | null;
+    bankSwift?: string | null;
+    bankDetailsVerified?: boolean | null;
+    stripeAccountId?: string | null;
+    stripeOnboarded?: boolean | null;
+    stripeChargesEnabled?: boolean | null;
+    stripePayoutsEnabled?: boolean | null;
+    stripeDetailsSubmitted?: boolean | null;
+    stripeDisabledReason?: string | null;
+    stripeRequirementsDue?: unknown;
+    stripeStatusUpdatedAt?: Date | string | null;
+}): AdminPayoutMethodsDto {
+    const bank = buildPayoutBankDetailsResponse({
+        bankName: input.bankName,
+        bankAccountHolder: input.bankAccountHolder,
+        bankIban: input.bankIban,
+        bankSwift: input.bankSwift,
+        bankDetailsVerified: Boolean(input.bankDetailsVerified),
+    });
+    const readiness = getPayoutReadiness({
+        bankIban: input.bankIban,
+        stripeAccountId: input.stripeAccountId,
+        stripeOnboarded: Boolean(input.stripeOnboarded),
+        stripeChargesEnabled: Boolean(input.stripeChargesEnabled),
+        stripePayoutsEnabled: Boolean(input.stripePayoutsEnabled),
+    });
+    const requirementsDueCount = Array.isArray(input.stripeRequirementsDue)
+        ? input.stripeRequirementsDue.length
+        : null;
+    const statusUpdatedAt = input.stripeStatusUpdatedAt
+        ? new Date(input.stripeStatusUpdatedAt).toISOString()
+        : null;
+
+    return {
+        bank: {
+            isLinked: bank.isLinked,
+            bankName: bank.bankName,
+            accountHolder: bank.accountHolder,
+            iban: bank.iban,
+            maskedIban: bank.maskedIban,
+            swift: bank.swift,
+            verificationStatus: bank.verificationStatus,
+        },
+        stripe: {
+            isConnected: Boolean(input.stripeAccountId?.trim()),
+            onboarded: Boolean(input.stripeOnboarded),
+            maskedAccountId: maskStripeAccountId(input.stripeAccountId),
+            chargesEnabled: input.stripeChargesEnabled ?? null,
+            payoutsEnabled: input.stripePayoutsEnabled ?? null,
+            detailsSubmitted: input.stripeDetailsSubmitted ?? null,
+            requirementsDueCount,
+            disabledReason: input.stripeDisabledReason ?? null,
+            statusUpdatedAt,
+        },
+        readiness: {
+            hasBank: readiness.hasBank,
+            hasStripe: readiness.hasStripe,
+            hasAny: readiness.hasAny,
+        },
+    };
+}

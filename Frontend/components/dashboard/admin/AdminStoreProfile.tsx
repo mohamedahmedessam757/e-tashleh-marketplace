@@ -28,6 +28,7 @@ import { ContractPrintDocument, mapAdminContractAcceptance } from '../shared/con
 import { renderToString } from 'react-dom/server';
 import { chatsApi } from '../../../services/api/chats';
 import { BlurredSection } from './BlurredSection';
+import { AdminPayoutMethodsCard } from './AdminPayoutMethodsCard';
 import { computeOfferFinalPrice } from '../../../utils/offerPricing';
 import { CopyableIdBadge } from '../../ui/CopyableIdBadge';
 import { AdminStoreOfferHistory } from './AdminStoreOfferHistory';
@@ -2467,6 +2468,10 @@ export const AdminStoreProfile: React.FC<AdminStoreProfileProps> = ({ vendorId, 
                                             </GlassCard>
                                         </motion.div>
                                     </div>
+
+                                    <BlurredSection isBlurred={isSectionBlurred('merchant_bank_details')}>
+                                        <AdminPayoutMethodsCard payoutMethods={vendor?.payoutMethods} />
+                                    </BlurredSection>
 
                                     {/* Ledgers Stack */}
                                     <div className="flex flex-col gap-8">

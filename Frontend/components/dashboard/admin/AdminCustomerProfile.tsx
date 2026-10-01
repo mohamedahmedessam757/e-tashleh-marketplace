@@ -14,6 +14,7 @@ import { Badge } from '../../ui/Badge';
 import { AdminSignatureModal } from './AdminSignatureModal';
 import { AdminInitiateChatModal } from './AdminInitiateChatModal';
 import { BlurredSection } from './BlurredSection';
+import { AdminPayoutMethodsCard } from './AdminPayoutMethodsCard';
 import { useAdminPermissionsStore } from '../../../stores/useAdminPermissionsStore';
 import { chatsApi } from '../../../services/api/chats';
 
@@ -1058,6 +1059,10 @@ export const AdminCustomerProfile: React.FC<AdminCustomerProfileProps> = ({ cust
                                                         </div>
                                                     </GlassCard>
                                                 </div>
+
+                                                <BlurredSection isBlurred={isSectionBlurred('merchant_bank_details')}>
+                                                    <AdminPayoutMethodsCard payoutMethods={customer.payoutMethods} />
+                                                </BlurredSection>
 
                                                 <div className="flex flex-col gap-10">
 

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { getAccessToken } from '../utils/auth';
+import type { AdminPayoutMethods } from '../types/payout-account';
 
 export interface Device {
   id: string;
@@ -38,6 +39,7 @@ export interface Customer {
   payments?: any[]; // Enriched with order/offer in Phase 3.1
   invoices?: any[]; // New field from Phase 3.1
   withdrawalRequests?: any[];
+  payoutMethods?: AdminPayoutMethods;
   returns?: any[];
   lastLoginIp?: string;
 

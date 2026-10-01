@@ -9,6 +9,7 @@ import { AccountAccessNotifyService } from '../notifications/account-access-noti
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { ActorType } from '@prisma/client';
 import { enrichSessionLocations } from '../common/ip/ip-geolocation.util';
+import { buildAdminPayoutMethods } from '../payments/payout-account.util';
 import {
   evaluateReferralSignupRisk,
   isValidReferralCodeFormat,
@@ -569,7 +570,18 @@ export class UsersService {
       include: {
         Session: {
           orderBy: { lastActive: 'desc' },
-          take: 10
+          take: 10,
+          select: {
+            id: true,
+            userId: true,
+            fingerprint: true,
+            device: true,
+            os: true,
+            location: true,
+            ip: true,
+            lastActive: true,
+            createdAt: true,
+          },
         },
         securityLogs: {
           orderBy: { createdAt: 'desc' },
@@ -662,15 +674,22 @@ export class UsersService {
       },
     });
 
+    const payoutMethods = buildAdminPayoutMethods(user);
+    const safeUser: Record<string, unknown> = { ...user };
+    for (const secretKey of ['passwordHash', 'otpCode', 'otpExpiresAt', 'bankIban']) {
+      delete safeUser[secretKey];
+    }
+
     return {
-      ...user,
+      ...safeUser,
       Session: enrichedSessions,
       ltv,
       totalSpent: ltv, // Consistency for 2026 platform standards
       successRate,
       violationScore,
       status: user.status || 'ACTIVE',
-      adminNotes: user.adminNotes || ''
+      adminNotes: user.adminNotes || '',
+      payoutMethods,
     };
   }
 

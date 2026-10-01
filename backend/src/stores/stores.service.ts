@@ -11,6 +11,7 @@ import { enrichSessionLocations } from '../common/ip/ip-geolocation.util';
 import { StripeService } from '../stripe/stripe.service';
 import { isStripeFullyReady, mapStripeAccountToStoreFields, stripeMerchantPhase } from './store-activation.policy';
 import { StoreStripeActivationService } from './store-stripe-activation.service';
+import { buildAdminPayoutMethods } from '../payments/payout-account.util';
 
 @Injectable()
 export class StoresService {
@@ -380,7 +381,18 @@ export class StoresService {
                         },
                         Session: {
                             orderBy: { lastActive: 'desc' },
-                            take: 10
+                            take: 10,
+                            select: {
+                                id: true,
+                                userId: true,
+                                fingerprint: true,
+                                device: true,
+                                os: true,
+                                location: true,
+                                ip: true,
+                                lastActive: true,
+                                createdAt: true,
+                            },
                         },
                         securityLogs: {
                             orderBy: { createdAt: 'desc' },
@@ -560,6 +572,7 @@ export class StoresService {
             performanceScore: calculatedScore,
             operationalKpis,
             rating: Number(store.rating) || 0,
+            payoutMethods: buildAdminPayoutMethods(store),
             offerGovernance: {
                 totalOffersSent: modTotal,
                 editCount: store.editCount || 0,
