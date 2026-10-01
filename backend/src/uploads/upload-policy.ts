@@ -38,7 +38,22 @@ export function kindOfMime(mime: string): UploadKind | null {
 
 const MB = 1024 * 1024;
 
-export const UPLOAD_POLICIES: Record<UploadPurpose, { bucket: string; limits: Partial<Record<UploadKind, number>> }> = {
+export interface UploadPolicy {
+    bucket: string;
+    limits: Partial<Record<UploadKind, number>>;
+    /** Narrower mime allow-list; when absent every mime of an allowed kind is accepted. */
+    mimes?: readonly string[];
+}
+
+const RASTER = ['image/jpeg', 'image/png', 'image/webp'] as const;
+
+export function maxBytesFor(policy: UploadPolicy, mime: string): number | null {
+    if (!MIME_EXT[mime] || (policy.mimes && !policy.mimes.includes(mime))) return null;
+    const kind = kindOfMime(mime);
+    return (kind && policy.limits[kind]) || null;
+}
+
+export const UPLOAD_POLICIES: Record<UploadPurpose, UploadPolicy> = {
     'order-draft': { bucket: 'marketplace-uploads', limits: { image: 10 * MB, video: 50 * MB, pdf: 10 * MB } },
     offer: { bucket: 'offer-attachments', limits: { image: 10 * MB, video: 50 * MB } },
     verification: { bucket: 'verification-docs', limits: { image: 10 * MB, video: 50 * MB, pdf: 10 * MB } },
@@ -47,7 +62,11 @@ export const UPLOAD_POLICIES: Record<UploadPurpose, { bucket: string; limits: Pa
     support: { bucket: 'support-files', limits: { image: 10 * MB, video: 25 * MB, pdf: 10 * MB } },
     chat: { bucket: 'chat_media', limits: { image: 10 * MB, video: 25 * MB, pdf: 10 * MB } },
     appeals: { bucket: 'appeals', limits: { image: 10 * MB, video: 25 * MB, pdf: 10 * MB } },
-    avatar: { bucket: 'marketplace-uploads', limits: { image: 2 * MB } },
-    'store-logo': { bucket: 'profile', limits: { image: 2 * MB } },
-    'vendor-document': { bucket: 'vendor-documents', limits: { image: 5 * MB, pdf: 5 * MB } },
+    avatar: { bucket: 'marketplace-uploads', limits: { image: 2 * MB }, mimes: RASTER },
+    'store-logo': { bucket: 'profile', limits: { image: 2 * MB }, mimes: RASTER },
+    'vendor-document': {
+        bucket: 'vendor-documents',
+        limits: { image: 5 * MB, pdf: 5 * MB },
+        mimes: [...RASTER, 'application/pdf'],
+    },
 };

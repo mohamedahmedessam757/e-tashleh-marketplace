@@ -4,10 +4,21 @@ import { Throttle } from '@nestjs/throttler';
 import { randomUUID } from 'node:crypto';
 import { UploadsService } from './uploads.service';
 import { ConfirmUploadDto, SignUploadDto } from './dto/sign-upload.dto';
-import { MIME_EXT, UPLOAD_POLICIES, kindOfMime } from './upload-policy';
+import { MIME_EXT, UPLOAD_POLICIES, maxBytesFor } from './upload-policy';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { multerMemoryOptions } from './multer.config';
 import { ResourceAccessService } from '../common/authorization/resource-access.service';
+
+const SAFE_ID = /^[A-Za-z0-9_-]{1,64}$/;
+
+/** Matches only paths produced by `signUpload` for this user: `<prefix>/<userId>/<uuid>.<ext>`. */
+export function isOwnSignedUploadPath(path: string, userId: string): boolean {
+    if (!SAFE_ID.test(userId) || path.includes('..') || path.startsWith('/')) return false;
+    const re = new RegExp(
+        `^[A-Za-z0-9_-]+(?:/[A-Za-z0-9_-]+)*/${userId}/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\.(?:jpg|png|webp|gif|pdf|mp4|mov|webm)$`,
+    );
+    return re.test(path);
+}
 
 @Controller('uploads')
 export class UploadsController {
@@ -163,11 +174,10 @@ export class UploadsController {
 
     @Post('sign')
     @UseGuards(JwtAuthGuard)
-    @Throttle({ default: { limit: 60, ttl: 60_000 } })
+    @Throttle({ short: { limit: 60, ttl: 60_000 } })
     async signUpload(@Request() req, @Body() dto: SignUploadDto) {
-        const kind = kindOfMime(dto.contentType);
         const policy = UPLOAD_POLICIES[dto.purpose];
-        const limit = kind ? policy.limits[kind] : undefined;
+        const limit = maxBytesFor(policy, dto.contentType);
         if (!limit) throw new BadRequestException('File type not allowed');
         if (dto.size > limit) throw new BadRequestException('File too large');
 
@@ -179,18 +189,19 @@ export class UploadsController {
 
     @Post('confirm')
     @UseGuards(JwtAuthGuard)
-    @Throttle({ default: { limit: 60, ttl: 60_000 } })
+    @Throttle({ short: { limit: 60, ttl: 60_000 } })
     async confirmUpload(@Request() req, @Body() dto: ConfirmUploadDto) {
-        const re = new RegExp(`/${req.user.id}/[0-9a-f-]{36}\\.(jpg|png|webp|gif|pdf|mp4|mov|webm)$`);
-        if (!re.test(dto.path) || dto.path.includes('..')) throw new ForbiddenException();
-        const url = await this.uploadsService.confirmUpload(UPLOAD_POLICIES[dto.purpose].bucket, dto.path);
+        if (!isOwnSignedUploadPath(dto.path, String(req.user.id))) throw new ForbiddenException();
+        const url = await this.uploadsService.confirmUpload(UPLOAD_POLICIES[dto.purpose], dto.path);
         return { url };
     }
 
     private async resolvePrefix(req: any, dto: SignUploadDto): Promise<string> {
         const userId: string = req.user.id;
         const storeId: string | null | undefined = req.user.storeId;
-        const safe = (x: string) => x.replace(/[^a-zA-Z0-9/_-]/g, '').replace(/\.\./g, '').slice(0, 120);
+        const safe = (x: string) =>
+            x.replace(/[^a-zA-Z0-9/_-]/g, '').split('/').filter(Boolean).join('/').slice(0, 120).replace(/\/+$/, '') ||
+            'misc';
         const requireOrder = async () => {
             if (!dto.orderId || !this.isUuid(dto.orderId)) throw new BadRequestException('Invalid order ID');
             await this.resourceAccess.assertUserCanAccessOrder(this.actor(req), dto.orderId);
@@ -218,11 +229,13 @@ export class UploadsController {
                 return `${f}/${userId}`;
             }
             case 'chat':
-                if (!dto.chatId) throw new BadRequestException('Chat ID is required');
+                if (!dto.chatId || !SAFE_ID.test(dto.chatId)) throw new BadRequestException('Chat ID is required');
                 await this.resourceAccess.assertUserCanAccessChat(this.actor(req), dto.chatId);
                 return `chat/${dto.chatId}`;
             case 'appeals':
-                if (!dto.violationId) throw new BadRequestException('Violation ID is required');
+                if (!dto.violationId || !SAFE_ID.test(dto.violationId)) {
+                    throw new BadRequestException('Violation ID is required');
+                }
                 await this.resourceAccess.assertUserCanAccessViolation(this.actor(req), dto.violationId);
                 return `appeals/${dto.violationId}`;
             case 'avatar':

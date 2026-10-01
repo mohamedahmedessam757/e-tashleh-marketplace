@@ -3,7 +3,7 @@ import { client } from '../api/client';
 import { compressImageForUpload } from '../../utils/compressImage';
 import { useUploadFeedbackStore, type UploadErrorCode, type UploadFeedbackKind } from '../../stores/useUploadFeedbackStore';
 import { beginUploadActivity, endUploadActivity } from './uploadActivity';
-import { ALLOWED_UPLOAD_MIMES, MIME_BY_EXT, UPLOAD_LIMITS, kindOfMime, type UploadPurpose } from './uploadLimits';
+import { MIME_BY_EXT, UPLOAD_LIMITS, kindOfMime, maxBytesForPurpose, type UploadPurpose } from './uploadLimits';
 
 export class UploadError extends Error {
     code: UploadErrorCode;
@@ -92,9 +92,15 @@ async function prepareFile(file: File, purpose: UploadPurpose): Promise<{ file: 
     let mime = resolveMime(file);
     let prepared = file;
 
-    if (mime.startsWith('image/') && mime !== 'image/gif') {
+    const imageLimit = UPLOAD_LIMITS[purpose].image ?? 0;
+    const isHeic = mime === 'image/heic' || mime === 'image/heif';
+    // Output is always JPEG, so PNG/WebP (which may carry transparency) are only re-encoded when they exceed the limit.
+    const shouldCompress =
+        isHeic || mime === 'image/jpeg' || ((mime === 'image/png' || mime === 'image/webp') && file.size > imageLimit);
+
+    if (shouldCompress) {
         const typed = file.type ? file : new File([file], file.name, { type: mime });
-        prepared = await compressImageForUpload(typed, { maxEdge: 1600, quality: 0.82 });
+        prepared = await compressImageForUpload(typed, { maxEdge: 1600, quality: 0.82, force: isHeic || file.size > imageLimit });
         mime = resolveMime(prepared);
         if (mime === 'image/heic' || mime === 'image/heif') throw new UploadError('type');
     }
@@ -103,9 +109,7 @@ async function prepareFile(file: File, purpose: UploadPurpose): Promise<{ file: 
         prepared = new File([prepared], prepared.name, { type: mime });
     }
 
-    if (!(ALLOWED_UPLOAD_MIMES as readonly string[]).includes(mime)) throw new UploadError('type');
-    const kind = kindOfMime(mime);
-    const limit = kind ? UPLOAD_LIMITS[purpose][kind] : undefined;
+    const limit = maxBytesForPurpose(purpose, mime);
     if (!limit) throw new UploadError('type');
     if (prepared.size > limit) throw new UploadError('too_large');
 

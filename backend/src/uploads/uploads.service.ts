@@ -2,7 +2,7 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { validateUploadedFile, UploadProfile, sniffMime, COMPATIBLE } from './upload-validation.util';
-import { EXT_MIME } from './upload-policy';
+import { EXT_MIME, UploadPolicy, maxBytesFor } from './upload-policy';
 
 export const VERIFICATION_FIELD_PHOTOS_BUCKET = 'verification-field-photos';
 
@@ -138,40 +138,73 @@ export class UploadsService {
         return { signedUrl: data.signedUrl, path: data.path, publicUrl: publicUrlData.publicUrl };
     }
 
-    /** Verifies the uploaded object's magic bytes match its extension; deletes it otherwise. */
-    async confirmUpload(bucket: string, path: string): Promise<string> {
+    /**
+     * Verifies the uploaded object's real size and magic bytes against the purpose policy.
+     * Signed upload URLs do not bind size or content, so anything invalid is deleted here.
+     */
+    async confirmUpload(policy: UploadPolicy, path: string): Promise<string> {
+        const { bucket } = policy;
         const ext = (path.split('.').pop() || '').toLowerCase();
         const expected = EXT_MIME[ext];
-        if (!expected) throw new BadRequestException('File type not allowed');
+        const maxBytes = expected ? maxBytesFor(policy, expected) : null;
+        if (!expected || !maxBytes) throw new BadRequestException('File type not allowed');
 
         const { data: publicUrlData } = this.supabase.storage.from(bucket).getPublicUrl(path);
         const publicUrl = publicUrlData.publicUrl;
 
-        const readHead = async (url: string): Promise<Response | null> => {
-            try {
-                const res = await fetch(url, {
-                    headers: { Range: 'bytes=0-63' },
-                    signal: AbortSignal.timeout(10_000),
-                });
-                return res.ok ? res : null;
-            } catch {
-                return null;
-            }
+        let head = await this.readObjectHead(publicUrl);
+        if (!head) {
+            const signed = await this.createSignedUrl(bucket, path, 60).catch(() => null);
+            if (signed) head = await this.readObjectHead(signed);
+        }
+        if (!head) throw new BadRequestException('Upload not found');
+
+        const reject = async (message: string): Promise<never> => {
+            await this.supabase.storage.from(bucket).remove([path]).catch(() => undefined);
+            throw new BadRequestException(message);
         };
 
-        let res = await readHead(publicUrl);
-        if (!res) {
-            const signed = await this.createSignedUrl(bucket, path, 60).catch(() => null);
-            if (signed) res = await readHead(signed);
-        }
-        if (!res) throw new BadRequestException('Upload not found');
+        if (!Number.isFinite(head.total) || head.total <= 0) await reject('Upload could not be verified');
+        if (head.total > maxBytes) await reject('File too large');
 
-        const sniffed = sniffMime(Buffer.from(await res.arrayBuffer()));
+        const sniffed = sniffMime(head.bytes);
         if (!sniffed || !(COMPATIBLE[sniffed] || []).includes(expected)) {
-            await this.supabase.storage.from(bucket).remove([path]).catch(() => undefined);
-            throw new BadRequestException('File content does not match its declared type');
+            await reject('File content does not match its declared type');
         }
         return publicUrl;
+    }
+
+    /** Reads only the first 64 bytes plus the object's total size, without downloading the body. */
+    private async readObjectHead(url: string): Promise<{ bytes: Buffer; total: number } | null> {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 10_000);
+        try {
+            const res = await fetch(url, { headers: { Range: 'bytes=0-63' }, signal: controller.signal });
+            if (!res.ok || !res.body) return null;
+
+            const range = res.headers.get('content-range');
+            const total = range
+                ? Number(range.split('/').pop())
+                : res.status === 200
+                  ? Number(res.headers.get('content-length'))
+                  : NaN;
+
+            const reader = res.body.getReader();
+            const chunks: Buffer[] = [];
+            let read = 0;
+            while (read < 64) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                chunks.push(Buffer.from(value));
+                read += value.byteLength;
+            }
+            await reader.cancel().catch(() => undefined);
+            return { bytes: Buffer.concat(chunks).subarray(0, 64), total };
+        } catch {
+            return null;
+        } finally {
+            clearTimeout(timer);
+        }
     }
 
     async uploadPlatformAsset(

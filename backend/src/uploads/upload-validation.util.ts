@@ -52,7 +52,12 @@ export function sniffMime(buf: Buffer): string | null {
   if (buf.slice(0, 5).toString('ascii') === '%PDF-') return 'application/pdf';
 
   // MP4 / ISO base media: bytes 4-8 == "ftyp"
-  if (buf.slice(4, 8).toString('ascii') === 'ftyp') return 'video/mp4';
+  const box = buf.slice(4, 8).toString('ascii');
+  if (box === 'ftyp') return 'video/mp4';
+  // Legacy QuickTime files may open with one of these atoms instead of "ftyp".
+  if (box === 'moov' || box === 'mdat' || box === 'wide' || box === 'free' || box === 'skip') {
+    return 'video/quicktime';
+  }
 
   // WEBM / Matroska (EBML): 1A 45 DF A3
   if (buf[0] === 0x1a && buf[1] === 0x45 && buf[2] === 0xdf && buf[3] === 0xa3) return 'video/webm';
@@ -69,6 +74,7 @@ export const COMPATIBLE: Record<string, string[]> = {
   'application/pdf': ['application/pdf'],
   'video/mp4': ['video/mp4', 'video/quicktime'],
   'video/webm': ['video/webm'],
+  'video/quicktime': ['video/quicktime', 'video/mp4'],
 };
 
 export function validateUploadedFile(

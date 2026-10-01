@@ -56,9 +56,26 @@ export const MIME_BY_EXT: Record<string, string> = {
     heif: 'image/heif',
 };
 
+const RASTER = ['image/jpeg', 'image/png', 'image/webp'] as const;
+
+/** Narrower per-purpose allow-lists; must stay identical to backend `mimes`. */
+export const PURPOSE_MIMES: Partial<Record<UploadPurpose, readonly string[]>> = {
+    avatar: RASTER,
+    'store-logo': RASTER,
+    'vendor-document': [...RASTER, 'application/pdf'],
+};
+
 export function kindOfMime(mime: string): UploadKind | null {
     if (mime.startsWith('image/')) return 'image';
     if (mime.startsWith('video/')) return 'video';
     if (mime === 'application/pdf') return 'pdf';
     return null;
+}
+
+export function maxBytesForPurpose(purpose: UploadPurpose, mime: string): number | null {
+    if (!(ALLOWED_UPLOAD_MIMES as readonly string[]).includes(mime)) return null;
+    const narrowed = PURPOSE_MIMES[purpose];
+    if (narrowed && !narrowed.includes(mime)) return null;
+    const kind = kindOfMime(mime);
+    return (kind && UPLOAD_LIMITS[purpose][kind]) || null;
 }
