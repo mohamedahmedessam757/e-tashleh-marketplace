@@ -138,13 +138,23 @@ type ViewState =
   | 'business-license'
   | 'business-license-verify'
   | 'invoice-scan'
-  | 'waybill-scan';
+  | 'waybill-scan'
+  | 'booting';
 type UserRole = 'customer' | 'merchant' | 'admin' | null;
+
+/** Views that need async/param resolution in syncUrlOnBoot before they can render. */
+const BOOT_RESOLVED_VIEWS = new Set<string>(['dashboard', 'verify-link', 'invoice-scan', 'waybill-scan']);
+
+function getInitialView(): ViewState {
+  if (typeof window === 'undefined') return 'role-selection';
+  const { view } = parseUrlToState();
+  return BOOT_RESOLVED_VIEWS.has(view) ? 'booting' : (view as ViewState);
+}
 
 function AppContent() {
   const { language, ensureDashboardTranslations } = useLanguage();
   const [loading, setLoading] = useState(() => !shouldSkipBootLoader());
-  const [currentView, setCurrentView] = useState<ViewState>('landing');
+  const [currentView, setCurrentView] = useState<ViewState>(getInitialView);
   const [legalInitialSection, setLegalInitialSection] = useState<'terms' | 'privacy'>('terms');
   const [landingInitialSection, setLandingInitialSection] = useState<string | null>(null);
   const [recoveryRole, setRecoveryRole] = useState<'customer' | 'merchant'>('customer');
@@ -719,7 +729,7 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-[#1A1814] text-white font-sans selection:bg-gold-500 selection:text-white relative">
 
-      {currentView !== 'dashboard' && (
+      {currentView !== 'dashboard' && currentView !== 'booting' && (
         <>
           <div
             className="fixed inset-0 z-0 pointer-events-none transform-gpu"
@@ -758,7 +768,9 @@ function AppContent() {
 
         {!loading && (
           <>
-            {currentView === 'verify-link' && verifyToken ? (
+            {currentView === 'booting' ? (
+              routeFallback
+            ) : currentView === 'verify-link' && verifyToken ? (
               <div className="view-fade-in">
                 <Suspense fallback={routeFallback}>
                   <VerifyLinkPage
