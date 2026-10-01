@@ -1,4 +1,5 @@
 import { client } from './client';
+import { MULTIPART_TIMEOUT_MS } from '../upload/multipartUpload';
 
 export interface MerchantResolutionResponse {
     returns: any[];
@@ -38,7 +39,7 @@ export const returnsApi = {
         if (evidence) {
             (evidence as File[]).forEach(file => formData.append('files', file));
         }
-        return client.post(`/returns/${id}/respond-return`, formData);
+        return client.post(`/returns/${id}/respond-return`, formData, { timeout: MULTIPART_TIMEOUT_MS });
     },
 
     respondToDispute: (
@@ -61,7 +62,7 @@ export const returnsApi = {
         if (evidence) {
             (evidence as File[]).forEach((file) => formData.append('files', file));
         }
-        return client.post(`/returns/${id}/respond-dispute`, formData);
+        return client.post(`/returns/${id}/respond-dispute`, formData, { timeout: MULTIPART_TIMEOUT_MS });
     },
 
     // Admin

@@ -1,6 +1,7 @@
 import { getAccessToken } from '../../../utils/auth';
 import React from 'react';
 import { Building2, FileText, Upload } from 'lucide-react';
+import { uploadPlatformAssetFile } from '../../../services/upload/multipartUpload';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
 
@@ -20,17 +21,7 @@ export const AdminSettingsCompanyTab: React.FC<Props> = ({
   const company = formData.company || {};
 
   const uploadNomo = async (file: File) => {
-    const token = getAccessToken();
-    const fd = new FormData();
-    fd.append('file', file);
-    fd.append('assetType', 'nomo-document');
-    const res = await fetch(`${API_URL}/admin/uploads/platform-asset`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-      body: fd,
-    });
-    if (!res.ok) throw new Error('Upload failed');
-    const { url } = await res.json();
+    const url = await uploadPlatformAssetFile(API_URL, getAccessToken(), file, 'nomo-document');
     updateField('company', 'nomoDocumentUrl', url);
     updateField('company', 'nomoDocumentUpdatedAt', new Date().toISOString());
   };

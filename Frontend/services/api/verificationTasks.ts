@@ -1,4 +1,5 @@
 import { client } from './client';
+import { MULTIPART_TIMEOUT_MS } from '../upload/multipartUpload';
 
 export const verificationTasksApi = {
   assignTask: (orderId: string, officerId?: string, offerId?: string) =>
@@ -46,6 +47,7 @@ export const verificationTasksApi = {
     return client.post<{ urls: string[]; success: boolean }>(
       `/verification-tasks/${taskId}/field-photos`,
       fd,
+      { timeout: MULTIPART_TIMEOUT_MS },
     );
   },
 

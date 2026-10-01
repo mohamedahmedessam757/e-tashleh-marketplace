@@ -2,6 +2,11 @@ import { create } from 'zustand';
 import { Return, Dispute } from '../types';
 import { getAccessToken } from '../utils/auth';
 import { bumpFulfillmentSummary } from '../utils/fulfillmentSummarySync';
+import {
+    fetchWithUploadTimeout,
+    notifyMultipartResult,
+    prepareMultipartFiles,
+} from '../services/upload/multipartUpload';
 
 interface ReturnsState {
     returns: Return[];
@@ -117,15 +122,16 @@ export const useReturnsStore = create<ReturnsState>((set, get) => ({
     requestReturn: async (orderId, orderPartId, reason, description, usageCondition, files) => {
         set({ error: null });
         try {
+            const prepared = await prepareMultipartFiles(files);
             const formData = new FormData();
             formData.append('orderId', orderId);
             if (orderPartId) formData.append('orderPartId', orderPartId);
             formData.append('reason', reason);
             formData.append('description', description);
             if (usageCondition) formData.append('usageCondition', usageCondition);
-            files?.forEach((file) => formData.append('files', file));
+            prepared.forEach((file) => formData.append('files', file));
 
-            const response = await fetch(`${getApiUrl()}/returns/request`, {
+            const response = await fetchWithUploadTimeout(`${getApiUrl()}/returns/request`, {
                 method: 'POST',
                 headers: getAuthHeaders(),
                 body: formData,
@@ -134,6 +140,7 @@ export const useReturnsStore = create<ReturnsState>((set, get) => ({
             if (!response.ok) {
                 throw new Error(await parseApiError(response, 'Failed to request return'));
             }
+            notifyMultipartResult('success', prepared);
 
             void get().fetchReturnsAndDisputes({ silent: true });
             bumpFulfillmentSummary(orderId);
@@ -146,6 +153,7 @@ export const useReturnsStore = create<ReturnsState>((set, get) => ({
             return true;
         } catch (error: any) {
             console.error('Failed to request return:', error);
+            notifyMultipartResult('error', files, error);
             set({ error: error?.message || 'Failed to request return' });
             return false;
         }
@@ -174,14 +182,15 @@ export const useReturnsStore = create<ReturnsState>((set, get) => ({
     escalateDispute: async (orderId, orderPartId, reason, description, files) => {
         set({ error: null });
         try {
+            const prepared = await prepareMultipartFiles(files);
             const formData = new FormData();
             formData.append('orderId', orderId);
             if (orderPartId) formData.append('orderPartId', orderPartId);
             formData.append('reason', reason);
             formData.append('description', description);
-            files?.forEach((file) => formData.append('files', file));
+            prepared.forEach((file) => formData.append('files', file));
 
-            const response = await fetch(`${getApiUrl()}/returns/dispute`, {
+            const response = await fetchWithUploadTimeout(`${getApiUrl()}/returns/dispute`, {
                 method: 'POST',
                 headers: getAuthHeaders(),
                 body: formData,
@@ -190,6 +199,7 @@ export const useReturnsStore = create<ReturnsState>((set, get) => ({
             if (!response.ok) {
                 throw new Error(await parseApiError(response, 'Failed to escalate dispute'));
             }
+            notifyMultipartResult('success', prepared);
 
             void get().fetchReturnsAndDisputes({ silent: true });
             bumpFulfillmentSummary(orderId);
@@ -202,6 +212,7 @@ export const useReturnsStore = create<ReturnsState>((set, get) => ({
             return true;
         } catch (error: any) {
             console.error('Failed to escalate dispute:', error);
+            notifyMultipartResult('error', files, error);
             set({ error: error?.message || 'Failed to escalate dispute' });
             return false;
         }

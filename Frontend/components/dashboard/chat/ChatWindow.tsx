@@ -10,6 +10,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { CountdownTimer } from '../OrderDetails';
 import { client as api } from '../../../services/api/client';
+import { uploadMedia } from '../../../services/upload/uploadService';
 import { useOrderStore } from '../../../stores/useOrderStore'; // ADDED
 import { Badge } from '../../ui/Badge'; // ADDED
 import { usePlatformSettingsStore } from '../../../stores/usePlatformSettingsStore';
@@ -255,15 +256,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
       try {
         if (pendingAttachment) {
-          const formData = new FormData();
-          formData.append('file', pendingAttachment.file);
-          formData.append('chatId', orderChat?.id || '');
           try {
-            const { data } = await api.post<{ url: string }>('/uploads/chat', formData);
-            uploadedMediaUrl = data.url;
+            uploadedMediaUrl = await uploadMedia(pendingAttachment.file, {
+              purpose: 'chat',
+              context: { chatId: orderChat?.id || '' },
+            });
           } catch (error) {
             console.error('Upload Error:', error);
-            alert('Failed to upload attachment. It might be too large or invalid format.');
             setIsUploading(false);
             return;
           }

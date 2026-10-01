@@ -20,6 +20,11 @@ import {
 } from '../resolution/MerchantSettlementPaymentCard';
 import { useShippingPaymentReturn } from '../../../utils/useShippingPaymentReturn';
 import { CopyableIdBadge } from '../../ui/CopyableIdBadge';
+import {
+  notifyMultipartResult,
+  prepareMultipartFiles,
+  withUploadActivity,
+} from '../../../services/upload/multipartUpload';
 
 function isImageEvidenceUrl(url: string): boolean {
   const raw = String(url || '').trim();
@@ -166,12 +171,16 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
     setIsSubmitting(true);
     
     try {
+      const evidence = await prepareMultipartFiles(selectedFiles);
       // Secure Backend Upload (Bypasses Frontend RLS using NestJS Service Role Key)
-      await respondToCase(dispute.id, dispute.type, {
-        text: response,
-        acceptedReturn: decision === 'APPROVE',
-        evidence: selectedFiles // Passing files to be handled by backend
-      });
+      await withUploadActivity(() =>
+        respondToCase(dispute.id, dispute.type, {
+          text: response,
+          acceptedReturn: decision === 'APPROVE',
+          evidence // Passing files to be handled by backend
+        }),
+      );
+      notifyMultipartResult('success', evidence);
 
       addNotification({
           type: 'dispute',
@@ -186,6 +195,7 @@ export const MerchantDisputeDetails: React.FC<MerchantDisputeDetailsProps> = ({ 
 
       onBack();
     } catch (error: any) {
+      notifyMultipartResult('error', selectedFiles, error);
       addNotification({
         type: 'alert',
         titleKey: 'error',

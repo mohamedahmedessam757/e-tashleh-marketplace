@@ -7,7 +7,7 @@ import { useAdminStore } from '../../../stores/useAdminStore';
 import { useOrderStore } from '../../../stores/useOrderStore';
 import { useVendorStore } from '../../../stores/useVendorStore';
 import { offersApi } from '../../../services/api/offers';
-import { supabase } from '../../../services/supabase';
+import { uploadMedia } from '../../../services/upload/uploadService';
 import { OfferEvidenceCapture } from './OfferEvidenceCapture';
 import { ShippingClassQuestions } from '../../ui/ShippingClassQuestions';
 import {
@@ -496,14 +496,7 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
     );
 
     const uploadOfferFile = async (file: File): Promise<string> => {
-        const fileExt = file.name.split('.').pop() || 'bin';
-        const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage
-            .from('offer-attachments')
-            .upload(fileName, file);
-        if (uploadError) throw uploadError;
-        const { data: urlData } = supabase.storage.from('offer-attachments').getPublicUrl(fileName);
-        return urlData.publicUrl;
+        return uploadMedia(file, { purpose: 'offer', context: { orderId: String(requestDetails?.id) } });
     };
 
     const handleCapturePhoto = async (file: File) => {
@@ -525,7 +518,6 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
             });
         } catch (err) {
             console.error('Upload failed:', err);
-            alert(isAr ? 'فشل رفع الصورة. حاول مرة أخرى.' : 'Upload failed. Please try again.');
         } finally {
             setUploading(false);
         }
@@ -533,13 +525,16 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
 
     const handleCaptureVideo = async (file: File) => {
         if (!activePartId) return;
+        const partId = activePartId;
         setUploading(true);
         try {
             const url = await uploadOfferFile(file);
-            updateField('videoUrl', url);
+            setFormDataMap((prev) => ({
+                ...prev,
+                [partId]: { ...(prev[partId] || DEFAULT_FORM), videoUrl: url },
+            }));
         } catch (err) {
             console.error('Upload failed:', err);
-            alert(isAr ? 'فشل رفع الفيديو. حاول مرة أخرى.' : 'Video upload failed. Please try again.');
         } finally {
             setUploading(false);
         }
@@ -682,7 +677,7 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                 // Optimistic UI Update
                 if (requestDetails?.id && !editOfferId) {
                     addOfferToOrder(String(requestDetails.id), {
-                        storeId: resultData?.store?.id || resultData?.storeId || 'my-store-session',
+                        storeId: resultData?.store?.id || resultData?.storeId || storeId || 'my-store-session',
                         offerNumber: resultData?.offerNumber || '---',
                         storeCode: resultData?.store?.storeCode || resultData?.storeCode || '---',
                         submittedAt: resultData?.createdAt || new Date().toISOString(),
@@ -1370,7 +1365,7 @@ const SubmitOfferModalInner: React.FC<SubmitOfferModalProps> = ({
                                         </button>
                                         <button
                                             type="submit"
-                                            disabled={isSubmitting || (offerLimit !== -1 && dailyOfferCount >= offerLimit)}
+                                            disabled={isSubmitting || uploading || (offerLimit !== -1 && dailyOfferCount >= offerLimit)}
                                             className={`flex-1 relative group overflow-hidden bg-gradient-to-r from-gold-600 via-gold-500 to-gold-400 hover:from-gold-500 hover:to-gold-300 text-black font-black py-4 min-h-[48px] rounded-2xl transition-all shadow-xl shadow-gold-500/20 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 ${shake ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}
                                         >
                                             <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />

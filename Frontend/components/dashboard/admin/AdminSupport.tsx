@@ -8,7 +8,7 @@ import { useAdminPermissionsStore } from '../../../stores/useAdminPermissionsSto
 import { motion, AnimatePresence } from 'framer-motion';
 import { BlurredSection } from './BlurredSection';
 import { getCurrentUser } from '../../../utils/auth';
-import { client } from '../../../services/api/client';
+import { uploadMedia } from '../../../services/upload/uploadService';
 import { AdminSearchInput } from './AdminSearchInput';
 import { CopyableIdBadge } from '../../ui/CopyableIdBadge';
 
@@ -118,15 +118,13 @@ export const AdminSupport: React.FC<{ viewId?: string }> = ({ viewId }) => {
 
     try {
       if (pendingAttachment) {
-        const formData = new FormData();
-        formData.append('file', pendingAttachment.file);
-        formData.append('chatId', activeChat.id);
         try {
-          const { data } = await client.post<{ url: string }>('/uploads/chat', formData);
-          uploadedMediaUrl = data.url;
+          uploadedMediaUrl = await uploadMedia(pendingAttachment.file, {
+            purpose: 'chat',
+            context: { chatId: activeChat.id },
+          });
         } catch (error) {
           console.error('Upload Error:', error);
-          alert(isAr ? 'فشل رفع المرفق. تأكد من الحجم والصيغة.' : 'Failed to upload attachment. Check size and format.');
           setIsUploading(false);
           return;
         }

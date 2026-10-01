@@ -1,4 +1,4 @@
-import { getAccessToken } from '../../../utils/auth';
+import { uploadMedia } from '../../../services/upload/uploadService';
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -150,29 +150,11 @@ export const VerificationReviewPanel: React.FC<VerificationReviewPanelProps> = (
     }
 
     const uploadFile = async (file: File | Blob, folder: string): Promise<string> => {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('orderId', orderId);
-        formData.append('folder', `admin-review/${folder}`);
-
-        const token = getAccessToken();
-        const API_URL = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
-        
-        const response = await fetch(`${API_URL}/uploads/verification`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
-            body: formData
+        const asFile = file instanceof File ? file : new File([file], 'upload', { type: file.type });
+        return uploadMedia(asFile, {
+            purpose: 'verification',
+            context: { orderId, folder: `admin-review/${folder}` },
         });
-
-        if (!response.ok) {
-            const err = await response.json();
-            throw new Error(err.message || 'File upload failed');
-        }
-
-        const data = await response.json();
-        return data.url;
     };
 
     const handleAddRejectionImages = (e: React.ChangeEvent<HTMLInputElement>) => {

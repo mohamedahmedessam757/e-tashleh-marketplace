@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { supabase } from '../services/supabase';
 import { getCurrentUserId, getCurrentUser } from '../utils/auth';
 import { getAccessToken } from '../utils/auth';
+import { uploadMedia } from '../services/upload/uploadService';
 
 export interface UserProfile {
   id: string;
@@ -417,24 +418,12 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     if (!file.type.startsWith('image/')) {
       throw new Error('Please upload an image file');
     }
-    if (file.size > 2 * 1024 * 1024) { // 2MB Limit
-      throw new Error('Image size must be less than 2MB');
-    }
 
     set({ loading: true });
 
     try {
-      const token = getAccessToken();
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const uploadRes = await fetch(`${import.meta.env.VITE_API_URL}/uploads/avatar`, {
-        method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formData,
-      });
-      if (!uploadRes.ok) throw new Error('Avatar upload failed');
-      const { url: publicUrl } = await uploadRes.json();
+      // 2MB limit is enforced after compression by the upload service
+      const publicUrl = await uploadMedia(file, { purpose: 'avatar' });
 
       try {
         const { authApi } = await import('../services/api/auth');

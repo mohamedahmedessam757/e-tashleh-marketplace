@@ -5,6 +5,7 @@ import { supabase } from '../services/supabase';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { resolveEarliestDocumentExpiry } from '../utils/licenseExpiry';
 import { getAccessToken } from '../utils/auth';
+import { uploadMedia, UploadError } from '../services/upload/uploadService';
 
 /** Ref-count: multiple components may request vendor profile realtime. */
 let vendorProfileRealtimeRefCount = 0;
@@ -433,7 +434,7 @@ export const useVendorStore = create<VendorState>()(
     if (file.size > 2 * 1024 * 1024) throw new Error('File size exceeds 2MB limit');
     if (!file.type.startsWith('image/')) throw new Error('Invalid file type. Only images allowed.');
 
-    try {
+    const legacyUpload = async (): Promise<string> => {
       const { supabase } = await import('../services/supabase');
       const storeName = get().storeInfo.storeName || 'unknown_store';
       const safeName = storeName.replace(/[^\x20-\x7E]/g, '').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '') || `store_${Date.now()}`;
@@ -455,6 +456,22 @@ export const useVendorStore = create<VendorState>()(
       const { data: { publicUrl } } = supabase.storage
         .from('profile')
         .getPublicUrl(filePath);
+      return publicUrl;
+    };
+
+    try {
+      let publicUrl: string;
+      if (getAccessToken()) {
+        try {
+          publicUrl = await uploadMedia(file, { purpose: 'store-logo' });
+        } catch (err) {
+          // No store linked to the session yet (onboarding) — keep the pre-login path
+          if (err instanceof UploadError && err.code === 'forbidden') publicUrl = await legacyUpload();
+          else throw err;
+        }
+      } else {
+        publicUrl = await legacyUpload();
+      }
 
       // Update local state immediately
       set((state) => ({
@@ -486,31 +503,37 @@ export const useVendorStore = create<VendorState>()(
     updateDocumentStatus(key, 'uploading', 0);
 
     try {
-      const { supabase } = await import('../services/supabase');
       const storeName = get().storeInfo.storeName || 'unknown_store';
       // Sanitize filename
       const safeName = storeName.replace(/[^\x20-\x7E]/g, '').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '') || `store_${Date.now()}`;
       const fileExt = file.name.split('.').pop();
       const fileName = `${safeName}_${key}_${Date.now()}.${fileExt}`;
-      const filePath = `${fileName}`;
 
-      // Upload to 'vendor-documents' bucket
-      const { data, error } = await supabase.storage
-        .from('vendor-documents')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: true,
-        });
+      let publicUrl: string;
+      const token = getAccessToken();
+      if (token) {
+        publicUrl = await uploadMedia(file, { purpose: 'vendor-document' });
+      } else {
+        const { supabase } = await import('../services/supabase');
+        const filePath = `${fileName}`;
 
-      if (error) throw error;
+        // Upload to 'vendor-documents' bucket
+        const { error } = await supabase.storage
+          .from('vendor-documents')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: true,
+          });
 
-      // Get Public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('vendor-documents')
-        .getPublicUrl(filePath);
+        if (error) throw error;
+
+        // Get Public URL
+        publicUrl = supabase.storage
+          .from('vendor-documents')
+          .getPublicUrl(filePath).data.publicUrl;
+      }
 
       // SYNC WITH BACKEND (Only if logged in / has token)
-      const token = getAccessToken();
       if (token) {
         try {
           const { client } = await import('../services/api/client');

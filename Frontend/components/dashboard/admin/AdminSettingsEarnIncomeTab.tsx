@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { ChevronDown, Image, RotateCcw, Sparkles } from 'lucide-react';
 import type { EarnIncomeConfig } from '../../../types/earnIncome';
 import { buildEarnIncomeFromLocale } from '../../../utils/systemConfigDefaults';
+import { uploadPlatformAssetFile } from '../../../services/upload/multipartUpload';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://api.e-tashleh.net';
 
@@ -13,18 +14,7 @@ interface Props {
 }
 
 async function uploadAsset(file: File, assetType: string): Promise<string> {
-  const token = getAccessToken();
-  const fd = new FormData();
-  fd.append('file', file);
-  fd.append('assetType', assetType);
-  const res = await fetch(`${API_URL}/admin/uploads/platform-asset`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
-    body: fd,
-  });
-  if (!res.ok) throw new Error('Upload failed');
-  const { url } = await res.json();
-  return url;
+  return uploadPlatformAssetFile(API_URL, getAccessToken(), file, assetType);
 }
 
 function patchEarn(

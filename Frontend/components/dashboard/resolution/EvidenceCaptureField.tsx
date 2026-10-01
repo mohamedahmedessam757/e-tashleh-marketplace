@@ -3,8 +3,8 @@ import { Camera, Video, X, AlertCircle } from 'lucide-react';
 
 const MAX_PHOTOS = 4;
 const MAX_VIDEO = 1;
-const MAX_PHOTO_BYTES = 15 * 1024 * 1024;
-const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
+const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 10 * 1024 * 1024;
 
 export interface EvidenceCaptureFieldProps {
   files: File[];
@@ -71,7 +71,7 @@ export const EvidenceCaptureField: React.FC<EvidenceCaptureFieldProps> = ({
           if (!file.type.startsWith('image/')) continue;
           if (file.size > MAX_PHOTO_BYTES) {
             setLocalError(
-              isAr ? 'حجم الصورة كبير جداً (حد 15MB)' : 'Photo too large (max 15MB)',
+              isAr ? 'حجم الصورة كبير جداً (حد 10MB)' : 'Photo too large (max 10MB)',
             );
             continue;
           }
@@ -80,7 +80,7 @@ export const EvidenceCaptureField: React.FC<EvidenceCaptureFieldProps> = ({
           if (!file.type.startsWith('video/')) continue;
           if (file.size > MAX_VIDEO_BYTES) {
             setLocalError(
-              isAr ? 'حجم الفيديو كبير جداً (حد 50MB)' : 'Video too large (max 50MB)',
+              isAr ? 'حجم الفيديو أكبر من 10MB' : 'Video is larger than 10MB',
             );
             continue;
           }

@@ -22,6 +22,13 @@ import { verificationTasksApi } from '@/services/api/verificationTasks';
 import { getCurrentUser } from '../../../utils/auth';
 import { supabase } from '../../../services/supabase';
 import {
+  asMultipartUploadError,
+  notifyMultipartResult,
+  prepareMultipartFiles,
+  withUploadActivity,
+} from '../../../services/upload/multipartUpload';
+import { UploadError } from '../../../services/upload/uploadService';
+import {
   isDevGpsBypassEnabled,
   isGeolocationSecureContext,
   mapGeolocationError,
@@ -289,7 +296,18 @@ export const VerificationTaskDetails: React.FC<VerificationTaskDetailsProps> = (
               ? 'Uploading photos & video…'
               : 'Uploading photos…',
         );
-        await verificationTasksApi.uploadFieldPhotos(taskId, uploadBatch);
+        try {
+          const prepared = await prepareMultipartFiles(uploadBatch, {
+            maxBytes: 10 * 1024 * 1024,
+            videoMaxBytes: 50 * 1024 * 1024,
+          });
+          await withUploadActivity(() => verificationTasksApi.uploadFieldPhotos(taskId, prepared));
+          notifyMultipartResult('success', prepared);
+        } catch (uploadError) {
+          notifyMultipartResult('error', uploadBatch, uploadError);
+          if (asMultipartUploadError(uploadError) instanceof UploadError) return;
+          throw uploadError;
+        }
       }
 
       setCompletingHint(isAr ? 'جاري إرسال القرار وتسجيل المهمة…' : 'Submitting decision…');

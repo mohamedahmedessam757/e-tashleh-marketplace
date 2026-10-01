@@ -8,7 +8,7 @@ import {
     ShieldCheck, EyeOff, Info, AlertTriangle, Loader2,
     Video, Image as ImageIcon, FileText, Download, X, Paperclip, Globe, MessageSquare
 } from 'lucide-react';
-import { client } from '../../../../services/api/client';
+import { uploadMedia } from '../../../../services/upload/uploadService';
 
 export const AdminChatWindow: React.FC = () => {
     const { language } = useLanguage();
@@ -79,15 +79,13 @@ export const AdminChatWindow: React.FC = () => {
 
         try {
             if (pendingAttachment) {
-                const formData = new FormData();
-                formData.append('file', pendingAttachment.file);
-                formData.append('chatId', activeChat.id);
                 try {
-                    const { data } = await client.post<{ url: string }>('/uploads/chat', formData);
-                    uploadedMediaUrl = data.url;
+                    uploadedMediaUrl = await uploadMedia(pendingAttachment.file, {
+                        purpose: 'chat',
+                        context: { chatId: activeChat.id },
+                    });
                 } catch (error) {
                     console.error('Upload Error:', error);
-                    alert(isAr ? 'فشل رفع المرفق. تأكد من الحجم والصيغة.' : 'Failed to upload attachment. Check size and format.');
                     setIsUploading(false);
                     return;
                 }
