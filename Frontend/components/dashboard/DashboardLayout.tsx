@@ -11,6 +11,9 @@ import { useOrderStore } from '../../stores/useOrderStore';
 import { useShipmentsStore } from '../../stores/useShipmentsStore';
 import { useBillingStore } from '../../stores/useBillingStore';
 import { useMerchantWalletStore } from '../../stores/useMerchantWalletStore';
+import { useOrderChatStore } from '../../stores/useOrderChatStore';
+import { useChatStore } from '../../stores/useChatStore';
+import { useVisualViewportHeight } from '../../hooks/useVisualViewportHeight';
 import { useResolutionStore } from '../../stores/useResolutionStore';
 import { useCustomerWalletStore, subscribeToWalletUpdates } from '../../stores/useCustomerWalletStore';
 import { useAdminPermissionsStore } from '../../stores/useAdminPermissionsStore';
@@ -375,8 +378,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
 
 
+  const hasOpenOrderChat = useOrderChatStore((s) => !!s.activeChat);
+  const hasOpenSupportChat = useChatStore((s) => !!s.activeChatId);
+  const hideHeaderOnMobile = currentPath === 'chats' && role !== 'admin' && (hasOpenOrderChat || hasOpenSupportChat);
+  useVisualViewportHeight(currentPath === 'chats');
+
   return (
-    <div className={`${currentPath === 'chats' ? 'h-dvh max-h-dvh overflow-hidden' : 'min-h-screen'} bg-[#0F0E0C] text-white font-sans selection:bg-gold-500 selection:text-white flex flex-col`}>
+    <div className={`${currentPath === 'chats' ? 'h-[var(--app-height,100dvh)] max-h-[var(--app-height,100dvh)] overflow-hidden' : 'min-h-screen'} bg-[#0F0E0C] text-white font-sans selection:bg-gold-500 selection:text-white flex flex-col`}>
 
       <NavigationDrawer
         isOpen={isMenuOpen}
@@ -404,7 +412,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       >
 
         {/* Top Header */}
-        <header className="shrink-0 sticky top-0 z-40 px-4 md:px-6 py-4 bg-[#0F0E0C]/95 border-b border-white/5 flex items-center justify-between">
+        <header className={`shrink-0 sticky top-0 z-40 px-4 md:px-6 py-4 bg-[#0F0E0C]/95 border-b border-white/5 items-center justify-between ${hideHeaderOnMobile ? 'hidden md:flex' : 'flex'}`}>
 
           {/* Hamburger Menu & Brand */}
           <div className="flex items-center gap-4">
@@ -557,7 +565,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         </div>
 
       </main>
-      <VerdictPopUp onNavigate={onNavigate} />
+      <VerdictPopUp onNavigate={onNavigate} role={role} />
       <VerificationCorrectionPopup onNavigate={onNavigate} />
     </div>
   );

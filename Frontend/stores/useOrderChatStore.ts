@@ -65,7 +65,7 @@ interface OrderChatState {
     globalChatSubscription: any;
 
     // Actions
-    fetchChat: (orderId: string, vendorId: string) => Promise<any>;
+    fetchChat: (orderId: string, vendorId: string, orderPartId?: string | null) => Promise<any>;
     loadChat: (chatId: string) => Promise<void>;
     fetchChats: (silent?: boolean) => Promise<void>;
     createSupportChat: (subject: string, message: string, orderId?: string, mediaUrl?: string, mediaType?: string, mediaName?: string, priority?: string) => Promise<void>;
@@ -106,6 +106,9 @@ function mapSupabaseMessage(raw: any): OrderChatMessage {
 let typingTimeout: any = null;
 let previousChatRoom: string | null = null;
 
+const typingEmitState = new Map<string, { last: number; isTyping: boolean }>();
+const TYPING_EMIT_INTERVAL_MS = 2000;
+
 export const useOrderChatStore = create<OrderChatState>((set, get) => ({
     chats: [],
     activeChat: null,
@@ -117,11 +120,15 @@ export const useOrderChatStore = create<OrderChatState>((set, get) => ({
     typingUserId: null,
     globalChatSubscription: null,
 
-    fetchChat: async (orderId: string, vendorId: string) => {
+    fetchChat: async (orderId: string, vendorId: string, orderPartId?: string | null) => {
         set({ isChatContentLoading: true, error: null });
         try {
             // Initiate via Backend to ensure it exists and runs guards
-            const response = await api.post('/chats/init', { orderId, vendorId });
+            const response = await api.post('/chats/init', {
+                orderId,
+                vendorId,
+                ...(orderPartId ? { orderPartId } : {}),
+            });
             const chat = response.data;
 
             // Use the messages included in the API response
@@ -574,9 +581,13 @@ export const useOrderChatStore = create<OrderChatState>((set, get) => ({
 
     setTypingStatus: (chatId: string, isTyping: boolean, userId: string) => {
         const socket = get().socket;
-        if (socket) {
-            socket.emit('typing', { chatId, isTyping, userId });
-        }
+        if (!socket) return;
+        const now = Date.now();
+        const previous = typingEmitState.get(chatId);
+        if (isTyping && previous?.isTyping && now - previous.last < TYPING_EMIT_INTERVAL_MS) return;
+        if (!isTyping && previous && !previous.isTyping) return;
+        typingEmitState.set(chatId, { last: now, isTyping });
+        socket.emit('typing', { chatId, isTyping, userId });
     },
 
     subscribeToAllChats: () => {

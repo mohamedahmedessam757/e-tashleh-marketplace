@@ -112,10 +112,39 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   };
 
 
-  // Auto Scroll
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const isNearBottomRef = useRef(true);
+  const lastScrolledChatIdRef = useRef<string | null>(null);
+  const typingIdleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const chatMessages: any[] = (displayChat?.messages as any[]) ?? [];
+  const lastChatMessage: any = chatMessages.length > 0 ? chatMessages[chatMessages.length - 1] : null;
+  const scrollKey = `${displayChat?.id ?? ''}|${chatMessages.length}|${lastChatMessage?.id ?? ''}|${pendingAttachment ? 1 : 0}`;
+
+  const handleMessagesScroll = () => {
+    const el = messagesContainerRef.current;
+    if (!el) return;
+    isNearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+  };
+
+  // Auto scroll only the messages box, and only when a new message arrives
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [displayChat?.messages, pendingAttachment, orderChat?.messages]);
+    const el = messagesContainerRef.current;
+    if (!el) return;
+    const currentChatId = displayChat?.id ?? null;
+    const chatChanged = lastScrolledChatIdRef.current !== currentChatId;
+    lastScrolledChatIdRef.current = currentChatId;
+    const isMine = lastChatMessage?.sender === 'me';
+    if (chatChanged || isMine || isNearBottomRef.current) {
+      el.scrollTo({ top: el.scrollHeight, behavior: chatChanged ? 'auto' : 'smooth' });
+      isNearBottomRef.current = true;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scrollKey]);
+
+  useEffect(() => () => {
+    if (typingIdleRef.current) clearTimeout(typingIdleRef.current);
+  }, []);
 
   // Auto-Mark as Read when opening an order chat
   useEffect(() => {
@@ -521,7 +550,11 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4 sm:space-y-6 relative pb-3">
+      <div
+        ref={messagesContainerRef}
+        onScroll={handleMessagesScroll}
+        className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3 sm:p-4 space-y-4 sm:space-y-6 relative pb-3"
+      >
         {/* Selection Phase Banner */}
         {orderStatus === 'AWAITING_SELECTION' && (
           <motion.div 
@@ -585,16 +618,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         );
         })}
 
-        {/* Global Typing Indicator */}
-        {showTypingIndicator && (
-          <div className="flex items-center gap-2 text-white/50 text-xs italic animate-pulse">
-            <span className="w-1.5 h-1.5 bg-gold-500 rounded-full"></span>
-            <span className="w-1.5 h-1.5 bg-gold-500 rounded-full animation-delay-150"></span>
-            <span className="w-1.5 h-1.5 bg-gold-500 rounded-full animation-delay-300"></span>
-            {t.dashboard.chat?.someoneTyping || 'Someone is typing...'}
-          </div>
-        )}
-
         {/* Status Indicators in Chat Stream */}
         {effectiveChatStatus === 'expired' && (!orderStatus || orderStatus === 'AWAITING_OFFERS' || orderStatus === 'COLLECTING_OFFERS' || orderStatus === 'AWAITING_SELECTION') && (
           <div className="flex justify-center my-4">
@@ -638,6 +661,14 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
       {/* Footer / Status Banner — always pinned; never clipped by message scroll */}
       <div className="shrink-0 p-3 sm:p-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-[#151310] border-t border-white/10 z-30 relative">
+        {showTypingIndicator && (
+          <div className="pointer-events-none absolute bottom-full start-3 sm:start-4 mb-1 flex items-center gap-2 rounded-full bg-[#151310]/90 border border-white/10 px-3 py-1 text-white/60 text-xs italic animate-pulse">
+            <span className="w-1.5 h-1.5 bg-gold-500 rounded-full"></span>
+            <span className="w-1.5 h-1.5 bg-gold-500 rounded-full animation-delay-150"></span>
+            <span className="w-1.5 h-1.5 bg-gold-500 rounded-full animation-delay-300"></span>
+            {t.dashboard.chat?.someoneTyping || 'Someone is typing...'}
+          </div>
+        )}
 
         {isChatActive ? (
           <>
@@ -691,9 +722,17 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 type="text"
                 value={text}
                 onChange={(e) => {
-                  setText(e.target.value);
+                  const value = e.target.value;
+                  setText(value);
                   if (isOrderChat && orderChat) {
-                    useOrderChatStore.getState().setTypingStatus(orderChat.id, e.target.value.length > 0, user?.id || '');
+                    const typingChatId = orderChat.id;
+                    const typingUserId = user?.id || '';
+                    const setTyping = useOrderChatStore.getState().setTypingStatus;
+                    setTyping(typingChatId, value.length > 0, typingUserId);
+                    if (typingIdleRef.current) clearTimeout(typingIdleRef.current);
+                    if (value.length > 0) {
+                      typingIdleRef.current = setTimeout(() => setTyping(typingChatId, false, typingUserId), 3000);
+                    }
                   }
                 }}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
@@ -702,9 +741,11 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                     ? (language === 'ar' ? 'اكتب... (ترجمة تلقائية)' : 'Type... (Auto-translating)')
                     : (language === 'ar' ? 'اكتب رسالتك...' : 'Type your message...')
                 }
-                className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-gold-500 outline-none placeholder:text-white/30"
+                className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-base sm:text-sm text-white focus:border-gold-500 outline-none placeholder:text-white/30"
                 disabled={!isChatActive || isUploading}
                 aria-label={language === 'ar' ? 'رسالة' : 'Message'}
+                enterKeyHint="send"
+                autoComplete="off"
               />
               <button
                 type="button"
