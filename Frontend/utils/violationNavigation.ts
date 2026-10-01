@@ -1,3 +1,5 @@
+import { isKnownDashboardView, normalizeDashboardRole } from './dashboardViews';
+
 export const VIOLATION_NAV_KEY = 'violation_nav';
 export const STORE_LIST_FILTER_KEY = 'admin_store_list_filter';
 export const STORE_PROFILE_NAV_KEY = 'admin_store_profile_nav';
@@ -92,6 +94,51 @@ function uuidFrom(value: unknown): string | undefined {
   return value.trim();
 }
 
+const LINK_PATH_ALIASES: Record<string, string> = {
+  dashboard: 'home',
+  merchants: 'store-profile',
+  stores: 'store-profile',
+  'risk-management': 'customers',
+  reliability: 'home',
+};
+
+/** Links that point to a list page must win over generic orderId/caseId routing. */
+const LINK_FIRST_VIEWS = new Set<string>([
+  'shipping-cart',
+  'shipping-carts',
+  'wallet',
+  'wallet-obligations',
+  'rewards',
+  'loyalty',
+  'performance',
+  'reviews',
+  'billing',
+]);
+
+const SUPPORT_CHAT_SOURCES = new Set<string>(['support_message', 'LANDING']);
+
+function splitLinkTarget(rawLink: string | null | undefined): NotificationNavResult | null {
+  const link = String(rawLink || '').trim();
+  if (!link) return null;
+  const [pathPart, query] = normalizeNotificationLink(link).split('?');
+  const cleaned = pathPart
+    .replace(/^merchant\//, '')
+    .replace(/^admin\//, '')
+    .replace(/^customer\//, '')
+    .replace(/^dashboard\//, '');
+  const segments = cleaned.split('/').filter(Boolean);
+  if (segments.length === 0) return { path: 'home' };
+  const first = segments[0];
+  const id = segments[1];
+  let path = LINK_PATH_ALIASES[first] ?? first;
+  if (path === 'verification-tasks' && id) path = 'verification-task-details';
+  return {
+    path,
+    ...(id ? { id } : {}),
+    ...(query ? { search: `?${query}` } : {}),
+  };
+}
+
 /**
  * Map notification link + metadata → dashboard path (+ optional view id).
  */
@@ -167,6 +214,24 @@ export function resolveNotificationNavigation(
       return { path: 'store-profile', id: storeId };
     }
     return { path: 'profile' };
+  }
+
+  const chatId = uuidFrom(meta.chatId);
+  const linkTarget = splitLinkTarget(notif.link);
+  if (chatId && linkTarget?.path !== 'violations') {
+    const source = typeof meta.source === 'string' ? meta.source : '';
+    if (SUPPORT_CHAT_SOURCES.has(source)) {
+      return { path: 'support', id: chatId };
+    }
+    return { path: 'chats', id: chatId };
+  }
+
+  if (linkTarget && LINK_FIRST_VIEWS.has(linkTarget.path)) {
+    return linkTarget;
+  }
+
+  if (caseId && type !== 'SHIPMENT_UPDATE' && type !== 'SHIPMENT') {
+    return { path: 'dispute-details', id: caseId };
   }
 
   if (orderId) {
@@ -263,13 +328,49 @@ function mapLinkToNavigation(
     if (id) return { path: 'order-details', id: orderFromMeta || id };
   }
 
-  // Strip nested prefixes that DashboardShell doesn't understand
-  path = path
-    .replace(/^merchant\//, '')
-    .replace(/^admin\//, '')
-    .replace(/^customer\//, '');
+  return splitLinkTarget(path) ?? { path: 'home' };
+}
 
-  if (path === 'home' || path === '') return { path: 'home' };
+/**
+ * Role-aware final target: remaps shared paths per role and never returns a view
+ * that DashboardShell cannot render (falls back to home instead of a blank screen).
+ */
+export function finalizeNotificationNav(
+  nav: NotificationNavResult,
+  role: string | null | undefined,
+  metadata?: Record<string, unknown> | null,
+): { path: string; id?: string; search?: string } {
+  const r = normalizeDashboardRole(role);
+  const meta = (metadata ?? {}) as Record<string, unknown>;
+  let path = nav.path;
+  let id = nav.id;
+  let search = nav.search;
 
-  return { path };
+  if (path === 'order-details' || path === 'orders') {
+    id = id || uuidFrom(meta.orderId);
+    if (r === 'admin') path = id ? 'admin-order-details' : 'orders-control';
+    else if (r === 'merchant') path = id ? 'explore-offer' : 'active-orders';
+    else path = id ? 'order-details' : 'orders';
+  } else if (path === 'dispute-details') {
+    id = id || uuidFrom(meta.caseId);
+    path = r === 'admin' ? 'admin-dispute-details' : 'dispute-details';
+  } else if (path === 'store-profile' && r !== 'admin') {
+    path = 'profile';
+    id = undefined;
+    search = undefined;
+  } else if (path === 'profile' && r === 'admin' && uuidFrom(meta.storeId)) {
+    path = 'store-profile';
+    id = uuidFrom(meta.storeId);
+  } else if (path === 'notifications' && r === 'customer') {
+    path = 'preferences';
+  } else if (path === 'shipping-cart' && r === 'admin') {
+    path = 'shipping-carts';
+  } else if (path === 'shipments' && r === 'admin') {
+    path = 'shipping';
+  }
+
+  if (!isKnownDashboardView(r, path)) {
+    return { path: 'home' };
+  }
+  return { path, ...(id ? { id } : {}), ...(search ? { search } : {}) };
 }

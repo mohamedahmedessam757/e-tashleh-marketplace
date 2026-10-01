@@ -7,6 +7,7 @@ import { getCurrentUserId } from '../../../utils/auth';
 import { MerchantPreferencesTab } from './MerchantPreferencesTab';
 import {
     resolveNotificationNavigation,
+    finalizeNotificationNav,
     setViolationNavContext,
 } from '../../../utils/violationNavigation';
 
@@ -57,17 +58,8 @@ export const MerchantNotifications: React.FC<MerchantNotificationsProps> = ({ on
         if (!nav) return;
         if (nav.context) setViolationNavContext(nav.context);
 
-        let path = nav.path;
-        let id = nav.id || (notif.metadata?.orderId as string | undefined);
-
-        if (path === 'order-details' || path === 'orders') {
-            path = id ? 'explore-offer' : 'active-orders';
-        } else if (path === 'store-profile') {
-            path = 'profile';
-            id = undefined;
-        }
-
-        onNavigate(path, id, nav.search);
+        const target = finalizeNotificationNav(nav, 'merchant', notif.metadata as Record<string, unknown> | undefined);
+        onNavigate(target.path, target.id, target.search);
     };
 
     return (

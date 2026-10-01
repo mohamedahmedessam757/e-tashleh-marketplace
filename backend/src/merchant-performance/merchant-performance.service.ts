@@ -258,6 +258,7 @@ export class MerchantPerformanceService {
           messageAr: `وصل متجرك إلى مستوى ${nextTier}.`,
           messageEn: `Your store reached performance tier ${nextTier}.`,
           type: 'loyalty',
+          link: '/dashboard/performance',
         });
       } else if (this.isTierDowngrade(previousTier, nextTier)) {
         await this.notifications.create({
@@ -268,6 +269,7 @@ export class MerchantPerformanceService {
           messageAr: `تم تعديل مستوى متجرك إلى ${nextTier}. راجع التقييم والمخالفات والاشتراك.`,
           messageEn: `Your store tier was adjusted to ${nextTier}. Review rating, violations, and subscription.`,
           type: 'alert',
+          link: '/dashboard/performance',
         });
       }
     }

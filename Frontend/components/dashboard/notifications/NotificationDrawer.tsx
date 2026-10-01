@@ -7,6 +7,7 @@ import { useNotificationStore, NotificationType, Notification } from '../../../s
 import { getCurrentUserId } from '../../../utils/auth';
 import {
     resolveNotificationNavigation,
+    finalizeNotificationNav,
     setViolationNavContext,
     setStoreProfileNavContext,
 } from '../../../utils/violationNavigation';
@@ -141,26 +142,8 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
                     setStoreProfileNavContext(nav.storeProfile);
                 }
 
-                let path = nav.path;
-                let id = nav.id || (notif.metadata?.orderId as string | undefined) || (notif.metadata?.caseId as string | undefined);
-                let search = nav.search;
-
-                if (path === 'order-details' || path === 'orders') {
-                    if (role === 'admin') path = 'admin-order-details';
-                    else if (role === 'merchant') path = id ? 'explore-offer' : 'active-orders';
-                    else path = 'order-details';
-                } else if (path === 'dispute-details') {
-                    path = role === 'admin' ? 'admin-dispute-details' : 'dispute-details';
-                } else if (path === 'store-profile' && role !== 'admin') {
-                    path = 'profile';
-                    id = undefined;
-                    search = undefined;
-                } else if (path === 'profile' && role === 'admin' && notif.metadata?.storeId) {
-                    path = 'store-profile';
-                    id = String(notif.metadata.storeId);
-                }
-
-                onNavigate(path, id, search);
+                const target = finalizeNotificationNav(nav, role, notif.metadata as Record<string, unknown> | undefined);
+                onNavigate(target.path, target.id, target.search);
                 onClose();
             }
         },

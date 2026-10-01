@@ -709,6 +709,7 @@ export class WithdrawalWorkflowService {
       recipientId,
       recipientRole,
       type: 'payment',
+      link: '/dashboard/wallet',
       titleAr: payload.titleAr,
       titleEn: payload.titleEn,
       messageAr: payload.messageAr,

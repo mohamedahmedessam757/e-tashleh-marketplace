@@ -6,12 +6,13 @@ import { useNotificationStore, NotificationType } from '../../../stores/useNotif
 import { getCurrentUserId } from '../../../utils/auth';
 import {
     resolveNotificationNavigation,
+    finalizeNotificationNav,
     setViolationNavContext,
 } from '../../../utils/violationNavigation';
 
 interface NotificationCenterTabProps {
     role?: 'customer' | 'merchant' | 'admin' | string;
-    onNavigate?: (path: string, id?: string | number) => void;
+    onNavigate?: (path: string, id?: string | number, search?: string) => void;
 }
 
 export const NotificationCenterTab: React.FC<NotificationCenterTabProps> = ({ role = 'customer', onNavigate }) => {
@@ -90,18 +91,8 @@ export const NotificationCenterTab: React.FC<NotificationCenterTabProps> = ({ ro
                                         if (!nav) return;
                                         if (nav.context) setViolationNavContext(nav.context);
 
-                                        let path = nav.path;
-                                        let id =
-                                            nav.id ||
-                                            (notif.metadata?.orderId as string | undefined) ||
-                                            (notif.metadata?.caseId as string | undefined);
-
-                                        if (path === 'store-profile') {
-                                            path = 'profile';
-                                            id = undefined;
-                                        }
-
-                                        onNavigate(path, id);
+                                        const target = finalizeNotificationNav(nav, role, notif.metadata as Record<string, unknown> | undefined);
+                                        onNavigate(target.path, target.id, target.search);
                                     }}
                                     className={`p-5 hover:bg-white/5 cursor-pointer transition-colors relative flex gap-4 ${!notif.isRead ? 'bg-gold-500/5' : ''}`}
                                 >

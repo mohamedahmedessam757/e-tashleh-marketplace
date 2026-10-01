@@ -50,6 +50,7 @@ export class WithdrawalReminderService {
 
                 await this.notifications.notifyAdmins({
                     type: 'SYSTEM',
+                    link: '/dashboard/billing',
                     titleAr: 'تذكير: طلب سحب متأخر ⏳',
                     titleEn: 'Reminder: Overdue Withdrawal Request ⏳',
                     messageAr: `طلب السحب الخاص بـ (${entityName}) بمبلغ ${request.amount} معلّق منذ أكثر من 48 ساعة.`,
@@ -65,6 +66,7 @@ export class WithdrawalReminderService {
 
                 await this.notifications.notifyAdmins({
                     type: 'SYSTEM',
+                    link: '/dashboard/billing',
                     titleAr: 'تذكير: سحب قيد التنفيذ منذ 3 أيام عمل',
                     titleEn: 'Reminder: Processing Withdrawal SLA Breach',
                     messageAr: `طلب سحب (${entityName}) بمبلغ ${request.amount} في حالة «جارٍ التنفيذ» منذ أكثر من 3 أيام عمل.`,

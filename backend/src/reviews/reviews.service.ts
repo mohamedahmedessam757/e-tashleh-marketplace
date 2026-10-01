@@ -276,6 +276,7 @@ export class ReviewsService {
         messageAr: `قام العميل بوضع تقييم للطلب ${order.orderNumber}. بانتظار موافقتك.`,
         messageEn: `A customer has left a review on order ${order.orderNumber}. Awaiting your approval.`,
         type: 'alert',
+        link: '/dashboard/reviews',
         metadata: { reviewId: review.id },
       })
       .catch((err) => this.logger.warn('Review admin notify failed', err));
@@ -578,7 +579,8 @@ export class ReviewsService {
           titleEn: 'Store Suspension Review Required ⚠️',
           messageAr: `متوسط تقييم المتجر "${store.name}" انخفض إلى ${rating.toFixed(2)}. تم إنشاء طلب إيقاف للمراجعة.`,
           messageEn: `Store "${store.name}" average rating fell to ${rating.toFixed(2)}. A suspension request has been created for review.`,
-          type: 'alert'
+          type: 'alert',
+          metadata: { storeId: store.id },
         });
       }
     } else if (rule.actionType === 'WARNING') {
@@ -590,7 +592,8 @@ export class ReviewsService {
         titleEn: 'Performance Warning: Rating Levels ⚠️',
         messageAr: `نود تنبيهك بأن متوسط تقييم متجرك حالياً هو ${rating.toFixed(2)}. يرجى العمل على تحسين جودة الخدمة لتجنب الإجراءات الإدارية.`,
         messageEn: `Please be advised that your store's average rating is currently ${rating.toFixed(2)}. Please improve service quality to avoid administrative actions.`,
-        type: 'alert'
+        type: 'alert',
+        link: '/dashboard/reviews',
       });
     } else if (rule.actionType === 'FEATURED') {
       // Notify merchant of featured status
@@ -601,7 +604,8 @@ export class ReviewsService {
         titleEn: 'Congratulations! Your store is now Featured 🌟',
         messageAr: `بناءً على تقييمك الرائع (${rating.toFixed(2)})، حصل متجرك على وسم التاجر المميز في المنصة.`,
         messageEn: `Based on your excellent rating (${rating.toFixed(2)}), your store has earned the Featured Merchant badge.`,
-        type: 'alert'
+        type: 'alert',
+        link: '/dashboard/reviews',
       });
     }
   }

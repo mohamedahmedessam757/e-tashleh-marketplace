@@ -13,9 +13,11 @@ import { Button } from '../../ui/Button';
 import { GlassCard } from '../../ui/GlassCard';
 import { useNotificationStore, Notification } from '../../../stores/useNotificationStore';
 import { useLanguage } from '../../../contexts/LanguageContext';
+import { resolveNotificationNavigation, finalizeNotificationNav } from '../../../utils/violationNavigation';
 
 interface VerdictPopUpProps {
-    onNavigate?: (path: string, id?: any) => void;
+    onNavigate?: (path: string, id?: any, search?: string) => void;
+    role?: string;
 }
 
 function resolveVerdictPopupCta(notification: Notification, isAr: boolean): string {
@@ -38,7 +40,7 @@ function resolveVerdictPopupCta(notification: Notification, isAr: boolean): stri
     return isAr ? 'عرض التفاصيل' : 'View Details';
 }
 
-export const VerdictPopUp: React.FC<VerdictPopUpProps> = ({ onNavigate }) => {
+export const VerdictPopUp: React.FC<VerdictPopUpProps> = ({ onNavigate, role }) => {
     const { notifications, dismissNotification, shouldShowAsPopup } = useNotificationStore();
     const { language } = useLanguage();
     const isAr = language === 'ar';
@@ -81,14 +83,14 @@ export const VerdictPopUp: React.FC<VerdictPopUpProps> = ({ onNavigate }) => {
         const popup = currentPopUp;
 
         if (popup.link && onNavigate) {
-            const link = popup.link.replace(/^\//, '');
-            if (popup.metadata?.caseId) {
-                onNavigate(link.split('/')[0] || link, popup.metadata.caseId);
-            } else if (popup.metadata?.orderId) {
-                onNavigate('order-details', popup.metadata.orderId);
-            } else {
-                const parts = link.split('/');
-                onNavigate(parts[0], parts[1]);
+            const nav = resolveNotificationNavigation({
+                link: popup.link,
+                metadata: popup.metadata,
+                type: popup.type,
+            });
+            if (nav) {
+                const target = finalizeNotificationNav(nav, role, popup.metadata);
+                onNavigate(target.path, target.id, target.search);
             }
         }
 

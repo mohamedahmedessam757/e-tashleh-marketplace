@@ -4390,6 +4390,7 @@ export class PaymentsService {
                     messageAr: `قام التاجر ${store.name} بطلب سحب ${amount} AED عبر ${payoutMethod === 'STRIPE' ? 'Stripe' : 'تحويل بنكي'}`,
                     messageEn: `Merchant ${store.name} requested a ${methodLabel} withdrawal of ${amount} AED`,
                     type: 'SYSTEM',
+                    link: '/dashboard/billing',
                     metadata: {
                         type: 'WITHDRAWAL_REQUEST',
                         requestId: request.id,
@@ -4542,6 +4543,7 @@ export class PaymentsService {
                     messageAr: `قام العميل ${user.name || user.email} بطلب سحب ${amount} AED عبر ${methodLabel}`,
                     messageEn: `Customer ${user.name || user.email} requested a ${methodLabel} withdrawal of ${amount} AED`,
                     type: 'SYSTEM',
+                    link: '/dashboard/billing',
                     metadata: {
                         type: 'WITHDRAWAL_REQUEST',
                         requestId: request.id,
