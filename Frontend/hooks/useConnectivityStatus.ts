@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { probeHealth, probeSystemStatus } from '../utils/connectivityProbe';
+import { getActiveUploadCount } from '../services/upload/uploadActivity';
 
 export type ConnectivityLevel =
   | 'ok'
@@ -259,6 +260,9 @@ export function useConnectivityStatus(): ConnectivityStatus {
 
         // Soft: browser timeout/network during nav/uploads — require sustained failures
         if (isSoftHealthFailure(health)) {
+          if (getActiveUploadCount() > 0) {
+            return;
+          }
           failStreakRef.current += 1;
           if (
             failStreakRef.current < SOFT_FAIL_STREAK_REQUIRED &&
