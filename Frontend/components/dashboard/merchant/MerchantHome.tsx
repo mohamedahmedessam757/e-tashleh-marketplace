@@ -27,6 +27,8 @@ import {
     MERCHANT_LIVE_TRACKING_STATUSES,
     MERCHANT_TERMINAL_STATUSES,
 } from '../../../utils/merchantOrderBuckets';
+import { getMerchantOfferCoverage } from '../../../utils/merchantOfferCoverage';
+import { MerchantActiveOrderCard } from './MerchantActiveOrderCard';
 
 interface MerchantHomeProps {
     onNavigate: (path: string, id?: string | number) => void;
@@ -134,8 +136,8 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
     // --- LOGIC: Stats & Categories ---
     const myOrders = orders.filter(o => belongsToMerchantStore(o, myStoreId));
 
-    // 1. New marketplace requests (open bidding only — never AWAITING_SELECTION)
-    const newRequestOrders = useMemo(() => {
+    // 1. Open marketplace orders matching this store (open bidding only — never AWAITING_SELECTION)
+    const openEligibleOrders = useMemo(() => {
         return orders.filter((o) => {
             if (!isEligibleMerchantIncomingOrder(o)) return false;
 
@@ -154,7 +156,26 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
             return matchesSpecialization && matchesModel;
         });
     }, [orders, storeInfo?.selectedMakes, storeInfo?.selectedModels]);
+
+    // New requests = open orders this store has not offered on yet
+    const newRequestOrders = useMemo(
+        () => openEligibleOrders.filter((o) => !getMerchantOfferCoverage(o, myStoreId).hasAnyOffer),
+        [openEligibleOrders, myStoreId],
+    );
     const newRequests = newRequestOrders.length;
+
+    const { offeredPartsTotal, remainingPartsTotal, partialOrdersCount } = useMemo(() => {
+        let offered = 0;
+        let remaining = 0;
+        let partial = 0;
+        for (const o of openEligibleOrders) {
+            const c = getMerchantOfferCoverage(o, myStoreId);
+            offered += c.offeredParts;
+            remaining += c.remainingParts;
+            if (c.hasAnyOffer && c.remainingParts > 0) partial += 1;
+        }
+        return { offeredPartsTotal: offered, remainingPartsTotal: remaining, partialOrdersCount: partial };
+    }, [openEligibleOrders, myStoreId]);
     
     // 3. Orders Awaiting Verification Alert
     const preparedOrders = myOrders.filter(o => o.status === 'PREPARED');
@@ -196,7 +217,7 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
     ];
 
     const filterChips = [
-        { key: 'ALL' as const, label: isAr ? 'الكل' : 'All', count: myOrders.length + newRequests },
+        { key: 'ALL' as const, label: isAr ? 'الكل' : 'All', count: new Set([...myOrders, ...newRequestOrders].map((o) => o.id)).size },
         { key: 'NEW' as const, label: isAr ? 'طلبات جديدة' : 'New requests', count: newRequests },
         { key: 'NEGOTIATING' as const, label: t.dashboard.merchant.kpi.negotiating, count: negotiating },
         { key: 'IN_PROGRESS' as const, label: t.dashboard.merchant.kpi.executing, count: inProgress },
@@ -240,6 +261,21 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
 
     const liveOrder = filteredLiveOrder;
 
+    const activeListOrders = useMemo(() => {
+        const pool = homeFilter === 'NEW' ? newRequestOrders : filteredActivityOrders;
+        const rank = (status: string) => {
+            const idx = (MERCHANT_LIVE_TRACKING_STATUSES as readonly string[]).indexOf(status);
+            return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
+        };
+        const ts = (o: any) => new Date(o.updatedAt || o.createdAt || o.date || 0).getTime() || 0;
+        return [...pool].sort((a, b) => rank(a.status) - rank(b.status) || ts(b) - ts(a));
+    }, [homeFilter, newRequestOrders, filteredActivityOrders]);
+
+    const [visibleCount, setVisibleCount] = useState(10);
+    useEffect(() => {
+        setVisibleCount(10);
+    }, [homeFilter]);
+
     return (
         <div className="space-y-5 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12 min-w-0 overflow-x-clip">
 
@@ -248,7 +284,7 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
             <LicenseExpiryBanner onNavigate={onNavigate} />
 
             <AnimatePresence>
-                {newRequests > 0 && (
+                {(newRequests > 0 || remainingPartsTotal > 0) && (
                     <motion.button
                         key="new-requests-banner"
                         type="button"
@@ -265,15 +301,25 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p className="text-gold-400 text-[10px] font-black uppercase tracking-[0.2em] mb-1">
-                                    {isAr ? 'طلبات جديدة متاحة' : 'New requests available'}
+                                    {newRequests > 0
+                                        ? (isAr ? 'طلبات جديدة متاحة' : 'New requests available')
+                                        : (isAr ? 'قطع متبقية في السوق' : 'Parts still open')}
                                 </p>
                                 <h3 className="text-white font-black text-lg leading-tight">
-                                    {isAr
-                                        ? `${newRequests} طلب يمكنك التقديم عليه الآن`
-                                        : `${newRequests} request${newRequests > 1 ? 's' : ''} you can bid on now`}
+                                    {newRequests > 0
+                                        ? (isAr
+                                            ? `${newRequests} طلب جديد يمكنك التقديم عليه`
+                                            : `${newRequests} new request${newRequests > 1 ? 's' : ''} you can bid on`)
+                                        : (isAr
+                                            ? `متبقي ${remainingPartsTotal} قطعة لم تقدّم عليها بعد${partialOrdersCount > 0 ? ` في ${partialOrdersCount} طلب` : ''}`
+                                            : `${remainingPartsTotal} part${remainingPartsTotal > 1 ? 's' : ''} you haven't offered on yet${partialOrdersCount > 0 ? ` across ${partialOrdersCount} order${partialOrdersCount > 1 ? 's' : ''}` : ''}`)}
                                 </h3>
                                 <p className="text-white/50 text-sm mt-1">
-                                    {isAr ? 'اضغط للانتقال إلى السوق وتقديم عرضك' : 'Tap to open the marketplace and submit your offer'}
+                                    {offeredPartsTotal > 0
+                                        ? (isAr
+                                            ? `قدّمت عروضاً على ${offeredPartsTotal} قطعة — متبقي ${remainingPartsTotal} قطعة في السوق`
+                                            : `You offered on ${offeredPartsTotal} part${offeredPartsTotal > 1 ? 's' : ''} — ${remainingPartsTotal} part${remainingPartsTotal === 1 ? '' : 's'} still open`)
+                                        : (isAr ? 'اضغط للانتقال إلى السوق وتقديم عرضك' : 'Tap to open the marketplace and submit your offer')}
                                 </p>
                             </div>
                             <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gold-500 text-black font-black text-sm shrink-0">
@@ -282,6 +328,40 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
                             </span>
                         </div>
                     </motion.button>
+                )}
+                {newRequests === 0 && remainingPartsTotal === 0 && offeredPartsTotal > 0 && (
+                    <motion.div
+                        key="all-offered-banner"
+                        initial={{ opacity: 0, y: -8, height: 0 }}
+                        animate={{ opacity: 1, y: 0, height: 'auto' }}
+                        exit={{ opacity: 0, y: -8, height: 0 }}
+                        transition={{ duration: 0.25 }}
+                        className="w-full relative overflow-hidden rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5"
+                    >
+                        <div className="relative flex flex-col sm:flex-row sm:items-center gap-4 min-w-0">
+                            <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                                <CheckCircle2 className="text-emerald-400" size={22} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h3 className="text-white font-black text-lg leading-tight">
+                                    {isAr ? 'تم تقديم عروضك على جميع القطع المتاحة حالياً' : 'You have offered on all available parts'}
+                                </h3>
+                                <p className="text-white/50 text-sm mt-1">
+                                    {isAr
+                                        ? `قدّمت عروضاً على ${offeredPartsTotal} قطعة`
+                                        : `You offered on ${offeredPartsTotal} part${offeredPartsTotal > 1 ? 's' : ''}`}
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setHomeFilter('NEGOTIATING')}
+                                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 text-black font-black text-sm shrink-0 hover:bg-emerald-400 transition-colors"
+                            >
+                                {isAr ? 'متابعة عروضي' : 'Track my offers'}
+                                <ArrowIcon size={16} />
+                            </button>
+                        </div>
+                    </motion.div>
                 )}
             </AnimatePresence>
 
@@ -520,65 +600,29 @@ export const MerchantHome: React.FC<MerchantHomeProps> = ({ onNavigate }) => {
                         </h3>
                     </div>
 
-                    {liveOrder ? (
-                        <GlassCard 
-                            onClick={() => onNavigate('explore-offer', liveOrder.id)}
-                            className="p-0 overflow-hidden bg-[#151310] border-gold-500/10 hover:border-gold-500/30 transition-all duration-500 group shadow-xl cursor-pointer"
-                        >
-                            <div className="p-4 sm:p-6 md:p-8 min-w-0">
-                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-6 mb-6 md:mb-8 min-w-0">
-                                    <div className="flex items-center gap-3 sm:gap-5 min-w-0 w-full md:w-auto">
-                                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-gold-500 group-hover:scale-110 transition-transform duration-500 shrink-0">
-                                            <Car size={28} />
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <h4 className="text-xl sm:text-2xl font-bold text-white mb-1 truncate">{liveOrder.car}</h4>
-                                            <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-sm min-w-0">
-                                                <span className="text-white/60 truncate max-w-[10rem] sm:max-w-[14rem]">{liveOrder.part}</span>
-                                                <span className="w-1 h-1 rounded-full bg-white/20 shrink-0" />
-                                                <span className="text-gold-500/80 font-mono text-xs truncate max-w-[9rem] sm:max-w-[12rem]">
-                                                    #{formatOrderDisplayId(liveOrder)}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <Badge status={liveOrder.status as StatusType} className="shrink-0" />
-                                </div>
-
-                                <div className="space-y-6 min-w-0">
-                                    <div className="min-w-0">
-                                        <div className="flex items-center justify-between gap-3 text-xs font-bold mb-3 min-w-0">
-                                            <span className="text-white/40 uppercase tracking-widest shrink-0">{t.dashboard.orders.status}</span>
-                                            <span className="text-gold-500 tabular-nums shrink-0">{getMerchantOrderProgress(liveOrder.status)}%</span>
-                                        </div>
-                                        <div className="h-2.5 w-full bg-white/5 rounded-full overflow-hidden p-[1px]">
-                                            <motion.div 
-                                                initial={{ width: 0 }}
-                                                animate={{ width: `${getMerchantOrderProgress(liveOrder.status)}%` }}
-                                                className="h-full bg-gradient-to-r from-gold-600 to-gold-400 rounded-full shadow-[0_0_15px_rgba(212,175,55,0.3)]"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs min-w-0">
-                                        <div className="px-3 py-1.5 rounded-lg bg-gold-500/5 border border-gold-500/10 text-gold-500/80 font-bold">
-                                            {liveOrder.offersCount} {t.dashboard.merchant.marketplace.competingOffers}
-                                        </div>
-                                        <div className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white/40">
-                                            {t.dashboard.merchant.marketplace.lastUpdate} {liveOrder.date}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <button 
-                                onClick={(e) => { e.stopPropagation(); onNavigate('explore-offer', liveOrder.id); }}
-                                className="w-full py-4 border-t border-white/5 bg-white/[0.02] hover:bg-white/[0.05] transition-all flex items-center justify-center gap-2 group/btn"
-                            >
-                                <span className="text-sm font-bold text-white/60 group-hover/btn:text-white transition-colors">{t.dashboard.merchant.marketplace.viewDetails}</span>
-                                <ArrowIcon size={16} className="text-white/20 group-hover/btn:text-gold-500 transition-all" />
-                            </button>
-                        </GlassCard>
+                    {activeListOrders.length > 0 ? (
+                        <div className="max-h-[min(70vh,760px)] overflow-y-auto overscroll-contain custom-scrollbar space-y-4 pe-1">
+                            {activeListOrders.slice(0, visibleCount).map((order) => (
+                                <MerchantActiveOrderCard
+                                    key={order.id}
+                                    order={order}
+                                    isAr={isAr}
+                                    onNavigate={onNavigate}
+                                    t={t}
+                                />
+                            ))}
+                            {activeListOrders.length > visibleCount && (
+                                <button
+                                    type="button"
+                                    onClick={() => setVisibleCount((c) => c + 10)}
+                                    className="w-full py-3 rounded-xl bg-gold-500/10 text-gold-500 font-bold text-sm hover:bg-gold-500 hover:text-black transition-all border border-gold-500/20"
+                                >
+                                    {isAr
+                                        ? `عرض المزيد (${activeListOrders.length - visibleCount})`
+                                        : `Show more (${activeListOrders.length - visibleCount})`}
+                                </button>
+                            )}
+                        </div>
                     ) : (
                         <GlassCard className="p-6 sm:p-12 flex flex-col items-center justify-center text-center opacity-50 grayscale">
                             <ListChecks size={48} className="text-white/10 mb-4" />

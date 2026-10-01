@@ -16,8 +16,10 @@ import { formatOrderDisplayId } from '../../utils/orderDisplayId';
 import {
     ACTIVE_ORDER_BUCKET,
     countOrdersByStatus,
+    FEATURED_PRIORITY,
     pickFeaturedOrder,
 } from '../../utils/orderStatusFilter.util';
+import { CustomerActiveOrderCard } from './CustomerActiveOrderCard';
 
 interface DashboardHomeProps {
     onNavigate: (path: string, id?: number) => void;
@@ -68,6 +70,24 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigate }) => {
         }
         return pickFeaturedOrder(filteredOrders);
     }, [filteredOrders, homeStatusFilter, orders, activeStatuses]);
+
+    const activeListOrders = useMemo(() => {
+        const pool =
+            homeStatusFilter === 'ALL'
+                ? orders.filter((o) => activeStatuses.includes(o.status))
+                : filteredOrders;
+        const rank = (status: string) => {
+            const idx = FEATURED_PRIORITY.indexOf(status);
+            return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
+        };
+        const ts = (o: any) => new Date(o.updatedAt || o.createdAt || o.date || 0).getTime() || 0;
+        return [...pool].sort((a, b) => rank(a.status) - rank(b.status) || ts(b) - ts(a));
+    }, [filteredOrders, homeStatusFilter, orders, activeStatuses]);
+
+    const [visibleCount, setVisibleCount] = useState(10);
+    React.useEffect(() => {
+        setVisibleCount(10);
+    }, [homeStatusFilter]);
 
     const activityOrders = useMemo(() => {
         if (homeStatusFilter === 'ALL') {
@@ -243,79 +263,32 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onNavigate }) => {
                         </button>
                     </div>
 
-                    {activeOrder ? (
-                        <GlassCard className="p-0 overflow-hidden bg-[#1A1814] border-gold-500/30 shadow-[0_0_30px_rgba(168,139,62,0.05)]">
-                            <div className="p-4 sm:p-6 md:p-8">
-                                <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6 min-w-0">
-                                    <div className="flex items-center gap-4 min-w-0 flex-1">
-                                        <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 shrink-0">
-                                            <Car size={28} />
-                                        </div>
-                                        <div className="min-w-0">
-                                            <h4 className="text-xl font-bold text-white mb-1 truncate">{activeOrder.car}</h4>
-                                            <div className="flex flex-wrap items-center gap-2 text-sm text-white/50">
-                                                <span className="truncate max-w-[12rem]">{activeOrder.part}</span>
-                                                <span className="w-1 h-1 rounded-full bg-white/20 shrink-0" />
-                                                <span className="text-gold-400 font-mono text-xs truncate">
-                                                    #{formatOrderDisplayId(activeOrder)}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-wrap items-center gap-2 shrink-0 w-full sm:w-auto sm:justify-end">
-                                        <Badge status={activeOrder.status as StatusType} />
-                                        <OrderStatusCountdown order={activeOrder} variant="compact" />
-                                    </div>
-                                </div>
-
-                                <div className="mb-2">
-                                    <div className="flex justify-between text-xs font-bold mb-2">
-                                        <span className="text-gold-400">{t.dashboard.orders.status}</span>
-                                        <span className="text-white/40">{getProgress(activeOrder.status)}%</span>
-                                    </div>
-                                    <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-                                        <motion.div
-                                            initial={{ width: 0 }}
-                                            animate={{ width: `${getProgress(activeOrder.status)}%` }}
-                                            transition={{ duration: 1, ease: 'easeOut' }}
-                                            className="h-full bg-gradient-to-r from-gold-600 to-gold-400"
-                                        />
-                                    </div>
-                                    <div className="mt-2 text-xs text-white/40 text-right">
-                                        {activeOrder.date}
-                                    </div>
-                                    {activeOrder.requestType === 'multiple' &&
-                                        (activeOrder.status === 'PARTIALLY_SHIPPED' ||
-                                            (activeOrder.offers?.some(
-                                                (o) =>
-                                                    isAcceptedOfferStatus(o.status) &&
-                                                    o.shippedFromCart,
-                                            ) &&
-                                                activeOrder.offers?.some(
-                                                    (o) =>
-                                                        isAcceptedOfferStatus(o.status) &&
-                                                        !o.shippedFromCart,
-                                                ))) && (
-                                            <p className="mt-2 text-[10px] text-blue-300/90 font-medium">
-                                                {language === 'ar'
-                                                    ? 'شحن جزئي — بعض القطع في سلة التجميع'
-                                                    : 'Partial shipping — some parts still in assembly cart'}
-                                            </p>
-                                        )}
-                                </div>
-                            </div>
-
-                            <button
-                                type="button"
-                                aria-label={dh?.actions.viewDetails}
-                                onClick={() => onNavigate('order-details', activeOrder.id)}
-                                className="w-full m-0 border-t border-gold-500/20 bg-gold-500/15 hover:bg-gold-500/25 px-4 py-3.5 flex items-center justify-center gap-2 text-gold-300 font-bold text-sm transition-all hover:shadow-[0_0_20px_rgba(196,169,92,0.35)]"
-                            >
-                                <Eye size={18} />
-                                <span>{dh?.actions.viewDetails}</span>
-                                <ChevronIcon size={16} className="opacity-70" />
-                            </button>
-                        </GlassCard>
+                    {activeListOrders.length > 0 ? (
+                        <div className="max-h-[min(70vh,760px)] overflow-y-auto overscroll-contain custom-scrollbar space-y-4 pe-1">
+                            {activeListOrders.slice(0, visibleCount).map((order) => (
+                                <CustomerActiveOrderCard
+                                    key={order.id}
+                                    order={order}
+                                    isAr={isAr}
+                                    language={language}
+                                    t={t}
+                                    dh={dh}
+                                    getProgress={getProgress}
+                                    onNavigate={onNavigate}
+                                />
+                            ))}
+                            {activeListOrders.length > visibleCount && (
+                                <button
+                                    type="button"
+                                    onClick={() => setVisibleCount((c) => c + 10)}
+                                    className="w-full py-3 rounded-xl bg-gold-500/10 text-gold-400 font-bold text-sm hover:bg-gold-500 hover:text-black transition-all border border-gold-500/20"
+                                >
+                                    {isAr
+                                        ? `عرض المزيد (${activeListOrders.length - visibleCount})`
+                                        : `Show more (${activeListOrders.length - visibleCount})`}
+                                </button>
+                            )}
+                        </div>
                     ) : (
                         <GlassCard className="p-4 md:p-8 flex flex-col items-center justify-center text-center bg-[#1A1814] border-white/5">
                             <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4 text-white/20">

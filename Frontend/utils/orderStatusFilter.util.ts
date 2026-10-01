@@ -72,7 +72,7 @@ export const COMPLETED_ORDER_BUCKET = [
 
 export const PENDING_ORDER_BUCKET = ['AWAITING_OFFERS', 'COLLECTING_OFFERS'] as const;
 
-const FEATURED_PRIORITY: string[] = [
+export const FEATURED_PRIORITY: string[] = [
     'SHIPPED',
     'PARTIALLY_SHIPPED',
     'PARTIALLY_DELIVERED',
