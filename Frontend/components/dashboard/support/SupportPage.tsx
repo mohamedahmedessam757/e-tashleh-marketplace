@@ -229,14 +229,14 @@ export const SupportPage: React.FC<SupportPageProps> = ({ onNavigate }) => {
                         </div>
 
                         {/* Direct Contact Info */}
-                        <div className="mt-12 p-5 rounded-2xl bg-gold-500/5 border border-gold-500/10">
+                        <div className="mt-12 p-5 rounded-2xl bg-gold-500/5 border border-gold-500/10 min-w-0 overflow-hidden">
                             <p className="text-xs text-gold-500/60 uppercase tracking-wider font-bold mb-3">
                                 {language === 'ar' ? 'اتصال مباشر' : 'Direct Contact'}
                             </p>
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between text-sm">
-                                    <span className="text-white/40">{language === 'ar' ? 'البريد الإلكتروني:' : 'Email:'}</span>
-                                    <a href={`mailto:${siteContacts.customer}`} className="text-white/80 font-medium tracking-tight hover:text-gold-500 transition-colors">{siteContacts.customer}</a>
+                            <div className="space-y-3 min-w-0">
+                                <div className="flex items-center justify-between gap-3 text-sm min-w-0">
+                                    <span className="text-white/40 shrink-0">{language === 'ar' ? 'البريد الإلكتروني:' : 'Email:'}</span>
+                                    <a href={`mailto:${siteContacts.customer}`} className="text-white/80 font-medium tracking-tight hover:text-gold-500 transition-colors truncate min-w-0 text-end break-all">{siteContacts.customer}</a>
                                 </div>
                             </div>
                         </div>

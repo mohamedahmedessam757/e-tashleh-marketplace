@@ -84,14 +84,14 @@ const OfferFiltersBar: React.FC<OfferFiltersBarProps> = memo(({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="rounded-2xl bg-black/30 border border-white/[0.06] p-2.5 sm:p-3">
+                <div className="rounded-2xl bg-black/30 border border-white/[0.06] p-2.5 sm:p-3 min-w-0">
                     <div className="flex items-center gap-2 mb-2.5 px-0.5">
-                        <ArrowUpDown size={12} className="text-gold-500/70" />
+                        <ArrowUpDown size={12} className="text-gold-500/70 shrink-0" />
                         <span className="text-[10px] font-black uppercase tracking-[0.15em] text-white/35">
                             {isAr ? 'ترتيب السعر' : 'Price order'}
                         </span>
                     </div>
-                    <div className="relative grid grid-cols-3 gap-1 p-1 rounded-xl bg-white/[0.03] border border-white/[0.05]">
+                    <div className="relative grid grid-cols-3 gap-1 p-1 rounded-xl bg-white/[0.03] border border-white/[0.05] min-w-0">
                         {PRICE_SORT_OPTIONS.map((opt) => {
                             const active = priceSort === opt.id;
                             return (
@@ -115,14 +115,14 @@ const OfferFiltersBar: React.FC<OfferFiltersBarProps> = memo(({
                     </div>
                 </div>
 
-                <div className="rounded-2xl bg-black/30 border border-white/[0.06] p-2.5 sm:p-3">
+                <div className="rounded-2xl bg-black/30 border border-white/[0.06] p-2.5 sm:p-3 min-w-0">
                     <div className="flex items-center gap-2 mb-2.5 px-0.5">
-                        <Shield size={12} className="text-gold-500/70" />
+                        <Shield size={12} className="text-gold-500/70 shrink-0" />
                         <span className="text-[10px] font-black uppercase tracking-[0.15em] text-white/35">
                             {isAr ? 'الضمان' : 'Warranty'}
                         </span>
                     </div>
-                    <div className="grid grid-cols-4 gap-1.5">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                         {WARRANTY_OPTIONS.map((opt) => {
                             const active = warrantyFilter === opt.id;
                             return (
@@ -130,7 +130,7 @@ const OfferFiltersBar: React.FC<OfferFiltersBarProps> = memo(({
                                     key={opt.id}
                                     type="button"
                                     onClick={() => onWarrantyFilter(opt.id)}
-                                    className={`relative overflow-hidden min-h-[40px] px-1.5 sm:px-3.5 py-2 rounded-xl text-[10px] sm:text-[11px] font-bold leading-tight transition-colors duration-150 border ${
+                                    className={`relative overflow-hidden min-h-[40px] px-2 sm:px-3.5 py-2 rounded-xl text-[10px] sm:text-[11px] font-bold leading-tight transition-colors duration-150 border ${
                                         active
                                             ? 'border-gold-500/50 text-gold-100 shadow-[0_0_20px_rgba(212,175,55,0.12)]'
                                             : 'border-white/[0.08] bg-white/[0.02] text-white/40 hover:border-white/15 hover:text-white/65'
@@ -139,11 +139,11 @@ const OfferFiltersBar: React.FC<OfferFiltersBarProps> = memo(({
                                     {active && (
                                         <span className="absolute inset-0 bg-gradient-to-br from-gold-500/25 via-gold-600/10 to-transparent" />
                                     )}
-                                    <span className="relative flex items-center justify-center gap-1">
+                                    <span className="relative flex items-center justify-center gap-1 min-w-0">
                                         {active && (
-                                            <span className="hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-gold-400 shadow-[0_0_6px_rgba(212,175,55,0.8)]" />
+                                            <span className="hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-gold-400 shadow-[0_0_6px_rgba(212,175,55,0.8)] shrink-0" />
                                         )}
-                                        {isAr ? opt.ar : opt.en}
+                                        <span className="truncate">{isAr ? opt.ar : opt.en}</span>
                                     </span>
                                 </button>
                             );

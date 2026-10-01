@@ -21,12 +21,12 @@ export const MultiItemResolutionProgress: React.FC<MultiItemResolutionProgressPr
     const completedCount = parts.filter((p) => p.fulfillmentStatus === 'COMPLETED').length;
 
     return (
-        <div className={`rounded-2xl border border-white/10 bg-white/[0.03] p-5 ${className}`}>
-            <div className="flex items-center justify-between mb-4">
-                <h4 className="text-xs font-black text-white/50 uppercase tracking-widest">
+        <div className={`rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:p-5 min-w-0 overflow-hidden ${className}`}>
+            <div className="flex items-center justify-between mb-4 gap-2">
+                <h4 className="text-xs font-black text-white/50 uppercase tracking-widest truncate">
                     {isAr ? 'تقدم حل القطع' : 'Part Resolution Progress'}
                 </h4>
-                <span className="text-[10px] font-bold text-gold-400">
+                <span className="text-[10px] font-bold text-gold-400 shrink-0">
                     {completedCount}/{parts.length}
                 </span>
             </div>
@@ -55,14 +55,14 @@ export const MultiItemResolutionProgress: React.FC<MultiItemResolutionProgressPr
                     }
 
                     return (
-                        <div key={part.offerId} className="space-y-1.5">
-                            <div className="flex items-center justify-between gap-2">
-                                <span className="text-xs text-white/80 truncate font-medium">
+                        <div key={part.offerId} className="space-y-1.5 min-w-0">
+                            <div className="flex items-center justify-between gap-2 min-w-0">
+                                <span className="text-xs text-white/80 truncate font-medium min-w-0">
                                     {part.partName}
                                 </span>
-                                <span className="flex items-center gap-1 text-[10px] text-white/50 shrink-0">
+                                <span className="flex items-center gap-1 text-[10px] text-white/50 shrink-0 whitespace-nowrap">
                                     {icon}
-                                    {statusLabel}
+                                    <span className="truncate">{statusLabel}</span>
                                 </span>
                             </div>
                             <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">

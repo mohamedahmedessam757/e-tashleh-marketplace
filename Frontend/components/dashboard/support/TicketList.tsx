@@ -68,27 +68,26 @@ export const TicketList: React.FC<{ onNewClick: () => void; onNavigate?: (chatId
                         onClick={() => onNavigate && onNavigate(ticket.id)}
                         className="p-5 hover:bg-white/[0.04] border-white/5 hover:border-gold-500/30 transition-all cursor-pointer group relative overflow-hidden"
                     >
-                         {/* Hover Glow */}
                         <div className="absolute inset-x-0 bottom-0 h-1 bg-gold-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left opacity-30" />
                         
-                        <div className="flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-5">
-                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${getStatusColor(ticket.status)} border shadow-sm`}>
-                                    {ticket.status === 'CLOSED' ? <CheckCircle size={24} /> : <Clock size={24} />}
+                        <div className="flex items-center justify-between gap-3 min-w-0">
+                            <div className="flex items-center gap-3 sm:gap-5 min-w-0 flex-1">
+                                <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 shrink-0 ${getStatusColor(ticket.status)} border shadow-sm`}>
+                                    {ticket.status === 'CLOSED' ? <CheckCircle size={22} /> : <Clock size={22} />}
                                 </div>
-                                <div>
-                                    <h4 className="font-bold text-white text-lg group-hover:text-gold-500 transition-colors">
+                                <div className="min-w-0">
+                                    <h4 className="font-bold text-white text-base sm:text-lg group-hover:text-gold-500 transition-colors truncate">
                                         {displaySubject}
                                     </h4>
-                                    <div className="flex items-center gap-3 text-xs text-white/30 mt-1.5 font-medium">
-                                        <span className="px-1.5 py-0.5 rounded-md bg-white/5 border border-white/5">#{ticket.id?.substring(0, 8).toUpperCase()}</span>
-                                        <span>•</span>
-                                        <span className="italic">{ticket.createdAt ? new Date(ticket.createdAt).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recent'}</span>
+                                    <div className="flex items-center gap-2 sm:gap-3 text-xs text-white/30 mt-1.5 font-medium min-w-0">
+                                        <span className="px-1.5 py-0.5 rounded-md bg-white/5 border border-white/5 shrink-0">#{ticket.id?.substring(0, 8).toUpperCase()}</span>
+                                        <span className="shrink-0">•</span>
+                                        <span className="italic truncate min-w-0">{ticket.createdAt ? new Date(ticket.createdAt).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recent'}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-6">
+                            <div className="flex items-center gap-2 sm:gap-4 shrink-0">
                                 <div className="hidden md:flex flex-col items-end">
                                     <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-tighter border shadow-sm ${getStatusColor(ticket.status)}`}>
                                         {ticket.status}

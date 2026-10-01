@@ -234,63 +234,63 @@ export const OfferCard: React.FC<OfferProps> = memo(({
                 </div>
 
                 {/* Details Grid - Enhanced with Translation & New Fields */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6 min-w-0">
                     {/* Condition */}
-                    <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-white/5 border border-white/5 text-white/80 min-w-0">
+                    <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-white/5 border border-white/5 text-white/80 min-w-0 overflow-hidden">
                         <div className="w-2 h-2 rounded-full bg-blue-400 shrink-0" />
                         <div className="flex flex-col min-w-0">
-                            <span className="text-[10px] text-white/40 uppercase tracking-wider">{offersT?.labels?.condition || 'Condition'}</span>
-                            <span className="text-sm font-medium truncate">{conditionText}</span>
+                            <span className="text-[10px] text-white/40 uppercase tracking-wider shrink-0">{offersT?.labels?.condition || 'Condition'}</span>
+                            <span className="text-xs sm:text-sm font-medium truncate min-w-0">{conditionText}</span>
                         </div>
                     </div>
 
                     {/* Cylinders (Moved up for better visibility - 2026 Engine Logic) */}
                     {(cylinders !== undefined && cylinders !== null && cylinders !== 0 && cylinders !== '') && (
-                        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gold-500/10 border border-gold-500/20 text-white/80">
+                        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gold-500/10 border border-gold-500/20 text-white/80 min-w-0 overflow-hidden">
                             <Settings size={16} className="text-gold-400 shrink-0" />
-                            <div className="flex flex-col">
-                                <span className="text-[10px] text-gold-400 uppercase tracking-wider font-bold">{language === 'ar' ? 'السلندرات' : 'Cylinders'}</span>
-                                <span className="text-sm font-bold text-white">{cylinders}</span>
+                            <div className="flex flex-col min-w-0">
+                                <span className="text-[10px] text-gold-400 uppercase tracking-wider font-bold shrink-0">{language === 'ar' ? 'السلندرات' : 'Cylinders'}</span>
+                                <span className="text-sm font-bold text-white truncate">{cylinders}</span>
                             </div>
                         </div>
                     )}
 
                     {/* Part Type */}
-                    <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-white/5 border border-white/5 text-white/80 min-w-0">
+                    <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl bg-white/5 border border-white/5 text-white/80 min-w-0 overflow-hidden">
                         <Tag size={16} className="text-purple-400 shrink-0" />
                         <div className="flex flex-col min-w-0">
-                            <span className="text-[10px] text-white/40 uppercase tracking-wider">{offersT?.labels?.type || 'Type'}</span>
-                            <span className="text-sm font-medium truncate">
+                            <span className="text-[10px] text-white/40 uppercase tracking-wider shrink-0">{offersT?.labels?.type || 'Type'}</span>
+                            <span className="text-xs sm:text-sm font-medium truncate min-w-0">
                                 {offersT?.partTypes?.[(partType || 'Original').toLowerCase()] || partType || 'Original'}
                             </span>
                         </div>
                     </div>
 
                     {/* Warranty */}
-                    <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/5 text-white/80">
+                    <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/5 text-white/80 min-w-0 overflow-hidden">
                         <ShieldCheck size={16} className="text-gold-400 shrink-0" />
-                        <div className="flex flex-col">
-                            <span className="text-[10px] text-white/40 uppercase tracking-wider">{offersT?.labels?.warranty || 'Warranty'}</span>
-                            <span className="text-sm font-medium">{warrantyText}</span>
+                        <div className="flex flex-col min-w-0">
+                            <span className="text-[10px] text-white/40 uppercase tracking-wider shrink-0">{offersT?.labels?.warranty || 'Warranty'}</span>
+                            <span className="text-xs sm:text-sm font-medium truncate min-w-0">{warrantyText}</span>
                         </div>
                     </div>
 
                     {/* Part Price (New) - Now showing Final Price */}
-                    <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/5 text-white/80">
+                    <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/5 text-white/80 min-w-0 overflow-hidden">
                         <div className="text-yellow-400 font-bold shrink-0 text-lg">$</div>
-                        <div className="flex flex-col">
-                            <span className="text-[10px] text-white/40 uppercase tracking-wider">{offersT?.finalPrice || 'Final Price'}</span>
-                            <span className="text-sm font-medium">{priceValue.toLocaleString()} AED</span>
+                        <div className="flex flex-col min-w-0">
+                            <span className="text-[10px] text-white/40 uppercase tracking-wider shrink-0">{offersT?.finalPrice || 'Final Price'}</span>
+                            <span className="text-xs sm:text-sm font-medium truncate min-w-0">{priceValue.toLocaleString()} AED</span>
                         </div>
                     </div>
 
                     {/* Weight (Optional) - Strict Guard for '0' issue */}
                     {Number.isFinite(weightValue) && weightValue > 0 && (
-                        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/5 text-white/80">
+                        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/5 text-white/80 min-w-0 overflow-hidden">
                             <Box size={16} className="text-orange-400 shrink-0" />
-                            <div className="flex flex-col">
-                                <span className="text-[10px] text-white/40 uppercase tracking-wider">{offersT?.labels?.weight || 'Weight'}</span>
-                                <span className="text-sm font-medium">{weightValue} {offersT?.units?.kg || 'Kg'}</span>
+                            <div className="flex flex-col min-w-0">
+                                <span className="text-[10px] text-white/40 uppercase tracking-wider shrink-0">{offersT?.labels?.weight || 'Weight'}</span>
+                                <span className="text-xs sm:text-sm font-medium truncate min-w-0">{weightValue} {offersT?.units?.kg || 'Kg'}</span>
                             </div>
                         </div>
                     )}
