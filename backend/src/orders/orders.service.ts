@@ -17,6 +17,7 @@ import { WaybillsService } from '../waybills/waybills.service';
 import { OfferFulfillmentService } from './offer-fulfillment.service';
 import { OrderSlaService } from './order-sla.service';
 import { OfferFulfillmentStatus } from '@prisma/client';
+import { ASSEMBLY_CART_ORDER_STATUSES } from './assembly-cart.util';
 import { VerificationTasksService } from '../verification-tasks/verification-tasks.service';
 import { EscrowService } from '../payments/escrow.service';
 import { OrderCompletionFinanceService } from '../payments/order-completion-finance.service';
@@ -3286,59 +3287,45 @@ export class OrdersService {
     }
 
     async getAssemblyCart(customerId: string) {
-        const cartOrderStatuses: OrderStatus[] = [
-            OrderStatus.PREPARATION,
-            OrderStatus.PREPARED,
-            OrderStatus.VERIFICATION,
-            OrderStatus.VERIFICATION_SUCCESS,
-            OrderStatus.READY_FOR_SHIPPING,
-            OrderStatus.PARTIALLY_SHIPPED,
-        ];
-
-        const orders = await this.prisma.order.findMany({
-            where: {
-                customerId,
-                status: { in: cartOrderStatuses },
-                requestType: 'multiple',
-            },
-            include: {
-                parts: true,
-                store: true, // If single-store order
-                acceptedOffer: {
-                    include: { 
-                        store: true,
-                        payments: { where: { status: 'SUCCESS' } }
-                    }
-                },
-                offers: {
-                    where: {
-                        status: { in: ['accepted', 'ACCEPTED'] },
-                        shippedFromCart: false,
-                        fulfillmentStatus: { not: OfferFulfillmentStatus.CANCELLED },
-                    },
-                    include: {
-                        store: true,
-                        orderPart: true,
-                        payments: { where: { status: 'SUCCESS' } },
+        const [orders, assemblyCartMs] = await Promise.all([
+            this.prisma.order.findMany({
+                where: {
+                    customerId,
+                    status: { in: ASSEMBLY_CART_ORDER_STATUSES },
+                    requestType: 'multiple',
+                    offers: {
+                        some: {
+                            status: { in: ['accepted', 'ACCEPTED'] },
+                            shippedFromCart: false,
+                            fulfillmentStatus: { not: OfferFulfillmentStatus.CANCELLED },
+                        },
                     },
                 },
-                payments: {
-                    where: { status: 'SUCCESS' }
+                include: {
+                    parts: { select: { id: true, name: true, images: true } },
+                    store: { select: { name: true } },
+                    offers: {
+                        where: {
+                            status: { in: ['accepted', 'ACCEPTED'] },
+                            shippedFromCart: false,
+                            fulfillmentStatus: { not: OfferFulfillmentStatus.CANCELLED },
+                        },
+                        include: {
+                            store: { select: { name: true } },
+                            payments: { where: { status: 'SUCCESS' } },
+                        },
+                    },
+                    shippingAddresses: { take: 1 },
                 },
-                shippingAddresses: true
-            },
-            orderBy: { createdAt: 'desc' }
-        });
-
-        const assemblyCartMs = await this.orderDurationConfig.getAssemblyCartMs();
+                orderBy: { createdAt: 'desc' },
+            }),
+            this.orderDurationConfig.getAssemblyCartMs(),
+        ]);
 
         // Format for the frontend CartItemType
         const cartItems = [];
         for (const order of orders) {
-            // For each accepted offer (which is paid, since order is PREPARATION)
-            const acceptedOffers = order.offers.length > 0 ? order.offers : (order.acceptedOffer ? [order.acceptedOffer] : []);
-
-            for (const offer of acceptedOffers as any[]) {
+            for (const offer of order.offers as any[]) {
                 if (!offer.payments?.length) continue;
 
                 // Per-offer 7-day clock (matches auto-ship SLA) — not order first payment.
@@ -3409,49 +3396,34 @@ export class OrdersService {
     async getMerchantAssemblyCart(userId: string, storeId: string) {
         if (!storeId) return [];
 
-        const cartOrderStatuses: OrderStatus[] = [
-            OrderStatus.PREPARATION,
-            OrderStatus.PREPARED,
-            OrderStatus.VERIFICATION,
-            OrderStatus.VERIFICATION_SUCCESS,
-            OrderStatus.READY_FOR_SHIPPING,
-            OrderStatus.PARTIALLY_SHIPPED,
-        ];
+        const cartOfferWhere: Prisma.OfferWhereInput = {
+            status: { in: ['accepted', 'ACCEPTED'] },
+            shippedFromCart: false,
+            fulfillmentStatus: { not: OfferFulfillmentStatus.CANCELLED },
+        };
 
-        const orders = await this.prisma.order.findMany({
-            where: {
-                status: { in: cartOrderStatuses },
-                requestType: 'multiple',
-                offers: {
-                    some: {
-                        storeId: storeId,
-                        status: 'accepted',
-                        shippedFromCart: false
-                    }
-                }
-            },
-            include: {
-                parts: true,
-                store: true,
-                offers: {
-                    where: { 
-                        status: 'accepted',
-                        shippedFromCart: false
+        const [orders, assemblyCartMs] = await Promise.all([
+            this.prisma.order.findMany({
+                where: {
+                    status: { in: ASSEMBLY_CART_ORDER_STATUSES },
+                    requestType: 'multiple',
+                    offers: { some: { ...cartOfferWhere, storeId } },
+                },
+                include: {
+                    parts: { select: { id: true, name: true, images: true } },
+                    offers: {
+                        where: cartOfferWhere,
+                        include: {
+                            store: { select: { name: true } },
+                            payments: { where: { status: 'SUCCESS' } },
+                        },
                     },
-                    include: { 
-                        store: true,
-                        payments: { where: { status: 'SUCCESS' } }
-                    }
+                    shippingAddresses: { take: 1 },
                 },
-                payments: {
-                    where: { status: 'SUCCESS' }
-                },
-                shippingAddresses: true
-            },
-            orderBy: { createdAt: 'desc' }
-        });
-
-        const assemblyCartMs = await this.orderDurationConfig.getAssemblyCartMs();
+                orderBy: { createdAt: 'desc' },
+            }),
+            this.orderDurationConfig.getAssemblyCartMs(),
+        ]);
         const cartItems = [];
         for (const order of orders) {
             for (const offer of order.offers as any[]) {
@@ -5564,17 +5536,8 @@ export class OrdersService {
     }
 
     async getAdminShippingCarts(search?: string) {
-        const cartOrderStatuses: OrderStatus[] = [
-            OrderStatus.PREPARATION,
-            OrderStatus.PREPARED,
-            OrderStatus.VERIFICATION,
-            OrderStatus.VERIFICATION_SUCCESS,
-            OrderStatus.READY_FOR_SHIPPING,
-            OrderStatus.PARTIALLY_SHIPPED,
-        ];
-
         const baseWhere: Prisma.OrderWhereInput = {
-            status: { in: cartOrderStatuses },
+            status: { in: ASSEMBLY_CART_ORDER_STATUSES },
             requestType: 'multiple',
         };
 

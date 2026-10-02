@@ -5,6 +5,7 @@ import { OrdersService } from './orders.service';
 import { OrderStatus, ActorType, OfferFulfillmentStatus } from '@prisma/client';
 import { WaybillsService } from '../waybills/waybills.service';
 import { OrderDurationConfigService } from '../common/order-duration-config.service';
+import { ASSEMBLY_CART_ORDER_STATUSES } from './assembly-cart.util';
 
 @Injectable()
 export class ShippingAutomationService {
@@ -75,14 +76,7 @@ export class ShippingAutomationService {
                     },
                     // Only for orders in phases that support assembly cart
                     order: {
-                        status: {
-                            in: [
-                                OrderStatus.PREPARATION,
-                                OrderStatus.PARTIALLY_SHIPPED,
-                                OrderStatus.VERIFICATION_SUCCESS,
-                                OrderStatus.READY_FOR_SHIPPING,
-                            ],
-                        },
+                        status: { in: ASSEMBLY_CART_ORDER_STATUSES },
                     },
                 },
                 include: {
@@ -113,17 +107,23 @@ export class ShippingAutomationService {
                 {} as Record<string, { customerId: string; offerIds: string[] }>,
             );
 
-            for (const { customerId, offerIds } of Object.values(byOrder)) {
+            for (const [orderId, { customerId, offerIds }] of Object.entries(byOrder)) {
                 this.logger.log(
                     `🤖 Auto-shipping ${offerIds.length} item(s) for customer ${customerId} (one shipment per order batch)...`,
                 );
 
-                await this.ordersService.requestShipping(
-                    customerId,
-                    undefined,
-                    offerIds,
-                    true,
-                );
+                try {
+                    await this.ordersService.requestShipping(
+                        customerId,
+                        undefined,
+                        offerIds,
+                        true,
+                    );
+                } catch (err) {
+                    this.logger.error(
+                        `❌ Auto-ship failed for order ${orderId}: ${(err as Error)?.message}`,
+                    );
+                }
             }
 
             this.logger.log('✨ Auto-shipping audit completed successfully.');

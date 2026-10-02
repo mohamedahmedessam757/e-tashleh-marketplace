@@ -1,35 +1,40 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, ArrowRight, Info, PackageCheck, CheckSquare, Square } from 'lucide-react';
+import { ArrowRight, Info, PackageCheck, CheckSquare, Square } from 'lucide-react';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { CartItem } from './CartItem';
 import { AssemblyCartHandoverBanner } from './AssemblyCartHandoverBanner';
 import { AssemblyCartAutoShipNote } from './AssemblyCartAutoShipNote';
-import { GlassCard } from '../../ui/GlassCard';
+import { AssemblyCartLoadState } from './AssemblyCartLoadState';
 import { useCartStore } from '../../../stores/useCartStore';
 import { getCurrentUserId } from '../../../utils/auth';
 
 export const ShippingCartPage: React.FC = () => {
-    const { t } = useLanguage();
-    const { items, loading, error, fetchCartItems, requestShipping, requestingShipping, subscribeToRealtime, unsubscribeFromRealtime } = useCartStore();
+    const { t, language } = useLanguage();
+    const isAr = language === 'ar';
+    const { items, loading, loaded, error, fetchCartItems, requestShipping, requestingShipping, subscribeToRealtime, unsubscribeFromRealtime } = useCartStore();
     
     const [selectedOfferIds, setSelectedOfferIds] = useState<string[]>([]);
 
     useEffect(() => {
-        fetchCartItems();
+        void fetchCartItems({ silent: true });
         subscribeToRealtime(getCurrentUserId() || undefined);
         return () => unsubscribeFromRealtime();
     }, [fetchCartItems, subscribeToRealtime, unsubscribeFromRealtime]);
-
-    // Reset selection when items change (e.g. after a partial shipment)
-    useEffect(() => {
-        setSelectedOfferIds([]);
-    }, [items.length]);
 
     const selectableItems = useMemo(
         () => items.filter((i) => i.canSelectForShipping !== false),
         [items],
     );
+
+    // Live refreshes keep the user's selection; only drop items that left the cart or became locked.
+    useEffect(() => {
+        const stillSelectable = new Set(selectableItems.map((i) => i.offerId));
+        setSelectedOfferIds((prev) => {
+            const next = prev.filter((id) => stillSelectable.has(id));
+            return next.length === prev.length ? prev : next;
+        });
+    }, [selectableItems]);
 
     const handleSelectToggle = (offerId: string) => {
         const item = items.find((i) => i.offerId === offerId);
@@ -94,7 +99,9 @@ export const ShippingCartPage: React.FC = () => {
                             className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-colors text-sm font-medium"
                         >
                             {selectableItems.length > 0 && selectableItems.every((i) => selectedOfferIds.includes(i.offerId)) ? <CheckSquare size={16} className="text-gold-500" /> : <Square size={16} />}
-                            {selectableItems.length > 0 && selectableItems.every((i) => selectedOfferIds.includes(i.offerId)) ? 'إلغاء الكل' : 'تحديد الجاهز'}
+                            {selectableItems.length > 0 && selectableItems.every((i) => selectedOfferIds.includes(i.offerId))
+                                ? (isAr ? 'إلغاء الكل' : 'Clear all')
+                                : (isAr ? 'تحديد الجاهز' : 'Select ready')}
                         </button>
                     )}
                     <div className="bg-white/5 px-4 py-2 rounded-lg border border-white/10">
@@ -107,7 +114,7 @@ export const ShippingCartPage: React.FC = () => {
             <AssemblyCartAutoShipNote />
             <AssemblyCartHandoverBanner items={items} />
 
-            {error && (
+            {error && (loaded || items.length > 0) && (
                 <div className="p-4 bg-red-500/10 border border-red-500/25 rounded-xl text-red-200 text-sm font-medium">
                     {error}
                 </div>
@@ -161,15 +168,15 @@ export const ShippingCartPage: React.FC = () => {
                     ))}
                 </AnimatePresence>
 
-                {items.length === 0 && !loading && (
-                    <GlassCard className="text-center py-20 border border-dashed border-white/10">
-                        <ShoppingBag className="mx-auto mb-4 text-white/20" size={48} />
-                        <p className="text-white/50 font-medium mb-2">{t.dashboard.shippingCart.empty}</p>
-                        <p className="text-white/30 text-sm max-w-md mx-auto">
-                            {t.dashboard.shippingCart.emptyDesc}
-                        </p>
-                    </GlassCard>
-                )}
+                <AssemblyCartLoadState
+                    itemsCount={items.length}
+                    loading={loading}
+                    loaded={loaded}
+                    error={error}
+                    emptyTitle={t.dashboard.shippingCart.empty}
+                    emptyDesc={t.dashboard.shippingCart.emptyDesc}
+                    onRetry={() => void fetchCartItems()}
+                />
             </div>
 
             {/* Bottom Floating Bar */}

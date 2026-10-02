@@ -113,4 +113,13 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
       this.server.to(`user_${id}`).emit('shipment_updated', event);
     }
   }
+
+  /** Lightweight "refetch hint" for order / accepted-offer changes (assembly cart, order details). */
+  emitOrderUpdated(userIds: string[], payload: { orderId: string }) {
+    if (!this.server) return;
+    const event = { orderId: payload.orderId, at: new Date().toISOString() };
+    for (const id of new Set(userIds)) {
+      this.server.to(`user_${id}`).emit('order_updated', event);
+    }
+  }
 }

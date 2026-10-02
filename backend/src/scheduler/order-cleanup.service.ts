@@ -14,6 +14,7 @@ import { EscrowService } from '../payments/escrow.service';
 import { CronLockService } from '../common/cron-lock.service';
 import { ShippingReviewService } from '../offers/shipping-review.service';
 import { CUSTOMER_VISIBLE_SHIPPING_REVIEW } from '../offers/shipping-review.util';
+import { ASSEMBLY_CART_ORDER_STATUSES } from '../orders/assembly-cart.util';
 
 @Injectable()
 export class OrderCleanupService {
@@ -386,14 +387,7 @@ export class OrderCleanupService {
                     some: { status: 'SUCCESS' },
                 },
                 order: {
-                    status: {
-                        in: [
-                            OrderStatus.PREPARATION,
-                            OrderStatus.PARTIALLY_SHIPPED,
-                            OrderStatus.VERIFICATION_SUCCESS,
-                            OrderStatus.READY_FOR_SHIPPING,
-                        ],
-                    },
+                    status: { in: ASSEMBLY_CART_ORDER_STATUSES },
                 },
             },
             include: {
@@ -519,14 +513,7 @@ export class OrderCleanupService {
         const reminderDay = Math.max(assemblyDays - 1, 1);
         const orders = await this.prisma.order.findMany({
             where: {
-                status: {
-                    in: [
-                        OrderStatus.PREPARATION,
-                        OrderStatus.PARTIALLY_SHIPPED,
-                        OrderStatus.VERIFICATION_SUCCESS,
-                        OrderStatus.READY_FOR_SHIPPING,
-                    ],
-                },
+                status: { in: ASSEMBLY_CART_ORDER_STATUSES },
             },
             include: {
                 payments: true,

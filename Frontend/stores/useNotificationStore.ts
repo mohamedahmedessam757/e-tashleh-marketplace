@@ -415,6 +415,10 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
     // Shipments live sync — Supabase realtime is RLS-blocked for anon clients,
     // so the backend relays shipment / status-log / waybill changes over this socket.
+    socket.on('order_updated', (payload: { orderId?: string }) => {
+      window.dispatchEvent(new CustomEvent('order-updated', { detail: payload || {} }));
+    });
+
     socket.on('shipment_updated', (payload: { orderId?: string; shipmentIds?: string[] }) => {
       window.dispatchEvent(new CustomEvent('shipment-updated', { detail: payload || {} }));
       void import('./useShipmentsStore').then(({ useShipmentsStore }) => {

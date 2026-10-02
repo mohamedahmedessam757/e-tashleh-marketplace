@@ -1,19 +1,19 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, PackageCheck, Info } from 'lucide-react';
+import { PackageCheck, Info } from 'lucide-react';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { MerchantCartItem } from './MerchantCartItem';
-import { GlassCard } from '../../ui/GlassCard';
 import { useCartStore } from '../../../stores/useCartStore';
 import { getCurrentUserId } from '../../../utils/auth';
 import { AssemblyCartAutoShipNote } from '../shipping-cart/AssemblyCartAutoShipNote';
+import { AssemblyCartLoadState } from '../shipping-cart/AssemblyCartLoadState';
 
 export const MerchantShippingCartPage: React.FC = () => {
     const { t } = useLanguage();
-    const { items, loading, fetchMerchantCartItems, subscribeToRealtime, unsubscribeFromRealtime } = useCartStore();
+    const { items, loading, loaded, error, fetchMerchantCartItems, subscribeToRealtime, unsubscribeFromRealtime } = useCartStore();
 
     useEffect(() => {
-        fetchMerchantCartItems();
+        void fetchMerchantCartItems({ silent: true });
         subscribeToRealtime(getCurrentUserId() || undefined);
         return () => unsubscribeFromRealtime();
     }, [fetchMerchantCartItems, subscribeToRealtime, unsubscribeFromRealtime]);
@@ -62,15 +62,15 @@ export const MerchantShippingCartPage: React.FC = () => {
                     ))}
                 </AnimatePresence>
 
-                {items.length === 0 && !loading && (
-                    <GlassCard className="text-center py-20 border border-dashed border-white/10">
-                        <ShoppingBag className="mx-auto mb-4 text-white/20" size={48} />
-                        <p className="text-white/50 font-medium mb-2">{t.dashboard.merchant.shippingCart.empty}</p>
-                        <p className="text-white/30 text-sm max-w-md mx-auto">
-                            {t.dashboard.merchant.shippingCart.emptyDesc}
-                        </p>
-                    </GlassCard>
-                )}
+                <AssemblyCartLoadState
+                    itemsCount={items.length}
+                    loading={loading}
+                    loaded={loaded}
+                    error={error}
+                    emptyTitle={t.dashboard.merchant.shippingCart.empty}
+                    emptyDesc={t.dashboard.merchant.shippingCart.emptyDesc}
+                    onRetry={() => void fetchMerchantCartItems()}
+                />
             </div>
         </div>
     );
