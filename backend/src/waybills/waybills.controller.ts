@@ -2,6 +2,7 @@ import { Controller, Get, Param, UseGuards, Request } from '@nestjs/common';
 import { WaybillsService } from './waybills.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ResourceAccessService } from '../common/authorization/resource-access.service';
+import { isMerchantRole, redactWaybillForMerchant } from '../common/privacy/merchant-customer-privacy.util';
 
 @Controller('waybills')
 export class WaybillsController {
@@ -18,7 +19,10 @@ export class WaybillsController {
             orderId,
         );
         const result = await this.waybillsService.getWaybillsByOrder(orderId);
-        return { success: true, waybills: result.waybills };
+        const waybills = isMerchantRole(req.user.role)
+            ? result.waybills.map((wb) => redactWaybillForMerchant(wb))
+            : result.waybills;
+        return { success: true, waybills };
     }
 
     @Get(':id')
@@ -29,6 +33,9 @@ export class WaybillsController {
             id,
         );
         const waybill = await this.waybillsService.getWaybillById(id);
-        return { success: true, waybill };
+        return {
+            success: true,
+            waybill: isMerchantRole(req.user.role) ? redactWaybillForMerchant(waybill) : waybill,
+        };
     }
 }

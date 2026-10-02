@@ -10,6 +10,7 @@ import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import { ActorType, UserRole } from '@prisma/client';
 import { ResourceAccessService } from '../common/authorization/resource-access.service';
+import { isMerchantRole, redactOrderCustomerForMerchant } from '../common/privacy/merchant-customer-privacy.util';
 
 import { ExcelService } from './excel.service';
 import { Response } from 'express';
@@ -39,10 +40,13 @@ export class OrdersController {
     @Get()
     async findAll(@Request() req, @Query() query: FindAllOrdersDto) {
         const result = await this.ordersService.findAll(req.user, query);
-        
-        // For vendors, include their storeId so frontend can reliably identify own offers
-        if (req.user.role === 'VENDOR' && req.user.storeId) {
-            return { ...result, requestingStoreId: req.user.storeId };
+
+        if (isMerchantRole(req.user.role)) {
+            const items = (result.items as any[]).map((o) => redactOrderCustomerForMerchant(o));
+            // For vendors, include their storeId so frontend can reliably identify own offers
+            return req.user.storeId
+                ? { ...result, items, requestingStoreId: req.user.storeId }
+                : { ...result, items };
         }
         return result;
     }
@@ -105,7 +109,8 @@ export class OrdersController {
     @Get(':id')
     async findOne(@Request() req, @Param('id') id: string) {
         await this.resourceAccess.assertUserCanAccessOrder(this.actorFrom(req), id);
-        return this.ordersService.findOneWithContext(id, req.user);
+        const order = await this.ordersService.findOneWithContext(id, req.user);
+        return isMerchantRole(req.user.role) ? redactOrderCustomerForMerchant(order) : order;
     }
 
     @Patch(':id/transition')
@@ -342,6 +347,7 @@ export class OrdersController {
         @Res() res: Response,
         @Query('shipmentId') shipmentId?: string
     ) {
+        await this.resourceAccess.assertUserCanAccessOrder(this.actorFrom(req), id);
         return this.excelService.exportWaybill(id, req.user, res, shipmentId);
     }
 }

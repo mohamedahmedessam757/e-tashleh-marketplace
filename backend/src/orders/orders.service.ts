@@ -18,6 +18,7 @@ import { OfferFulfillmentService } from './offer-fulfillment.service';
 import { OrderSlaService } from './order-sla.service';
 import { OfferFulfillmentStatus } from '@prisma/client';
 import { ASSEMBLY_CART_ORDER_STATUSES } from './assembly-cart.util';
+import { redactShippingAddressForMerchant } from '../common/privacy/merchant-customer-privacy.util';
 import { VerificationTasksService } from '../verification-tasks/verification-tasks.service';
 import { EscrowService } from '../payments/escrow.service';
 import { OrderCompletionFinanceService } from '../payments/order-completion-finance.service';
@@ -3487,7 +3488,9 @@ export class OrdersService {
                     partsCount: 1, // Set to 1 as this card represents a single part
                     requestType: order.requestType || 'N/A',
                     shippingType: order.shippingType || 'N/A',
-                    shippingAddress: isMyOffer ? (order.shippingAddresses?.[0] || null) : null,
+                    shippingAddress: isMyOffer
+                        ? redactShippingAddressForMerchant(order.shippingAddresses?.[0] || null)
+                        : null,
                     totalPaid: finalPrice,
                     isMyOffer: isMyOffer,
                     fulfillmentStatus,

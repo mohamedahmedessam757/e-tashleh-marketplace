@@ -166,8 +166,13 @@ export const MerchantCartItem: React.FC<MerchantCartItemProps> = ({ item }) => {
                                 {isAr ? 'وجهة الشحن للعميل' : 'CUSTOMER SHIPPING DESTINATION'}
                             </h5>
                             <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs">
-                                <p className="text-white/80"><span className="text-white/40">الاسم: </span>{isAr ? 'عميل منصة إي-تشليح' : 'E-Tashleh Customer'}</p>
-                                <p className="text-white/80"><span className="text-white/40">المدينة: </span>{item.shippingAddress.city}</p>
+                                <p className="text-white/80">
+                                    <span className="text-white/40">{isAr ? 'الاسم: ' : 'Name: '}</span>
+                                    {item.shippingAddress.fullName || (isAr ? 'عميل منصة إي-تشليح' : 'E-Tashleh Customer')}
+                                </p>
+                                <p className="text-white/50">
+                                    {isAr ? 'بيانات التواصل والعنوان محمية من المنصة' : 'Contact details and address are protected by the platform'}
+                                </p>
                             </div>
                         </div>
                     )}

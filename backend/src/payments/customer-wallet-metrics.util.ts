@@ -8,14 +8,22 @@ export const CUSTOMER_NET_DEBIT_TYPES = new Set([
 
 export const EXCLUDED_ORDER_STATUSES_FOR_PURCHASES = ['CANCELLED', 'REFUNDED'] as const;
 
+/**
+ * Paid orders whose rewards are not settled yet. Multi-part orders take the status of their
+ * slowest part (PARTIALLY_PAID / PARTIALLY_SHIPPED / NON_MATCHING …), so those must count
+ * as pending too — otherwise paid parts show 0 cashback / 0 points until the whole order closes.
+ */
 export const CUSTOMER_PENDING_ORDER_STATUSES = [
+  'PARTIALLY_PAID',
   'PREPARATION',
   'PREPARED',
   'VERIFICATION',
   'VERIFICATION_SUCCESS',
   'READY_FOR_SHIPPING',
+  'PARTIALLY_SHIPPED',
   'SHIPPED',
   'DELIVERED',
+  'NON_MATCHING',
   'CORRECTION_PERIOD',
   'CORRECTION_SUBMITTED',
   'DELAYED_PREPARATION',

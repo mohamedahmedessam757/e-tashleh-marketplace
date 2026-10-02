@@ -3138,7 +3138,7 @@ export class PaymentsService {
         const nextTier = currentIdx < tiers.length - 1 ? tiers[currentIdx + 1] : null;
         const nextTierData = nextTier ? tierConfig[nextTier] : null;
 
-        const ACTIVE_STATUSES = ['PREPARATION', 'PREPARED', 'VERIFICATION', 'VERIFICATION_SUCCESS', 'READY_FOR_SHIPPING', 'SHIPPED', 'CORRECTION_PERIOD', 'CORRECTION_SUBMITTED', 'DELAYED_PREPARATION', 'NON_MATCHING'];
+        const ACTIVE_STATUSES = [...CUSTOMER_PENDING_REWARD_ORDER_STATUSES];
 
         // 3. KPI cards — always all-time (never date-filtered)
         // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•

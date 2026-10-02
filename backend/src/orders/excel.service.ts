@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { PrismaService } from '../prisma/prisma.service';
 import * as ExcelJS from 'exceljs';
 import { Response } from 'express';
+import { isMerchantRole, redactWaybillForMerchant } from '../common/privacy/merchant-customer-privacy.util';
 
 @Injectable()
 export class ExcelService {
@@ -11,7 +12,7 @@ export class ExcelService {
         const order = await this.prisma.order.findUnique({
             where: { id: orderId },
             include: {
-                customer: true,
+                customer: { select: { name: true, email: true, phone: true } },
                 store: true,
                 parts: true,
                 acceptedOffer: true,
@@ -165,18 +166,15 @@ export class ExcelService {
             }
         }
 
-        const waybills = await this.prisma.shippingWaybill.findMany({
-            where,
-            include: { order: true, store: true }
-        });
+        const isMerchant = isMerchantRole(user.role);
+        if (isMerchant) {
+            if (!user.storeId) throw new ForbiddenException('Unauthorized access');
+            where.storeId = user.storeId;
+        }
+
+        const waybills = await this.prisma.shippingWaybill.findMany({ where });
 
         if (!waybills || waybills.length === 0) throw new NotFoundException('Waybills not found');
-
-        const isMerchant = user.role === 'VENDOR' || user.role === 'MERCHANT';
-        if (isMerchant && waybills[0].storeId !== user.storeId) {
-            console.error(`[ExcelService] 403 Forbidden: Waybill Store mismatch. UserStore: ${user.storeId}, WaybillStore: ${waybills[0].storeId}`);
-            throw new ForbiddenException('Unauthorized access');
-        }
 
         const workbook = new ExcelJS.Workbook();
         const sheet = workbook.addWorksheet('Waybills');
@@ -184,12 +182,13 @@ export class ExcelService {
         sheet.addRow(['Waybill Number', 'Recipient', 'City', 'Phone', 'Part', 'Price', 'Currency', 'Issued At']);
         sheet.getRow(1).font = { bold: true };
 
-        waybills.forEach(wb => {
+        waybills.forEach(raw => {
+            const wb = isMerchant ? redactWaybillForMerchant(raw) : raw;
             sheet.addRow([
                 wb.waybillNumber,
-                isMerchant ? 'E-Tashleh Customer' : wb.recipientName,
-                wb.recipientCity,
-                isMerchant ? '---' : wb.recipientPhone,
+                wb.recipientName,
+                wb.recipientCity || '---',
+                wb.recipientPhone || '---',
                 wb.partName,
                 Number(wb.finalPrice),
                 wb.currency,

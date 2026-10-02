@@ -6,6 +6,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import { ResourceAccessService } from '../common/authorization/resource-access.service';
+import { isMerchantRole, redactOrderCustomerForMerchant } from '../common/privacy/merchant-customer-privacy.util';
 
 @Controller('shipments')
 @UseGuards(JwtAuthGuard)
@@ -34,7 +35,11 @@ export class ShipmentsController {
     @Get('order/:orderId')
     async getByOrderId(@Request() req, @Param('orderId') orderId: string) {
         await this.resourceAccess.assertUserCanAccessOrder(this.actorFrom(req), orderId);
-        return this.shipmentsService.getByOrderId(orderId);
+        const shipment = await this.shipmentsService.getByOrderId(orderId);
+        if (shipment?.order && isMerchantRole(req.user.role)) {
+            return { ...shipment, order: redactOrderCustomerForMerchant(shipment.order) };
+        }
+        return shipment;
     }
 
     @Get(':id/logs')

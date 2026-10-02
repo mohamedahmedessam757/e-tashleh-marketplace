@@ -777,7 +777,7 @@ export class WaybillsService {
             include: {
                 order: true,
                 orderPart: true,
-                store: true
+                store: { select: { id: true, name: true, storeCode: true, logo: true } },
             } as any
         } as any);
 

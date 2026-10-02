@@ -308,14 +308,14 @@ export const ShipmentDetailsPage: React.FC<ShipmentDetailsPageProps> = ({ shipme
                                                             <MapPin size={18} className="text-gold-500 shrink-0" />
                                                             <span className="text-xs sm:text-sm font-medium text-white/60">{isAr ? 'الدولة' : 'Country'}</span>
                                                         </div>
-                                                        <span className="font-bold text-white text-xs sm:text-sm text-end break-words min-w-0">{shipment.customerCountry}</span>
+                                                        <span className="font-bold text-white text-xs sm:text-sm text-end break-words min-w-0">{role === 'merchant' ? '---' : shipment.customerCountry}</span>
                                                     </div>
                                                     <div className="flex items-start sm:items-center justify-between gap-3 border-b border-white/5 pb-2">
                                                         <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
                                                             <Building2 size={18} className="text-gold-500 shrink-0" />
                                                             <span className="text-xs sm:text-sm font-medium text-white/60">{isAr ? 'المدينة' : 'City'}</span>
                                                         </div>
-                                                        <span className="font-bold text-white text-xs sm:text-sm text-end break-words min-w-0">{shipment.customerCity}</span>
+                                                        <span className="font-bold text-white text-xs sm:text-sm text-end break-words min-w-0">{role === 'merchant' ? '---' : shipment.customerCity}</span>
                                                     </div>
                                                     <div className="space-y-1">
                                                         <span className="text-[10px] text-white/30 uppercase font-bold">{isAr ? 'العنوان التفصيلي' : 'Full Address'}</span>
@@ -358,7 +358,9 @@ export const ShipmentDetailsPage: React.FC<ShipmentDetailsPageProps> = ({ shipme
                                                  </div>
                                                  <div className="flex-1 min-w-0 sm:text-end">
                                                      <p className="text-xs text-white/30 mb-1">{isAr ? 'الوجهة' : 'Destination'}</p>
-                                                     <p className="font-bold text-white text-sm sm:text-base break-words">{shipment.destination === 'Your Address' && isAr ? 'عنوانك الخاص' : shipment.destination}</p>
+                                                     <p className="font-bold text-white text-sm sm:text-base break-words">{role === 'merchant'
+                                                         ? (isAr ? 'عميل منصة إي-تشليح' : 'E-Tashleh Customer')
+                                                         : shipment.destination === 'Your Address' && isAr ? 'عنوانك الخاص' : shipment.destination}</p>
                                                  </div>
                                              </div>
 

@@ -17,6 +17,7 @@ import {
 import { resolveCompletionWarranty } from '../orders/warranty-activation.util';
 import { OrderDurationConfigService } from '../common/order-duration-config.service';
 import { OrderCompletionFinanceService } from '../payments/order-completion-finance.service';
+import { isMerchantRole } from '../common/privacy/merchant-customer-privacy.util';
 
 // Premium Bilingual status labels for notifications (Enthusiastic & Clear)
 const STATUS_LABELS: Record<string, { ar: string; en: string }> = {
@@ -592,8 +593,9 @@ export class ShipmentsService {
      */
     async findMyShipments(userId: string, role: string) {
         let orderFilter: any = {};
+        const isMerchant = isMerchantRole(role);
 
-        if (role === 'VENDOR' || role === 'MERCHANT') {
+        if (isMerchant) {
             const store = await this.prisma.store.findUnique({ where: { ownerId: userId } });
             if (!store) return [];
             // For vendors: verify ownership via storeId or acceptedOffer.storeId
@@ -768,16 +770,28 @@ export class ShipmentsService {
                         defaultOffer?.store?.storeCode ||
                         'STR-TASHLEH',
                     customerCode: `CUST-${order.customerId.substring(0, 8).toUpperCase()}`,
-                    shippingAddress: addr
-                        ? `${addr.details}, ${addr.city}, ${addr.country}`
-                        : 'Pending Address',
-                    customerCountry: addr?.country || 'N/A',
-                    customerCity: addr?.city || 'N/A',
-                    customerDetails: addr?.details || 'N/A',
-                    origin: 'Tashleh Hub',
-                    destination: addr
-                        ? `${addr.city}, ${addr.country}`
-                        : 'Customer Address',
+                    ...(isMerchant
+                        ? {
+                              // Merchants never receive customer location / contact data
+                              shippingAddress: null,
+                              customerCountry: null,
+                              customerCity: null,
+                              customerDetails: null,
+                              origin: 'Tashleh Hub',
+                              destination: 'E-Tashleh Customer',
+                          }
+                        : {
+                              shippingAddress: addr
+                                  ? `${addr.details}, ${addr.city}, ${addr.country}`
+                                  : 'Pending Address',
+                              customerCountry: addr?.country || 'N/A',
+                              customerCity: addr?.city || 'N/A',
+                              customerDetails: addr?.details || 'N/A',
+                              origin: 'Tashleh Hub',
+                              destination: addr
+                                  ? `${addr.city}, ${addr.country}`
+                                  : 'Customer Address',
+                          }),
                 });
             }
         }

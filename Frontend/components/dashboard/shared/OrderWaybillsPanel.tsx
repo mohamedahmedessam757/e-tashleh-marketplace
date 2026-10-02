@@ -50,6 +50,7 @@ export const OrderWaybillsPanel: React.FC<OrderWaybillsPanelProps> = ({
 
     const isGrouped = String(requestType || '').toLowerCase() === 'multiple';
     const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
+    const isMerchantView = ['MERCHANT', 'VENDOR'].includes(String(role || '').toUpperCase());
 
     const eligibleOffers = useMemo(
         () =>
@@ -266,17 +267,33 @@ export const OrderWaybillsPanel: React.FC<OrderWaybillsPanelProps> = ({
                             )}
 
                             <div className={`font-black text-lg sm:text-xl tracking-tighter break-words ${isPrint ? 'text-black' : 'text-white'}`}>
-                                {role === 'MERCHANT' ? (isAr ? 'عميل منصة إي-تشليح' : 'E-Tashleh Customer') : wb.recipientName}
+                                {wb.recipientName || (isAr ? 'عميل منصة إي-تشليح' : 'E-Tashleh Customer')}
                             </div>
-                            <div className={`text-sm font-bold mt-1 font-mono break-all ${isPrint ? 'text-gray-700' : 'text-white/60'}`}>
-                                {role === 'MERCHANT' ? '---' : wb.recipientPhone}
-                            </div>
-                            <div className={`text-xs font-black mt-1 uppercase tracking-wider break-words ${isPrint ? 'text-gray-800' : `text-${themeColor}-500`}`}>
-                                {wb.recipientCity}, {wb.recipientCountry}
-                            </div>
-                            <div className={`text-xs mt-2 leading-relaxed md:ms-auto max-w-xs break-words ${isPrint ? 'text-gray-600' : 'text-white/40'}`}>
-                                {role === 'MERCHANT' ? (isAr ? 'العنوان مخفي للخصوصية' : 'Address Hidden for Privacy') : wb.recipientAddress}
-                            </div>
+                            {isMerchantView && !isReturn ? (
+                                <div className={`text-xs mt-2 leading-relaxed md:ms-auto max-w-xs break-words ${isPrint ? 'text-gray-600' : 'text-white/40'}`}>
+                                    {isAr
+                                        ? 'بيانات التواصل والعنوان محمية من المنصة'
+                                        : 'Contact details and address are protected by the platform'}
+                                </div>
+                            ) : (
+                                <>
+                                    {wb.recipientPhone && (
+                                        <div className={`text-sm font-bold mt-1 font-mono break-all ${isPrint ? 'text-gray-700' : 'text-white/60'}`}>
+                                            {wb.recipientPhone}
+                                        </div>
+                                    )}
+                                    {(wb.recipientCity || wb.recipientCountry) && (
+                                        <div className={`text-xs font-black mt-1 uppercase tracking-wider break-words ${isPrint ? 'text-gray-800' : `text-${themeColor}-500`}`}>
+                                            {[wb.recipientCity, wb.recipientCountry].filter(Boolean).join(', ')}
+                                        </div>
+                                    )}
+                                    {wb.recipientAddress && (
+                                        <div className={`text-xs mt-2 leading-relaxed md:ms-auto max-w-xs break-words ${isPrint ? 'text-gray-600' : 'text-white/40'}`}>
+                                            {wb.recipientAddress}
+                                        </div>
+                                    )}
+                                </>
+                            )}
                             <div className="flex flex-wrap gap-2 mt-4 md:justify-end">
                                 {wb.customerCode && (
                                     <div className={`text-[10px] uppercase font-black px-3 py-1 rounded-lg break-all ${isPrint ? 'bg-gray-100 text-gray-700' : 'bg-white/5 text-white/30 border border-white/5'}`}>
