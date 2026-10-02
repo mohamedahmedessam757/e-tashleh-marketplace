@@ -28,6 +28,14 @@ import {
     offerHasUsableWarranty,
 } from './warranty-activation.util';
 import { shouldCloseOrderChat } from '../chat/chat-offer-expiry.util';
+import { runDetached } from '../common/utils/run-detached';
+
+/** Verification media must live in our own verification-docs bucket (no third-party URLs). */
+function isOwnVerificationMediaUrl(url: string): boolean {
+    const base = (process.env.SUPABASE_URL || '').trim().replace(/\/+$/, '');
+    if (!base) return true;
+    return url.trim().startsWith(`${base}/storage/v1/object/public/verification-docs/`);
+}
 import { OrderCompletionFinanceService } from '../payments/order-completion-finance.service';
 import {
     aggregateStatusBranch,
@@ -232,7 +240,10 @@ export class OfferFulfillmentService {
         return { cancelledOfferIds, nextStatus };
     }
 
-    async recomputeOrderStatus(orderId: string): Promise<OrderStatus> {
+    async recomputeOrderStatus(
+        orderId: string,
+        opts?: { deferNotifications?: boolean },
+    ): Promise<OrderStatus> {
         const order = await this.prisma.order.findUnique({
             where: { id: orderId },
             include: {
@@ -337,7 +348,7 @@ export class OfferFulfillmentService {
             });
 
             // Aggregate path bypasses OrdersService.transitionStatus — emit ORDER_STATUS WA/in-app here.
-            await this.notifyAggregateStatusChange({
+            const notifyParams = {
                 orderId,
                 orderNumber: order.orderNumber,
                 customerId: order.customerId,
@@ -347,12 +358,19 @@ export class OfferFulfillmentService {
                     requestType: order.requestType,
                     parts: allAccepted.length > 1 ? allAccepted : allAccepted.slice(0, 1),
                 }),
-            }).catch((err) => {
-                console.error(
-                    `Failed aggregate status notify for order ${orderId}:`,
-                    err instanceof Error ? err.message : err,
+            };
+            if (opts?.deferNotifications) {
+                runDetached(`aggregate-status-notify:${orderId}`, () =>
+                    this.notifyAggregateStatusChange(notifyParams),
                 );
-            });
+            } else {
+                await this.notifyAggregateStatusChange(notifyParams).catch((err) => {
+                    console.error(
+                        `Failed aggregate status notify for order ${orderId}:`,
+                        err instanceof Error ? err.message : err,
+                    );
+                });
+            }
 
             if (shouldCloseOrderChat(effectiveStatus)) {
                 this.chatService.lockOrderVendorChatOnCompletion(orderId).catch((err) => {
@@ -592,17 +610,26 @@ export class OfferFulfillmentService {
             );
         }
 
-        await this.prisma.offer.update({
-            where: { id: offerId },
+        // Conditional claim: a concurrent verification submit cannot be downgraded back to PREPARED.
+        const claimed = await this.prisma.offer.updateMany({
+            where: {
+                id: offerId,
+                fulfillmentStatus: {
+                    in: [OfferFulfillmentStatus.IN_PREPARATION, OfferFulfillmentStatus.PREPARED],
+                },
+            },
             data: {
                 fulfillmentStatus: OfferFulfillmentStatus.PREPARED,
                 preparedAt: new Date(),
             },
         });
+        if (claimed.count === 0) {
+            throw new BadRequestException('Offer fulfillment status changed. Please refresh and try again.');
+        }
 
         const partName = this.partLabel(offer, order);
         const prevOrderStatus = order.status;
-        const newStatus = await this.recomputeOrderStatus(orderId);
+        const newStatus = await this.recomputeOrderStatus(orderId, { deferNotifications: true });
         const isMulti = resolveIsMultiItemOrder(order);
         const copyCtx = { isMulti, orderNumber: order.orderNumber, partName };
         const preparedCopy = partPrepared(copyCtx);
@@ -621,51 +648,55 @@ export class OfferFulfillmentService {
             metadata: { offerId, partName },
         });
 
-        await this.notifications.create({
-            recipientId: order.customerId,
-            recipientRole: 'CUSTOMER',
-            titleAr: `تم تجهيز قطعة: ${partName}`,
-            titleEn: `Part prepared: ${partName}`,
-            messageAr: preparedCopy.messageAr,
-            messageEn: preparedCopy.messageEn,
-            type: 'ORDER',
-            link: `/dashboard/orders/${order.id}`,
-            metadata: {
-                offerId,
-                orderId,
-                orderNumber: order.orderNumber,
-                waEvent: 'ORDER_STATUS',
-            },
-        }).catch(() => {});
-
-        await this.notifications.notifyAdmins({
-            titleAr: `تجهيز قطعة — #${order.orderNumber}`,
-            titleEn: `Part prepared — #${order.orderNumber}`,
-            messageAr: `تم تجهيز «${partName}» من قبل المتجر.`,
-            messageEn: `Part "${partName}" marked prepared by merchant.`,
-            type: 'ORDER',
-            link: `/admin/orders/${order.id}`,
-            metadata: { offerId, orderId },
-        }).catch(() => {});
-
-        if (newStatus === OrderStatus.PREPARED && prevOrderStatus !== OrderStatus.PREPARED) {
-            await this.notifications.create({
-                recipientId: order.customerId,
-                recipientRole: 'CUSTOMER',
-                titleAr: allPreparedCopy.titleAr,
-                titleEn: allPreparedCopy.titleEn,
-                messageAr: allPreparedCopy.messageAr,
-                messageEn: allPreparedCopy.messageEn,
-                type: 'ORDER',
-                link: `/dashboard/orders/${order.id}`,
-                metadata: {
-                    offerId,
-                    orderId,
-                    orderNumber: order.orderNumber,
-                    waEvent: 'ORDER_STATUS',
-                },
-            }).catch(() => {});
-        }
+        const allPartsJustPrepared =
+            newStatus === OrderStatus.PREPARED && prevOrderStatus !== OrderStatus.PREPARED;
+        runDetached(`mark-offer-prepared-notify:${offerId}`, async () => {
+            await Promise.allSettled([
+                this.notifications.create({
+                    recipientId: order.customerId,
+                    recipientRole: 'CUSTOMER',
+                    titleAr: `تم تجهيز قطعة: ${partName}`,
+                    titleEn: `Part prepared: ${partName}`,
+                    messageAr: preparedCopy.messageAr,
+                    messageEn: preparedCopy.messageEn,
+                    type: 'ORDER',
+                    link: `/dashboard/orders/${order.id}`,
+                    metadata: {
+                        offerId,
+                        orderId,
+                        orderNumber: order.orderNumber,
+                        waEvent: 'ORDER_STATUS',
+                    },
+                }),
+                this.notifications.notifyAdmins({
+                    titleAr: `تجهيز قطعة — #${order.orderNumber}`,
+                    titleEn: `Part prepared — #${order.orderNumber}`,
+                    messageAr: `تم تجهيز «${partName}» من قبل المتجر.`,
+                    messageEn: `Part "${partName}" marked prepared by merchant.`,
+                    type: 'ORDER',
+                    link: `/admin/orders/${order.id}`,
+                    metadata: { offerId, orderId },
+                }),
+            ]);
+            if (allPartsJustPrepared) {
+                await this.notifications.create({
+                    recipientId: order.customerId,
+                    recipientRole: 'CUSTOMER',
+                    titleAr: allPreparedCopy.titleAr,
+                    titleEn: allPreparedCopy.titleEn,
+                    messageAr: allPreparedCopy.messageAr,
+                    messageEn: allPreparedCopy.messageEn,
+                    type: 'ORDER',
+                    link: `/dashboard/orders/${order.id}`,
+                    metadata: {
+                        offerId,
+                        orderId,
+                        orderNumber: order.orderNumber,
+                        waEvent: 'ORDER_STATUS',
+                    },
+                });
+            }
+        });
 
         return { offerId, orderStatus: newStatus, fulfillmentStatus: OfferFulfillmentStatus.PREPARED };
     }
@@ -725,7 +756,7 @@ export class OfferFulfillmentService {
             throw new BadRequestException('At least one verification image is required.');
         }
         for (const img of parsedImages) {
-            if (typeof img !== 'string' || !isSafePublicMediaUrl(img)) {
+            if (typeof img !== 'string' || !isSafePublicMediaUrl(img) || !isOwnVerificationMediaUrl(img)) {
                 throw new BadRequestException({
                     statusCode: 400,
                     message: 'Invalid verification image URL.',
@@ -738,7 +769,7 @@ export class OfferFulfillmentService {
         if (!data.videoUrl || typeof data.videoUrl !== 'string') {
             throw new BadRequestException('Verification video URL is required.');
         }
-        if (!isSafePublicMediaUrl(data.videoUrl)) {
+        if (!isSafePublicMediaUrl(data.videoUrl) || !isOwnVerificationMediaUrl(data.videoUrl)) {
             throw new BadRequestException({
                 statusCode: 400,
                 message: 'Verification video must be uploaded before submitting.',
@@ -751,7 +782,8 @@ export class OfferFulfillmentService {
             data.recipientSignature &&
             typeof data.recipientSignature === 'string' &&
             data.recipientSignature.startsWith('http') &&
-            !isSafePublicMediaUrl(data.recipientSignature)
+            (!isSafePublicMediaUrl(data.recipientSignature) ||
+                !isOwnVerificationMediaUrl(data.recipientSignature))
         ) {
             throw new BadRequestException({
                 statusCode: 400,
@@ -833,29 +865,32 @@ export class OfferFulfillmentService {
             }),
         ]);
 
-        const newStatus = await this.recomputeOrderStatus(orderId);
+        const newStatus = await this.recomputeOrderStatus(orderId, { deferNotifications: true });
 
-        await this.notifications.notifyAdmins({
-            titleAr: `توثيق قطعة — #${order.orderNumber}`,
-            titleEn: `Part verification — #${order.orderNumber}`,
-            messageAr: `رفع المتجر توثيق «${partName}».`,
-            messageEn: `Merchant submitted verification for "${partName}".`,
-            type: 'system_alert',
-            link: `/admin/orders/${order.id}`,
-            metadata: { offerId },
-        }).catch(() => {});
-
-        await this.notifications.create({
-            recipientId: order.customerId,
-            recipientRole: 'CUSTOMER',
-            titleAr: `توثيق قيد المراجعة: ${partName}`,
-            titleEn: `Verification in review: ${partName}`,
-            messageAr: `تم رفع توثيق «${partName}» وهو قيد مراجعة الإدارة.`,
-            messageEn: `Verification for "${partName}" is under admin review.`,
-            type: 'ORDER',
-            link: `/dashboard/orders/${order.id}`,
-            metadata: { offerId, orderId, verification: true, waEvent: 'VERIFICATION' },
-        }).catch(() => {});
+        runDetached(`submit-verification-notify:${offerId}`, () =>
+            Promise.allSettled([
+                this.notifications.notifyAdmins({
+                    titleAr: `توثيق قطعة — #${order.orderNumber}`,
+                    titleEn: `Part verification — #${order.orderNumber}`,
+                    messageAr: `رفع المتجر توثيق «${partName}».`,
+                    messageEn: `Merchant submitted verification for "${partName}".`,
+                    type: 'system_alert',
+                    link: `/admin/orders/${order.id}`,
+                    metadata: { offerId },
+                }),
+                this.notifications.create({
+                    recipientId: order.customerId,
+                    recipientRole: 'CUSTOMER',
+                    titleAr: `توثيق قيد المراجعة: ${partName}`,
+                    titleEn: `Verification in review: ${partName}`,
+                    messageAr: `تم رفع توثيق «${partName}» وهو قيد مراجعة الإدارة.`,
+                    messageEn: `Verification for "${partName}" is under admin review.`,
+                    type: 'ORDER',
+                    link: `/dashboard/orders/${order.id}`,
+                    metadata: { offerId, orderId, verification: true, waEvent: 'VERIFICATION' },
+                }),
+            ]),
+        );
 
         return { success: true, orderStatus: newStatus };
     }

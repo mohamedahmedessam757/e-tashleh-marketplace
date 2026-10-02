@@ -12,6 +12,8 @@ import { OrderSlaService } from '../orders/order-sla.service';
 import { OfferFulfillmentStatus } from '@prisma/client';
 import { EscrowService } from '../payments/escrow.service';
 import { CronLockService } from '../common/cron-lock.service';
+import { ShippingReviewService } from '../offers/shipping-review.service';
+import { CUSTOMER_VISIBLE_SHIPPING_REVIEW } from '../offers/shipping-review.util';
 
 @Injectable()
 export class OrderCleanupService {
@@ -28,6 +30,7 @@ export class OrderCleanupService {
         private readonly orderDurationConfig: OrderDurationConfigService,
         private readonly orderSla: OrderSlaService,
         private readonly cronLock: CronLockService,
+        private readonly shippingReview: ShippingReviewService,
     ) { }
 
     // Run every 1 minute to check for expired orders for near real-time expirations
@@ -39,7 +42,7 @@ export class OrderCleanupService {
             return;
         }
         // Prevent overlapping runs across instances (and slow ticks overlapping themselves).
-        // Stripe refunds must run AFTER the advisory lock transaction commits — never inside it.
+        // Stripe refunds must run AFTER the locked section finishes — never inside it.
         type PendingPartRefund = {
             orderId: string;
             offerIds: string[];
@@ -50,6 +53,12 @@ export class OrderCleanupService {
             'order-cleanup-minute',
             async (): Promise<PendingPartRefund[]> => {
                 const pending: PendingPartRefund[] = [];
+                // Must run before reveal: unresolved shipping reviews are withdrawn at bidding stop.
+                try {
+                    await this.shippingReview.expireUnresolvedShippingReviews();
+                } catch (err) {
+                    this.logger.error('expireUnresolvedShippingReviews failed (continuing cleanup):', err);
+                }
                 await this.handleCollectingOffersReveal();
                 await this.expireAwaitingSelection();
                 await this.expireAwaitingPayment();
@@ -708,7 +717,12 @@ export class OrderCleanupService {
             include: {
                 parts: { select: { id: true, name: true } },
                 offers: {
-                    where: { status: { not: 'rejected' } },
+                    // Only live, customer-visible offers count (held / withdrawn ones do not).
+                    where: {
+                        status: { notIn: ['rejected', 'withdrawn'] },
+                        isWithdrawn: false,
+                        ...CUSTOMER_VISIBLE_SHIPPING_REVIEW,
+                    },
                     select: { id: true, orderPartId: true },
                 },
             },
@@ -822,7 +836,11 @@ export class OrderCleanupService {
             },
             include: {
                 offers: {
-                    where: { status: { not: 'rejected' } },
+                    where: {
+                        status: { notIn: ['rejected', 'withdrawn'] },
+                        isWithdrawn: false,
+                        ...CUSTOMER_VISIBLE_SHIPPING_REVIEW,
+                    },
                     select: { id: true },
                 },
             },

@@ -33,7 +33,8 @@ const WEAK_DEBOUNCE_MS = 8000;
 const RECOVERED_MS = 2500;
 const POLL_OK_MS = 20_000;
 const POLL_BAD_MS = 5_000;
-const PROBE_TIMEOUT_MS = 4000;
+/** Must exceed the backend health check budget (2 × 3s + 0.5s) so slow-but-alive is not "down". */
+const PROBE_TIMEOUT_MS = 8000;
 const CONFIRM_GAP_MS = 400;
 /** Soft client blips need longer confirmation to avoid false platform_down */
 const SOFT_CONFIRM_GAP_MS = 1800;
@@ -247,13 +248,25 @@ export function useConnectivityStatus(): ConnectivityStatus {
       }
 
       if (isHealthProblem(health)) {
-        // Hard: Nest/Prisma reports DB unreachable or degraded — surface immediately
+        // Hard: Nest/Prisma reports DB unreachable or degraded — confirm once before surfacing
         if (isHardHealthFailure(health)) {
+          if (getActiveUploadCount() > 0) {
+            return;
+          }
+          await new Promise((r) => setTimeout(r, SOFT_CONFIRM_GAP_MS));
+          if (!mountedRef.current) return;
+          const confirmHard = await probeHealth(API_URL, PROBE_TIMEOUT_MS);
+          if (!mountedRef.current) return;
+          if (!isHealthProblem(confirmHard)) {
+            failStreakRef.current = 0;
+            evaluateHealthyPath(confirmHard.rttMs);
+            return;
+          }
           failStreakRef.current = 0;
           weakSinceRef.current = null;
           applyResolved('platform_down', {
-            rttMs: health.rttMs,
-            platformCause: 'database',
+            rttMs: confirmHard.rttMs,
+            platformCause: platformCauseFrom(confirmHard),
           });
           return;
         }

@@ -61,8 +61,8 @@ export const AdminAlerts: React.FC = () => {
                     title = (t.admin.alerts.types as any).shipping_class_mismatch
                         || (isAr ? 'اختلاف نوع الشحن' : 'Shipping class mismatch');
                     msg = isAr
-                        ? `يوجد ${a.count} عرض/عروض باختلاف تصنيف الشحن بين العميل والتاجر — راجع قبل الدفع`
-                        : `${a.count} offer(s) have customer vs merchant shipping-class mismatch — review before payment`;
+                        ? `عاجل: يوجد ${a.count} عرض بانتظار قرار نوع الشحن — سيُلغى تلقائياً عند نهاية ساعة التقديم 23`
+                        : `Urgent: ${a.count} offer(s) awaiting a shipping-type decision — auto-cancelled when bidding closes (hour 23)`;
                     break;
                 default:
                     title = isAr ? 'تنبيه نظام' : 'System Alert';

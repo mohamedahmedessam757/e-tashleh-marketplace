@@ -28,15 +28,23 @@ export function createDatabasePool(connectionString = process.env.DATABASE_URL):
     }
 
     const isSupabase = isSupabaseUrl(connectionString);
+    const poolMax = Number(process.env.DB_POOL_MAX) || 15;
     const config: PoolConfig = {
         connectionString: normalizeDatabaseUrl(connectionString),
-        max: 10,
-        connectionTimeoutMillis: 5000,
+        max: poolMax,
+        connectionTimeoutMillis: 10_000,
+        idleTimeoutMillis: 10_000,
+        keepAlive: true,
     };
 
     if (isSupabase) {
         config.ssl = { rejectUnauthorized: false };
     }
 
-    return new Pool(config);
+    const pool = new Pool(config);
+    // Without a listener, an idle-client error (e.g. pooler closing the socket) crashes the process.
+    pool.on('error', (err) => {
+        console.error('[pg-pool] idle client error (client discarded):', err?.message);
+    });
+    return pool;
 }

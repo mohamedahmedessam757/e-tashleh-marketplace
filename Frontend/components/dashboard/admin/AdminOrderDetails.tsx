@@ -394,6 +394,9 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
         return (order.offers || [])
             .filter((o: any) => {
                 if (!isActiveMerchantOffer(o)) return false;
+                const review = String(o.shippingReviewStatus || 'NONE').toUpperCase();
+                if (review === 'PENDING') return true;
+                if (review === 'APPROVED' || review === 'EXPIRED') return false;
                 const part = parts.find((p: any) => p.id === o.orderPartId);
                 const cust = part?.shippingClass;
                 const merch = o.partType;
@@ -869,6 +872,11 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                                         {isAr ? `قطعة ${item.partIndex}` : `Part ${item.partIndex}`}
                                                     </span>
                                                     <span>{item.part?.name || (item.offer as any).partName || 'Part'}</span>
+                                                    {String((item.offer as any).shippingReviewStatus || '').toUpperCase() === 'PENDING' && (
+                                                        <span className="text-[10px] font-bold text-red-300 bg-red-500/15 border border-red-500/30 px-2 py-0.5 rounded-md animate-pulse">
+                                                            {isAr ? 'بانتظار قرار الأدمن — مخفي عن العميل' : 'Awaiting admin decision — hidden from customer'}
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <div>
                                                     {isAr ? 'عميل' : 'Customer'}:{' '}

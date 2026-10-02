@@ -10,7 +10,7 @@ import { useEnforceExpiredOrderSla } from '../../../hooks/useEnforceExpiredOrder
 import { getDisplayOrderStatus } from '../../../utils/orderExpiryHelpers';
 import { useVendorStore } from '../../../stores/useVendorStore';
 import {
-    ArrowLeft, ArrowRight, Clock, MapPin, Package, Settings, Monitor, ShieldCheck, FileText, CheckCircle2, ChevronDown, MessageCircle, AlertTriangle, Search, Car, Box, Calendar, Truck, User, DollarSign, Weight, Shield, Edit3, XCircle, Loader2, ExternalLink, Scale, RefreshCcw
+    ArrowLeft, ArrowRight, Clock, MapPin, Package, Settings, Monitor, ShieldCheck, FileText, CheckCircle2, ChevronDown, MessageCircle, AlertTriangle, Search, Car, Box, Calendar, Truck, User, DollarSign, Weight, Shield, Edit3, XCircle, Loader2, ExternalLink, Scale, RefreshCcw, ShieldAlert
 } from 'lucide-react';
 import { CountdownTimer } from '../OrderDetails';
 import { PartCorrectionStatus } from '../shared/PartCorrectionStatus';
@@ -227,8 +227,13 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
     // Preparation States
     const [isPrepareDialogOpen, setIsPrepareDialogOpen] = useState(false);
     const [isPreparing, setIsPreparing] = useState(false);
-    const [prepareOfferId, setPrepareOfferId] = useState<string | null>(null);
+    // Snapshot taken when the dialog opens so realtime refetches can never swap the part shown.
+    const [prepareTarget, setPrepareTarget] = useState<{ id: string; name: string } | null>(null);
     const [verificationOfferId, setVerificationOfferId] = useState<string | null>(null);
+    // Offers auto-withdrawn because the admin did not resolve a shipping-type mismatch in time
+    const [restrictedOffers, setRestrictedOffers] = useState<
+        Array<{ id: string; orderPartId: string | null; offerNumber: string }>
+    >([]);
 
     // Shipping Request State
     const [isRequestingShipping, setIsRequestingShipping] = useState(false);
@@ -267,6 +272,9 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
             setPartDeletionCounts(
                 Array.isArray(response) ? {} : (response?.partDeletionCounts ?? {}),
             );
+            setRestrictedOffers(
+                Array.isArray(response) ? [] : (response?.restrictedOffers ?? []),
+            );
             const mappedOffers = (offersList || []).map((o: any) => ({
                 ...o,
                 storeCode: o.store?.storeCode || o.storeCode,
@@ -288,6 +296,18 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
     }, [orderId, order?.offers]);
 
     useOrderRealtimeSync(orderId, { onOffersChange: fetchMyOffers });
+
+    // Socket push (shipping-type review approved/expired) → refresh this merchant's offers now
+    useEffect(() => {
+        const onReview = (e: Event) => {
+            const detail = (e as CustomEvent<{ orderId?: string }>).detail;
+            if (detail?.orderId && String(detail.orderId) === String(orderId)) {
+                void fetchMyOffers();
+            }
+        };
+        window.addEventListener('offer-shipping-review', onReview);
+        return () => window.removeEventListener('offer-shipping-review', onReview);
+    }, [orderId, fetchMyOffers]);
 
     useEffect(() => {
         const fetchInitialData = async () => {
@@ -716,11 +736,6 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
         return { total, stepCounts };
     }, [merchantAcceptedOffers, fulfillmentSummary]);
 
-    const prepareOfferForDialog = useMemo(
-        () => offersNeedingPrepare.find((o) => o.id === prepareOfferId) || offersNeedingPrepare[0],
-        [offersNeedingPrepare, prepareOfferId],
-    );
-
     // Map partId -> check if awarded to ANOTHER merchant
     const awardedToOthers = useMemo(() => {
         const map = new Map<string, boolean>();
@@ -919,14 +934,15 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
     };
 
     const handleMarkPrepared = async () => {
-        const targetOfferId = prepareOfferId || offersNeedingPrepare[0]?.id;
-        if (!targetOfferId) return;
+        const targetOfferId = prepareTarget?.id;
+        if (!targetOfferId || isPreparing) return;
         setIsPreparing(true);
         try {
             await ordersApi.markOfferPrepared(String(orderId), targetOfferId);
-            await fetchOrder(String(orderId));
             setIsPrepareDialogOpen(false);
-            setPrepareOfferId(null);
+            setPrepareTarget(null);
+            void fetchOrder(String(orderId));
+            void fetchMyOffers();
         } catch (err: any) {
             console.error('Failed to mark prepared:', err);
             const msg = err?.response?.data?.message || err?.message;
@@ -1051,8 +1067,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                             }
                             setShowVerificationForm(false);
                             setVerificationOfferId(null);
-                            await fetchOrder(String(order.id));
-                            await fetchMyOffers();
+                            void Promise.all([fetchOrder(String(order.id)), fetchMyOffers()]);
                         } catch (err) {
                             console.error(err);
                             throw err; // VerificationForm will catch and show error
@@ -1856,6 +1871,37 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                 </div>
                                                 <p className="text-white/60 text-sm mb-4 leading-relaxed">{part.description || order.partDescription || (isAr ? 'لا توجد تفاصيل إضافية للقطعة المحددة.' : 'No additional details provided.')}</p>
 
+                                                {/* Offer restricted by admin: shipping-type mismatch not resolved before bidding closed */}
+                                                {!hasOffer && restrictedOffers.some((r) => r.orderPartId === part.id) && (
+                                                    <div className="mb-3 p-3 sm:p-4 rounded-xl border border-red-500/30 bg-red-500/10 flex flex-col sm:flex-row items-start gap-3 min-w-0">
+                                                        <div className="p-2 rounded-full bg-red-500/20 text-red-400 shrink-0">
+                                                            <ShieldAlert size={18} />
+                                                        </div>
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="text-sm font-bold text-red-300 mb-1">
+                                                                {isAr ? 'تم تقييد هذا العرض من الإدارة' : 'This offer was restricted by administration'}
+                                                            </p>
+                                                            <p className="text-xs text-white/70 leading-relaxed break-words">
+                                                                {isAr
+                                                                    ? 'تم تقييد هذا العرض من الإدارة بسبب اختلاف نوع الشحن بين المتجر والعميل. يمكنك إعادة التقديم مرة أخرى في حال طلب العميل القطع.'
+                                                                    : 'This offer was restricted by administration due to a shipping-type mismatch between the store and the customer. You may submit again if the customer requests the parts.'}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Offer held while admin decides on a shipping-type mismatch */}
+                                                {hasOffer && String(partOffer.shippingReviewStatus || '').toUpperCase() === 'PENDING' && (
+                                                    <div className="mb-3 px-3 py-2 rounded-xl border border-amber-500/30 bg-amber-500/10 flex items-start gap-2 min-w-0">
+                                                        <AlertTriangle size={14} className="text-amber-400 shrink-0 mt-0.5" />
+                                                        <span className="text-xs font-bold text-amber-300 leading-relaxed break-words">
+                                                            {isAr
+                                                                ? 'قيد مراجعة الإدارة: اختلاف نوع الشحن مع العميل'
+                                                                : 'Under admin review: shipping-type mismatch with the customer'}
+                                                        </span>
+                                                    </div>
+                                                )}
+
                                                 {/* Your Offer Summary for this part */}
                                                 {hasOffer && (
                                                     <div className="mt-3 p-3 bg-green-500/5 rounded-xl border border-green-500/15">
@@ -2102,7 +2148,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => {
-                                                                            setPrepareOfferId(partOffer.id);
+                                                                            setPrepareTarget({ id: String(partOffer.id), name: getMerchantOfferPartName(partOffer as any) });
                                                                             setIsPrepareDialogOpen(true);
                                                                         }}
                                                                         className="px-4 py-2 rounded-lg text-xs font-bold bg-blue-500 hover:bg-blue-400 text-white border border-blue-500/30"
@@ -2636,7 +2682,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                             key={offer.id}
                                             type="button"
                                             onClick={() => {
-                                                setPrepareOfferId(offer.id);
+                                                setPrepareTarget({ id: String(offer.id), name: getMerchantOfferPartName(offer as any) });
                                                 setIsPrepareDialogOpen(true);
                                             }}
                                             className={`w-full py-3 px-4 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 border ${
@@ -3680,9 +3726,9 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                 <h3 className="text-xl font-bold text-white">
                                     {isAr ? 'تأكيد تجهيز القطعة' : 'Confirm part preparation'}
                                 </h3>
-                                {prepareOfferForDialog && (
-                                    <p className="text-gold-400 font-bold text-sm">
-                                        {getMerchantOfferPartName(prepareOfferForDialog)}
+                                {prepareTarget?.name && (
+                                    <p className="text-gold-400 font-bold text-sm break-words">
+                                        {prepareTarget.name}
                                     </p>
                                 )}
                                 <p className="text-sm text-white/50 leading-relaxed px-2">
@@ -3706,7 +3752,10 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                     <span>{isAr ? 'نعم، القطعة جاهزة للتوثيق' : 'Yes, ready for verification'}</span>
                                 </button>
                                 <button
-                                    onClick={() => setIsPrepareDialogOpen(false)}
+                                    onClick={() => {
+                                        setIsPrepareDialogOpen(false);
+                                        setPrepareTarget(null);
+                                    }}
                                     disabled={isPreparing}
                                     className="w-full py-3.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white font-bold transition-colors border border-white/5"
                                 >

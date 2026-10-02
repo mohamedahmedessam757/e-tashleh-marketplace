@@ -177,6 +177,10 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     if (popupTypes.has(type)) return true;
     // Merchant verification correction — detailed popup (approve uses VerdictPopUp / SYSTEM)
     const meta = notification.metadata || {};
+    // Urgent admin decision: offer held for a customer/merchant shipping-class mismatch
+    if (meta.urgent === true && meta.shippingClassMismatch === true) {
+      return true;
+    }
     if (meta.verificationCorrection === true) {
       return true;
     }
@@ -361,6 +365,20 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
             void store.silentFetch();
           }
         });
+      }
+
+      // Shipping-type review decided/expired: refresh the open order + merchant offer panel
+      if (meta.shippingReview && meta.orderId) {
+        const oid = String(meta.orderId);
+        void import('./useOrderStore').then(({ useOrderStore }) => {
+          const store = useOrderStore.getState();
+          if (store.activeOrderId && String(store.activeOrderId) === oid) {
+            void store.fetchOrder(oid);
+          }
+        });
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('offer-shipping-review', { detail: { orderId: oid } }));
+        }
       }
 
       // Store activation / Stripe gate: refresh merchant status without reload

@@ -224,10 +224,23 @@ const OfferRow = memo(function OfferRow({
     acceptLoading,
     handlersRef,
 }: OfferRowProps) {
+    const { language } = useLanguage();
+    const isAr = language === 'ar';
+    const review = String(offer.shippingReviewStatus || 'NONE').toUpperCase();
     return (
         <div
             className="[content-visibility:auto] [contain-intrinsic-size:auto_280px] contain-paint"
         >
+            {readOnly && review === 'PENDING' && (
+                <div className="mb-2 text-[11px] font-bold text-red-300 bg-red-500/10 border border-red-500/30 px-3 py-1.5 rounded-lg">
+                    {isAr ? 'بانتظار قرار الأدمن (نوع الشحن) — مخفي عن العميل' : 'Awaiting admin shipping decision — hidden from customer'}
+                </div>
+            )}
+            {readOnly && review === 'APPROVED' && (
+                <div className="mb-2 text-[11px] font-bold text-green-300 bg-green-500/10 border border-green-500/30 px-3 py-1.5 rounded-lg">
+                    {isAr ? 'نوع الشحن معتمد من الإدارة' : 'Shipping type approved by admin'}
+                </div>
+            )}
             <OfferCard
                 {...offer}
                 storeName={offer.merchantName}

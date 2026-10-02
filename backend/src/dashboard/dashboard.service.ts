@@ -155,40 +155,14 @@ export class DashboardService {
             this.prisma.contractChangeRequest.count({
                 where: { status: 'PENDING_REVIEW' },
             }),
-            (async () => {
-                // Active pre-payment offers where merchant partType ≠ customer shippingClass
-                const rows = await this.prisma.offer.findMany({
-                    where: {
-                        isWithdrawn: false,
-                        status: { notIn: ['REJECTED', 'rejected', 'WITHDRAWN', 'withdrawn', 'CANCELLED', 'cancelled'] },
-                        orderPartId: { not: null },
-                        partType: { not: null },
-                        order: {
-                            status: {
-                                in: [
-                                    OrderStatus.AWAITING_OFFERS,
-                                    OrderStatus.COLLECTING_OFFERS,
-                                    OrderStatus.AWAITING_SELECTION,
-                                    OrderStatus.AWAITING_PAYMENT,
-                                ],
-                            },
-                        },
-                        payments: { none: { status: 'SUCCESS' } },
-                        orderPart: { shippingClass: { not: null } },
-                    },
-                    select: {
-                        partType: true,
-                        orderPart: { select: { shippingClass: true } },
-                    },
-                    take: 500,
-                });
-                return rows.filter(
-                    (r) =>
-                        r.orderPart?.shippingClass &&
-                        r.partType &&
-                        String(r.orderPart.shippingClass) !== String(r.partType),
-                ).length;
-            })(),
+            // Offers held (hidden from customer) until an admin shipping-class decision
+            this.prisma.offer.count({
+                where: {
+                    shippingReviewStatus: 'PENDING',
+                    isWithdrawn: false,
+                    status: 'pending',
+                },
+            }),
             this.prisma.order.findMany({
                 take: 5,
                 orderBy: { createdAt: 'desc' },
@@ -297,10 +271,10 @@ export class DashboardService {
                 : null,
             shippingClassMismatchCount > 0
                 ? {
-                      type: 'warning',
+                      type: 'error',
                       code: 'SHIPPING_CLASS_MISMATCH',
                       count: shippingClassMismatchCount,
-                      priority: 'high',
+                      priority: 'critical',
                   }
                 : null,
         ].filter(Boolean);

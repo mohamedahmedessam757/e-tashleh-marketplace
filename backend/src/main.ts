@@ -60,6 +60,13 @@ function parseBodyLimitMb(): string {
 }
 
 async function bootstrap() {
+    // Log stray promise rejections instead of letting Node terminate the API process.
+    process.on('unhandledRejection', (reason) => {
+        console.error(
+            '[process] Unhandled promise rejection:',
+            reason instanceof Error ? reason.stack || reason.message : reason,
+        );
+    });
     validateProductionEnv();
     const app = await NestFactory.create<NestExpressApplication>(AppModule, {
         rawBody: true,

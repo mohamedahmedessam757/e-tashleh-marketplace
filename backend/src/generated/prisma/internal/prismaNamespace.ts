@@ -5492,6 +5492,8 @@ export const OfferScalarFieldEnum = {
   canEditUntil: 'canEditUntil',
   isWithdrawn: 'isWithdrawn',
   withdrawalType: 'withdrawalType',
+  shippingReviewStatus: 'shippingReviewStatus',
+  shippingReviewResolvedAt: 'shippingReviewResolvedAt',
   shippedFromCart: 'shippedFromCart',
   shippedFromCartAt: 'shippedFromCartAt',
   cartShipmentId: 'cartShipmentId',

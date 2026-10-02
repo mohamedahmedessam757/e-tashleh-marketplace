@@ -23,11 +23,13 @@ export class AppController {
 
     @Get('health')
     @SkipThrottle()
+    @Header('Cache-Control', 'no-store')
     async healthCheck() {
-        const dbOk = await this.prisma.isHealthy();
+        const db = await this.prisma.checkDatabase();
         return {
-            status: dbOk ? 'healthy' : 'degraded',
-            database: dbOk ? 'connected' : 'unreachable',
+            status: db.ok ? 'healthy' : 'degraded',
+            database: db.ok ? 'connected' : 'unreachable',
+            dbLatencyMs: db.latencyMs,
             timestamp: new Date().toISOString(),
         };
     }

@@ -134,6 +134,8 @@ export interface OrderOffer {
     partName?: string; // Part name for display
     canEditUntil?: string; // 2026 Governance Timer
     isWithdrawn?: boolean; // 2026 Governance State
+    /** NONE | PENDING (awaiting admin shipping decision) | APPROVED | EXPIRED */
+    shippingReviewStatus?: string;
     
     // Partial Shipping from Assembly Cart (2026)
     shippedFromCart?: boolean;
@@ -517,6 +519,7 @@ const mergeOfferLists = (
             storeReviewCount: inc.storeReviewCount || prev.storeReviewCount,
             storeLogo: inc.storeLogo || prev.storeLogo,
             isWithdrawn: inc.isWithdrawn ?? prev.isWithdrawn,
+            shippingReviewStatus: inc.shippingReviewStatus ?? prev.shippingReviewStatus,
             unitPrice: inc.unitPrice ?? prev.unitPrice,
             shippingCost: inc.shippingCost ?? prev.shippingCost,
             price: inc.price ?? prev.price,
@@ -1067,6 +1070,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                     cylinders: offer.cylinders,
                     canEditUntil: offer.canEditUntil,
                     isWithdrawn: !!offer.isWithdrawn,
+                    shippingReviewStatus: offer.shippingReviewStatus || 'NONE',
                     shippedFromCart: !!offer.shippedFromCart,
                     shippedFromCartAt: offer.shippedFromCartAt,
                     cartShipmentId: offer.cartShipmentId,

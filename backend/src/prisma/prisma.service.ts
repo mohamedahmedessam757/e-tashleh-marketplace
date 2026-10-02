@@ -33,12 +33,32 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
     /** Lightweight ping — used by health checks and reconnect logic. */
     async isHealthy(): Promise<boolean> {
-        try {
-            await this.$queryRaw`SELECT 1`;
-            return true;
-        } catch {
-            return false;
+        return (await this.checkDatabase()).ok;
+    }
+
+    /**
+     * Two bounded attempts so a momentarily saturated pool is not reported as an outage.
+     */
+    async checkDatabase(): Promise<{ ok: boolean; latencyMs: number }> {
+        const started = Date.now();
+        for (let attempt = 0; attempt < 2; attempt++) {
+            if (attempt > 0) await new Promise((r) => setTimeout(r, 500));
+            let timer: ReturnType<typeof setTimeout> | undefined;
+            try {
+                await Promise.race([
+                    this.$queryRaw`SELECT 1`,
+                    new Promise((_, reject) => {
+                        timer = setTimeout(() => reject(new Error('health query timeout')), 3000);
+                    }),
+                ]);
+                return { ok: true, latencyMs: Date.now() - started };
+            } catch {
+                // retry once
+            } finally {
+                if (timer) clearTimeout(timer);
+            }
         }
+        return { ok: false, latencyMs: Date.now() - started };
     }
 
     /**
@@ -54,8 +74,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
             return true;
         }
 
-        this.logger.warn('Database ping failed — attempting reconnect…');
-        await this.$disconnect().catch(() => undefined);
+        // Do not $disconnect(): with an external pg Pool it detaches the adapter's idle-error
+        // listener, and pg recreates broken connections on its own.
+        this.logger.warn('Database ping failed — retrying connection…');
         await this.connectWithRetry();
         return this.isHealthy();
     }

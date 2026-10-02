@@ -54,6 +54,14 @@ import {
     assertHandoverNotInPast,
     HANDOVER_IN_PAST_EXCEPTION,
 } from './handover-datetime.util';
+import { ShippingReviewService } from '../offers/shipping-review.service';
+import {
+    SHIPPING_REVIEW,
+    CUSTOMER_VISIBLE_SHIPPING_REVIEW,
+    computeShippingReviewStatus,
+    isCustomerVisibleShippingReview,
+} from '../offers/shipping-review.util';
+import { runDetached } from '../common/utils/run-detached';
 @Injectable()
 export class OrdersService {
     private readonly logger = new Logger(OrdersService.name);
@@ -81,6 +89,7 @@ export class OrdersService {
         @Inject(forwardRef(() => ViolationsService))
         private violationsService: ViolationsService,
         private orderCreateQuota: OrderCreateQuotaService,
+        private shippingReview: ShippingReviewService,
     ) { }
 
     /** Side-effects when an order reaches a chat-lock terminal status. */
@@ -628,6 +637,15 @@ export class OrdersService {
                 if (withReview._count) withReview._count.offers = 0;
             }
 
+            // Offers held for (or expired from) admin shipping-class review are never shown to the customer
+            if (user.role === 'CUSTOMER' && withReview.offers?.length) {
+                withReview.offers = withReview.offers.filter((o: { shippingReviewStatus?: string | null }) =>
+                    isCustomerVisibleShippingReview(o.shippingReviewStatus),
+                );
+                // @ts-ignore
+                if (withReview._count) withReview._count.offers = withReview.offers.length;
+            }
+
             // 2. Hide OTHER merchants' offers from VENDOR during bidding phase
             if (user.role === 'VENDOR' && (withReview.status === OrderStatus.COLLECTING_OFFERS || withReview.status === OrderStatus.AWAITING_SELECTION)) {
                 const myStoreId = user.storeId;
@@ -738,6 +756,14 @@ export class OrdersService {
         if (user.role === 'CUSTOMER' && order.status !== OrderStatus.AWAITING_SELECTION && order.revealOffersAt && order.revealOffersAt > now) {
             order.offers = [];
             if (order._count) order._count.offers = 0;
+        }
+
+        // Offers held for (or expired from) admin shipping-class review are never shown to the customer
+        if (user.role === 'CUSTOMER' && order.offers?.length) {
+            order.offers = order.offers.filter((o) =>
+                isCustomerVisibleShippingReview((o as { shippingReviewStatus?: string | null }).shippingReviewStatus),
+            );
+            if (order._count) order._count.offers = order.offers.length;
         }
 
         // 2. Hide OTHER merchants' offers from VENDOR during bidding phase
@@ -1097,7 +1123,12 @@ export class OrdersService {
             // 3.1.5 Notify All Bidding Merchants about AWAITING_SELECTION (Reveal phase)
             if (newStatus === OrderStatus.AWAITING_SELECTION) {
                 const biddingMerchants = await this.prisma.offer.findMany({
-                    where: { orderId: order.id },
+                    where: {
+                        orderId: order.id,
+                        isWithdrawn: false,
+                        status: { notIn: ['rejected', 'withdrawn'] },
+                        ...CUSTOMER_VISIBLE_SHIPPING_REVIEW,
+                    },
                     select: { store: { select: { ownerId: true } } },
                     distinct: ['storeId'],
                 });
@@ -1261,7 +1292,7 @@ export class OrdersService {
 
             // Atomically claim the offer ONLY if it belongs to this order and is still pending.
             const claimed = await tx.offer.updateMany({
-                where: { id: offerId, orderId, status: 'pending' },
+                where: { id: offerId, orderId, status: 'pending', ...CUSTOMER_VISIBLE_SHIPPING_REVIEW },
                 data: { status: 'accepted' },
             });
             if (claimed.count === 0) {
@@ -1421,6 +1452,8 @@ export class OrdersService {
                     select: {
                         id: true,
                         status: true,
+                        isWithdrawn: true,
+                        shippingReviewStatus: true,
                         storeId: true,
                         orderPartId: true,
                         fulfillmentStatus: true,
@@ -1513,7 +1546,22 @@ export class OrdersService {
         // --- Collection → reveal or cancel ---
         if (status === OrderStatus.COLLECTING_OFFERS || status === OrderStatus.AWAITING_OFFERS) {
             if (!expired) return { changed: false, order, reason: 'not_expired' };
-            const hasOffers = order.offers.length > 0;
+            // Unresolved shipping reviews are withdrawn first; only customer-visible live offers count.
+            await this.shippingReview.expireUnresolvedShippingReviews(orderId);
+            const visibleOfferIds = new Set(
+                (
+                    await this.prisma.offer.findMany({
+                        where: {
+                            orderId,
+                            status: 'pending',
+                            isWithdrawn: false,
+                            ...CUSTOMER_VISIBLE_SHIPPING_REVIEW,
+                        },
+                        select: { id: true },
+                    })
+                ).map((o) => o.id),
+            );
+            const hasOffers = visibleOfferIds.size > 0;
             if (!hasOffers) {
                 const updated = await this.transitionStatus(
                     orderId,
@@ -1565,10 +1613,16 @@ export class OrdersService {
 
         // --- Selection cancel ---
         if (status === OrderStatus.AWAITING_SELECTION) {
-            if (order.offers.length > 0 && !expired) {
+            const selectableCount = order.offers.filter(
+                (o) =>
+                    o.status !== 'withdrawn' &&
+                    !o.isWithdrawn &&
+                    isCustomerVisibleShippingReview(o.shippingReviewStatus),
+            ).length;
+            if (selectableCount > 0 && !expired) {
                 return { changed: false, order, reason: 'not_expired' };
             }
-            const noOffers = order.offers.length === 0;
+            const noOffers = selectableCount === 0;
             const updated = await this.transitionStatus(
                 orderId,
                 OrderStatus.CANCELLED,
@@ -2483,7 +2537,7 @@ export class OrdersService {
 
             // Claim ONLY if the offer belongs to this order + part and is still pending (IDOR/race fix).
             const claimed = await tx.offer.updateMany({
-                where: { id: offerId, orderId, orderPartId: partId, status: 'pending' },
+                where: { id: offerId, orderId, orderPartId: partId, status: 'pending', ...CUSTOMER_VISIBLE_SHIPPING_REVIEW },
                 data: { status: 'accepted' },
             });
             if (claimed.count === 0) {
@@ -2699,19 +2753,12 @@ export class OrdersService {
     }
 
     async markAsPrepared(orderId: string, storeId: string, offerId?: string) {
-        const result = await this.offerFulfillment.markAsPreparedForStore(
-            orderId,
-            storeId,
-            offerId,
-        );
+        await this.offerFulfillment.markAsPreparedForStore(orderId, storeId, offerId);
 
-        const order = await this.prisma.order.findUnique({
-            where: { id: orderId },
-            select: { orderNumber: true },
-        });
+        const order = await this.prisma.order.findUnique({ where: { id: orderId } });
 
-        await this.notifications
-            .notifyMerchantByStoreId(storeId, {
+        runDetached(`merchant-verification-reminder:${orderId}`, () =>
+            this.notifications.notifyMerchantByStoreId(storeId, {
                 titleAr: 'توثيق حالة القطعة إلزامي!',
                 titleEn: 'Part Verification Required!',
                 messageAr: `تم تجهيز قطعتك في الطلب #${order?.orderNumber || orderId}. يرجى رفع التوثيق للمتابعة.`,
@@ -2723,10 +2770,10 @@ export class OrdersService {
                     verification: true,
                     waEvent: 'VERIFICATION',
                 },
-            })
-            .catch((e) => console.error('Failed to notify merchant upon preparation', e));
+            }),
+        );
 
-        return this.prisma.order.findUnique({ where: { id: orderId } });
+        return order;
     }
 
     async getOfferFulfillmentSummary(orderId: string) {
@@ -3763,7 +3810,7 @@ export class OrdersService {
             include: {
                 orderPart: true,
                 store: { select: { id: true, name: true, ownerId: true } },
-                order: { select: { id: true, orderNumber: true, customerId: true } },
+                order: { select: { id: true, orderNumber: true, customerId: true, status: true } },
                 payments: {
                     where: { status: 'SUCCESS' },
                     take: 1,
@@ -3776,6 +3823,16 @@ export class OrdersService {
             throw new BadRequestException(
                 'Cannot change shipping class after payment. Escrow amounts are locked.',
             );
+        }
+        const shippingDecisionExpired = {
+            statusCode: 400,
+            message: 'The shipping decision deadline passed and the offer was cancelled automatically.',
+            messageAr: 'انتهت مهلة القرار وتم إلغاء العرض تلقائياً',
+            messageEn: 'The shipping decision deadline passed and the offer was cancelled automatically.',
+            code: 'SHIPPING_REVIEW_EXPIRED',
+        };
+        if (offer.shippingReviewStatus === SHIPPING_REVIEW.EXPIRED || offer.isWithdrawn) {
+            throw new BadRequestException(shippingDecisionExpired);
         }
 
         const logistics = await this.logisticsConfig.getConfig();
@@ -3808,12 +3865,60 @@ export class OrdersService {
             config: logistics,
         });
 
+        const decidedAt = new Date();
+        const siblingsNowPending: Array<{ id: string; partType: string | null; storeName: string }> = [];
         const updated = await this.prisma.$transaction(async (tx) => {
+            if (offer.shippingReviewStatus === SHIPPING_REVIEW.PENDING) {
+                // Conditional claim: loses cleanly if the expiry job withdrew the offer meanwhile.
+                const approved = await tx.offer.updateMany({
+                    where: { id: offerId, shippingReviewStatus: SHIPPING_REVIEW.PENDING, isWithdrawn: false },
+                    data: { shippingReviewStatus: SHIPPING_REVIEW.APPROVED, shippingReviewResolvedAt: decidedAt },
+                });
+                if (approved.count === 0) {
+                    throw new BadRequestException(shippingDecisionExpired);
+                }
+            }
+
+            const customerClassChanged =
+                (body.applyTo === 'customer' || body.applyTo === 'both') &&
+                !!offer.orderPartId &&
+                String(offer.orderPart?.shippingClass ?? '') !== body.shippingClass;
+
             if ((body.applyTo === 'customer' || body.applyTo === 'both') && offer.orderPartId) {
                 await tx.orderPart.update({
                     where: { id: offer.orderPartId },
                     data: { shippingClass: body.shippingClass },
                 });
+            }
+
+            // Customer class changed while bidding is open → re-evaluate the other offers on this part.
+            if (customerClassChanged && offer.order.status === OrderStatus.COLLECTING_OFFERS) {
+                const siblings = await tx.offer.findMany({
+                    where: {
+                        orderPartId: offer.orderPartId,
+                        id: { not: offerId },
+                        status: 'pending',
+                        isWithdrawn: false,
+                        shippingReviewStatus: { in: [SHIPPING_REVIEW.NONE, SHIPPING_REVIEW.PENDING] },
+                    },
+                    select: {
+                        id: true,
+                        partType: true,
+                        shippingReviewStatus: true,
+                        store: { select: { name: true } },
+                    },
+                });
+                for (const s of siblings) {
+                    const next = computeShippingReviewStatus(body.shippingClass, s.partType);
+                    if (next === s.shippingReviewStatus) continue;
+                    await tx.offer.update({
+                        where: { id: s.id },
+                        data: { shippingReviewStatus: next, shippingReviewResolvedAt: null },
+                    });
+                    if (next === SHIPPING_REVIEW.PENDING) {
+                        siblingsNowPending.push({ id: s.id, partType: s.partType, storeName: s.store?.name || '' });
+                    }
+                }
             }
             if (body.applyTo === 'merchant' || body.applyTo === 'both') {
                 await tx.offer.update({
@@ -3857,8 +3962,26 @@ export class OrdersService {
         const customerMsgAr = `تم تحديث تصنيف شحن القطعة «${partName}» في الطلب #${offer.order.orderNumber} بقرار من الإدارة إلى (${classLabel}).`;
         const customerMsgEn = `Shipping class for "${partName}" on order #${offer.order.orderNumber} was updated by admin to (${classLabel}).`;
         // Merchant gets the same public copy — shipping cost must not appear in platform/WhatsApp notices
-        const merchantMsgAr = customerMsgAr;
-        const merchantMsgEn = customerMsgEn;
+        const wasHeld = offer.shippingReviewStatus === SHIPPING_REVIEW.PENDING;
+        const merchantMsgAr = wasHeld
+            ? `${customerMsgAr} تم اعتماد نوع الشحن، وسيظهر عرضك للعميل عند كشف العروض.`
+            : customerMsgAr;
+        const merchantMsgEn = wasHeld
+            ? `${customerMsgEn} The shipping type was approved; your offer will be shown to the customer when offers are revealed.`
+            : customerMsgEn;
+
+        for (const s of siblingsNowPending) {
+            void this.shippingReview.notifyShippingClassMismatch({
+                orderId,
+                orderNumber: offer.order.orderNumber,
+                offerId: s.id,
+                storeName: s.storeName,
+                orderPartId: String(offer.orderPartId),
+                partName: offer.orderPart?.name ?? null,
+                customerShippingClass: body.shippingClass,
+                merchantPartType: String(s.partType ?? ''),
+            });
+        }
 
         if (offer.order.customerId) {
             await this.notifications.create({
@@ -3883,7 +4006,13 @@ export class OrdersService {
                 messageEn: merchantMsgEn,
                 type: 'ORDER',
                 link: `/merchant/orders/${orderId}`,
-                metadata: { orderId, offerId, waEvent: 'ORDER_STATUS', hidePrice: true },
+                metadata: {
+                    orderId,
+                    offerId,
+                    waEvent: 'ORDER_STATUS',
+                    hidePrice: true,
+                    ...(wasHeld ? { shippingReview: SHIPPING_REVIEW.APPROVED } : {}),
+                },
             }).catch(() => {});
         }
 
@@ -4183,18 +4312,28 @@ export class OrdersService {
             data: { verificationSubmittedAt: new Date() },
         });
 
+        const submitResult = await this.offerFulfillment.submitOfferVerification(
+            orderId,
+            targetOfferId,
+            storeId,
+            data,
+        );
+
         if (availableOfficer) {
-            const task = await this.prisma.verificationTask.findFirst({
-                where: {
-                    orderId,
-                    offerId: targetOfferId,
-                    status: { notIn: ['ADMIN_APPROVED', 'ADMIN_REJECTED', 'CANCELLED'] },
-                },
-                orderBy: { createdAt: 'desc' },
-            });
-            if (task) {
+            const officerId = availableOfficer.id;
+            const taskOfferId = targetOfferId;
+            runDetached(`verification-officer-notify:${taskOfferId}`, async () => {
+                const task = await this.prisma.verificationTask.findFirst({
+                    where: {
+                        orderId,
+                        offerId: taskOfferId,
+                        status: { notIn: ['ADMIN_APPROVED', 'ADMIN_REJECTED', 'CANCELLED'] },
+                    },
+                    orderBy: { createdAt: 'desc' },
+                });
+                if (!task) return;
                 await this.notifications.create({
-                    recipientId: availableOfficer.id,
+                    recipientId: officerId,
                     recipientRole: 'VERIFICATION_OFFICER',
                     type: 'system_alert',
                     titleAr: 'مهمة مطابقة قطعة جديدة',
@@ -4203,15 +4342,10 @@ export class OrdersService {
                     messageEn: `A part verification task for order #${order.orderNumber} was assigned to you.`,
                     link: `/dashboard/verification-task-details/${task.id}`,
                 });
-            }
+            });
         }
 
-        return this.offerFulfillment.submitOfferVerification(
-            orderId,
-            targetOfferId,
-            storeId,
-            data,
-        );
+        return submitResult;
     }
 
     async adminReviewVerification(orderId: string, adminId: string, data: any) {

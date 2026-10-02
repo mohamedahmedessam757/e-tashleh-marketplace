@@ -2,9 +2,11 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Camera, Video, Upload, X, Save, AlertCircle, FileText, User, Calendar, Clock, PenTool, ShieldCheck, ImagePlus } from 'lucide-react';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { GlassCard } from '../../ui/GlassCard';
-import { client } from '../../../services/api/client';
-import { compressImageForUpload } from '../../../utils/compressImage';
+import { uploadMedia, UploadError } from '../../../services/upload/uploadService';
 import { getServerNowMs, syncServerClock } from '../../../utils/serverClock';
+
+const MAX_PARALLEL_IMAGE_UPLOADS = 3;
+const SIGNATURE_UPLOAD_DEBOUNCE_MS = 600;
 
 interface VerificationFormProps {
     orderId: string;
@@ -89,8 +91,12 @@ export const VerificationForm: React.FC<VerificationFormProps> = ({
 
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [uploadProgress, setUploadProgress] = useState(0);
     const [mediaUploading, setMediaUploading] = useState(0);
+    /** Real upload progress keyed by the local blob preview URL. */
+    const [uploadPct, setUploadPct] = useState<Record<string, number>>({});
+    const imageSlotsRef = useRef({ active: 0, waiters: [] as Array<() => void> });
+    const signatureUploadRef = useRef<{ dataUrl: string; promise: Promise<string> } | null>(null);
+    const signatureTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [minDate, setMinDate] = useState(() => formatLocalDate(getServerNowMs()));
     const [minTime, setMinTime] = useState(() => formatLocalTime(getServerNowMs()));
 
@@ -125,6 +131,9 @@ export const VerificationForm: React.FC<VerificationFormProps> = ({
         setSignatureText(initial.signatureText);
         setErrors({});
         setMediaUploading(0);
+        setUploadPct({});
+        signatureUploadRef.current = null;
+        if (signatureTimerRef.current) clearTimeout(signatureTimerRef.current);
         const canvas = signatureRef.current;
         const ctx = canvas?.getContext('2d');
         if (canvas && ctx) {
@@ -192,7 +201,9 @@ export const VerificationForm: React.FC<VerificationFormProps> = ({
         setIsDrawing(false);
         const canvas = signatureRef.current;
         if (canvas) {
-            setRecipientSignature(canvas.toDataURL('image/png'));
+            const dataUrl = canvas.toDataURL('image/png');
+            setRecipientSignature(dataUrl);
+            scheduleSignatureUpload(dataUrl);
         }
         if (errors.signature) {
             setErrors(prev => ({ ...prev, signature: '' }));
@@ -207,23 +218,90 @@ export const VerificationForm: React.FC<VerificationFormProps> = ({
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             setRecipientSignature(null);
         }
+        if (signatureTimerRef.current) clearTimeout(signatureTimerRef.current);
+        signatureUploadRef.current = null;
     };
 
-    const uploadFile = async (file: File, folder: string): Promise<string> => {
-        const payload =
-            file.type.startsWith('image/') && folder === 'images'
-                ? await compressImageForUpload(file)
-                : file;
-        const formData = new FormData();
-        formData.append('file', payload);
-        formData.append('orderId', orderId.toString());
-        formData.append('folder', folder);
-
-        const { data } = await client.post('/uploads/verification', formData);
-        if (!data?.url) {
-            throw new Error('Upload did not return a URL');
+    const uploadErrorMessage = (err: unknown, fallback: string): string => {
+        const code = err instanceof UploadError ? err.code : null;
+        switch (code) {
+            case 'too_large':
+                return vt?.errTooLarge || (isAr ? 'حجم الملف أكبر من المسموح' : 'File is too large');
+            case 'type':
+                return vt?.errType || (isAr ? 'نوع الملف غير مدعوم' : 'File type not supported');
+            case 'timeout':
+            case 'network':
+                return vt?.errNetwork || (isAr ? 'تعذر الاتصال أثناء الرفع، حاول مرة أخرى' : 'Connection problem during upload, please retry');
+            case 'forbidden':
+                return vt?.errForbidden || (isAr ? 'غير مصرح لك برفع ملفات لهذا الطلب' : 'You are not allowed to upload for this order');
+            case 'rate_limited':
+                return vt?.errRateLimited || (isAr ? 'محاولات كثيرة، انتظر قليلاً ثم أعد المحاولة' : 'Too many attempts, wait a moment and retry');
+            default:
+                return fallback;
         }
-        return data.url;
+    };
+
+    const uploadVerificationFile = (file: File, folder: string, progressKey?: string, silent = false) => {
+        let lastShown = -1;
+        return uploadMedia(file, {
+            purpose: 'verification',
+            context: { orderId: String(orderId), folder },
+            silent,
+            onProgress: progressKey
+                ? (pct) => {
+                      const rounded = Math.min(100, Math.round(pct));
+                      // Throttle re-renders: only every 5% step
+                      if (rounded !== 100 && rounded - lastShown < 5) return;
+                      lastShown = rounded;
+                      setUploadPct((prev) => ({ ...prev, [progressKey]: rounded }));
+                  }
+                : undefined,
+        });
+    };
+
+    const clearProgress = (key: string) =>
+        setUploadPct((prev) => {
+            if (!(key in prev)) return prev;
+            const next = { ...prev };
+            delete next[key];
+            return next;
+        });
+
+    const scheduleSignatureUpload = (dataUrl: string) => {
+        if (signatureTimerRef.current) clearTimeout(signatureTimerRef.current);
+        signatureTimerRef.current = setTimeout(() => {
+            signatureUploadRef.current = { dataUrl, promise: uploadSignatureDataUrl(dataUrl, true) };
+            // Background attempt: failures are retried on submit
+            signatureUploadRef.current.promise.catch(() => {
+                if (signatureUploadRef.current?.dataUrl === dataUrl) signatureUploadRef.current = null;
+            });
+        }, SIGNATURE_UPLOAD_DEBOUNCE_MS);
+    };
+
+    const uploadSignatureDataUrl = async (dataUrl: string, silent: boolean): Promise<string> => {
+        const blob = await (await fetch(dataUrl)).blob();
+        const sigFile = new File([blob], 'signature.png', { type: 'image/png' });
+        return uploadVerificationFile(sigFile, 'signatures', undefined, silent);
+    };
+
+    const acquireImageSlot = () =>
+        new Promise<void>((resolve) => {
+            const slots = imageSlotsRef.current;
+            if (slots.active < MAX_PARALLEL_IMAGE_UPLOADS) {
+                slots.active += 1;
+                resolve();
+            } else {
+                slots.waiters.push(() => {
+                    slots.active += 1;
+                    resolve();
+                });
+            }
+        });
+
+    const releaseImageSlot = () => {
+        const slots = imageSlotsRef.current;
+        slots.active = Math.max(0, slots.active - 1);
+        slots.waiters.shift()?.();
     };
 
     const beginMediaUpload = () => setMediaUploading((n) => n + 1);
@@ -240,24 +318,27 @@ export const VerificationForm: React.FC<VerificationFormProps> = ({
             newFiles.map(async (file, i) => {
                 const placeholder = placeholders[i];
                 beginMediaUpload();
+                setUploadPct((prev) => ({ ...prev, [placeholder]: 0 }));
+                await acquireImageSlot();
                 try {
-                    const url = await uploadFile(file, 'images');
+                    const url = await uploadVerificationFile(file, 'images', placeholder);
                     setImageUrls((prev) =>
                         prev.map((u) => (u === placeholder ? url : u)),
                     );
                     URL.revokeObjectURL(placeholder);
-                } catch (err: any) {
+                } catch (err: unknown) {
                     setImageUrls((prev) => prev.filter((u) => u !== placeholder));
                     URL.revokeObjectURL(placeholder);
                     setErrors((prev) => ({
                         ...prev,
-                        images:
-                            err?.response?.data?.message ||
-                            err?.message ||
-                            (vt?.uploadFailed ||
-                                (isAr ? 'فشل رفع الصورة' : 'Image upload failed')),
+                        images: uploadErrorMessage(
+                            err,
+                            vt?.uploadFailed || (isAr ? 'فشل رفع الصورة' : 'Image upload failed'),
+                        ),
                     }));
                 } finally {
+                    releaseImageSlot();
+                    clearProgress(placeholder);
                     endMediaUpload();
                 }
             }),
@@ -293,23 +374,29 @@ export const VerificationForm: React.FC<VerificationFormProps> = ({
         if (errors.video) setErrors((prev) => ({ ...prev, video: '' }));
 
         beginMediaUpload();
+        setUploadPct((prev) => ({ ...prev, [preview]: 0 }));
         try {
-            const url = await uploadFile(file, 'videos');
+            const url = await uploadVerificationFile(file, 'videos', preview);
             setVideoUrl((current) => {
-                if (current === preview) URL.revokeObjectURL(preview);
-                return url;
+                if (current === preview) {
+                    URL.revokeObjectURL(preview);
+                    return url;
+                }
+                // User removed/replaced the video while it was uploading
+                return current;
             });
-        } catch (err: any) {
-            setVideoUrl(null);
+        } catch (err: unknown) {
+            setVideoUrl((current) => (current === preview ? null : current));
             URL.revokeObjectURL(preview);
             setErrors((prev) => ({
                 ...prev,
-                video:
-                    err?.response?.data?.message ||
-                    err?.message ||
-                    (vt?.uploadFailed || (isAr ? 'فشل رفع الفيديو' : 'Video upload failed')),
+                video: uploadErrorMessage(
+                    err,
+                    vt?.uploadFailed || (isAr ? 'فشل رفع الفيديو' : 'Video upload failed'),
+                ),
             }));
         } finally {
+            clearProgress(preview);
             endMediaUpload();
         }
     };
@@ -377,7 +464,6 @@ export const VerificationForm: React.FC<VerificationFormProps> = ({
         }
 
         setIsSubmitting(true);
-        setUploadProgress(20);
         try {
             const finalImageUrls = imageUrls.filter((url) => url.startsWith('http'));
             if (!finalImageUrls.length) {
@@ -392,17 +478,20 @@ export const VerificationForm: React.FC<VerificationFormProps> = ({
                         (isAr ? 'يجب رفع الفيديو قبل الإرسال' : 'Video must be uploaded before submitting'),
                 );
             }
-            setUploadProgress(70);
-
             let finalSignatureUrl = recipientSignature;
-            if (recipientSignature && recipientSignature.startsWith('data:image')) {
-                const res = await fetch(recipientSignature);
-                const blob = await res.blob();
-                const sigFile = new File([blob], 'signature.png', { type: 'image/png' });
-                finalSignatureUrl = await uploadFile(sigFile, 'signatures');
+            if (signatureType === 'DRAWN' && recipientSignature?.startsWith('data:image')) {
+                if (signatureTimerRef.current) clearTimeout(signatureTimerRef.current);
+                const pending = signatureUploadRef.current;
+                try {
+                    finalSignatureUrl =
+                        pending && pending.dataUrl === recipientSignature
+                            ? await pending.promise
+                            : await uploadSignatureDataUrl(recipientSignature, false);
+                } catch {
+                    // Background attempt failed — retry once in the foreground
+                    finalSignatureUrl = await uploadSignatureDataUrl(recipientSignature, false);
+                }
             }
-            
-            setUploadProgress(90);
 
             const payload = {
                 images: finalImageUrls,
@@ -417,7 +506,6 @@ export const VerificationForm: React.FC<VerificationFormProps> = ({
             };
 
             await onSubmit(payload);
-            setUploadProgress(100);
         } catch (error: any) {
             console.error('Submission error:', error);
             const data = error?.response?.data;
@@ -429,6 +517,7 @@ export const VerificationForm: React.FC<VerificationFormProps> = ({
             setErrors({
                 submit:
                     apiMsg ||
+                    (error instanceof UploadError ? uploadErrorMessage(error, '') : '') ||
                     error?.message ||
                     (vt?.submitFailed ||
                         (isAr
@@ -437,7 +526,6 @@ export const VerificationForm: React.FC<VerificationFormProps> = ({
             });
         } finally {
             setIsSubmitting(false);
-            setUploadProgress(0);
         }
     };
 
@@ -499,8 +587,16 @@ export const VerificationForm: React.FC<VerificationFormProps> = ({
                                 <div key={`${url}-${index}`} className="relative aspect-square rounded-xl overflow-hidden group border border-white/10 hover:border-amber-500/40 transition-colors">
                                     <img src={url} alt={`Part ${index + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                                     {!url.startsWith('http') && (
-                                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                        <div className="absolute inset-0 bg-black/55 flex flex-col items-center justify-center gap-2 px-3">
                                             <div className="w-5 h-5 border-2 border-amber-400/40 border-t-amber-400 rounded-full animate-spin" />
+                                            {url in uploadPct && (
+                                                <>
+                                                    <span className="text-[11px] font-bold text-amber-300 tabular-nums">{uploadPct[url]}%</span>
+                                                    <div className="w-full h-1 rounded-full bg-white/10 overflow-hidden">
+                                                        <div className="h-full bg-amber-400 transition-[width] duration-200" style={{ width: `${uploadPct[url]}%` }} />
+                                                    </div>
+                                                </>
+                                            )}
                                         </div>
                                     )}
                                     {!isReadOnly && (
@@ -575,8 +671,16 @@ export const VerificationForm: React.FC<VerificationFormProps> = ({
                             <div className="relative aspect-video rounded-xl overflow-hidden border border-white/10 group">
                                 <video src={videoUrl} controls className="w-full h-full object-cover bg-black/50" />
                                 {!videoUrl.startsWith('http') && (
-                                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                    <div className="absolute inset-0 bg-black/55 flex flex-col items-center justify-center gap-2 px-6">
                                         <div className="w-6 h-6 border-2 border-purple-400/40 border-t-purple-400 rounded-full animate-spin" />
+                                        {videoUrl in uploadPct && (
+                                            <>
+                                                <span className="text-xs font-bold text-purple-200 tabular-nums">{uploadPct[videoUrl]}%</span>
+                                                <div className="w-full max-w-xs h-1.5 rounded-full bg-white/10 overflow-hidden">
+                                                    <div className="h-full bg-purple-400 transition-[width] duration-200" style={{ width: `${uploadPct[videoUrl]}%` }} />
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 )}
                                 {!isReadOnly && (
@@ -816,7 +920,7 @@ export const VerificationForm: React.FC<VerificationFormProps> = ({
                             {isSubmitting ? (
                                 <>
                                     <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
-                                    <span>{uploadProgress}%</span>
+                                    <span>{vt?.sending || (isAr ? 'جاري الإرسال...' : 'Sending...')}</span>
                                 </>
                             ) : (
                                 <>

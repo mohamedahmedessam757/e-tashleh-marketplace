@@ -20,6 +20,7 @@ import { ShippingAutomationService } from './shipping-automation.service';
 import { OfferFulfillmentService } from './offer-fulfillment.service';
 import { OrderSlaService } from './order-sla.service';
 import { OrderCreateQuotaService } from './order-create-quota.service';
+import { ShippingReviewService } from '../offers/shipping-review.service';
 
 @Module({
     imports: [
@@ -44,6 +45,7 @@ import { OrderCreateQuotaService } from './order-create-quota.service';
         OfferFulfillmentService,
         OrderSlaService,
         OrderCreateQuotaService,
+        ShippingReviewService,
     ],
     exports: [OrderStateMachine, OrdersService, ExcelService, OfferFulfillmentService, OrderSlaService, OrderCreateQuotaService],
 })

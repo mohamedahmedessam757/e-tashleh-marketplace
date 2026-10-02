@@ -62,7 +62,7 @@ export class OffersController {
         }
         if (req.user.role === 'CUSTOMER') {
             await this.resourceAccess.assertUserCanAccessOrder(actor, orderId);
-            return this.offersService.findByOrder(orderId);
+            return this.offersService.findByOrder(orderId, 'CUSTOMER');
         }
         if (req.user.role === 'VENDOR') {
             return this.offersService.findMyOffersByOrder(req.user.id, orderId);

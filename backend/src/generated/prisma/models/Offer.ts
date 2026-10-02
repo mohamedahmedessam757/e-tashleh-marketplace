@@ -65,6 +65,8 @@ export type OfferMinAggregateOutputType = {
   canEditUntil: Date | null
   isWithdrawn: boolean | null
   withdrawalType: string | null
+  shippingReviewStatus: string | null
+  shippingReviewResolvedAt: Date | null
   shippedFromCart: boolean | null
   shippedFromCartAt: Date | null
   cartShipmentId: string | null
@@ -102,6 +104,8 @@ export type OfferMaxAggregateOutputType = {
   canEditUntil: Date | null
   isWithdrawn: boolean | null
   withdrawalType: string | null
+  shippingReviewStatus: string | null
+  shippingReviewResolvedAt: Date | null
   shippedFromCart: boolean | null
   shippedFromCartAt: Date | null
   cartShipmentId: string | null
@@ -139,6 +143,8 @@ export type OfferCountAggregateOutputType = {
   canEditUntil: number
   isWithdrawn: number
   withdrawalType: number
+  shippingReviewStatus: number
+  shippingReviewResolvedAt: number
   shippedFromCart: number
   shippedFromCartAt: number
   cartShipmentId: number
@@ -192,6 +198,8 @@ export type OfferMinAggregateInputType = {
   canEditUntil?: true
   isWithdrawn?: true
   withdrawalType?: true
+  shippingReviewStatus?: true
+  shippingReviewResolvedAt?: true
   shippedFromCart?: true
   shippedFromCartAt?: true
   cartShipmentId?: true
@@ -229,6 +237,8 @@ export type OfferMaxAggregateInputType = {
   canEditUntil?: true
   isWithdrawn?: true
   withdrawalType?: true
+  shippingReviewStatus?: true
+  shippingReviewResolvedAt?: true
   shippedFromCart?: true
   shippedFromCartAt?: true
   cartShipmentId?: true
@@ -266,6 +276,8 @@ export type OfferCountAggregateInputType = {
   canEditUntil?: true
   isWithdrawn?: true
   withdrawalType?: true
+  shippingReviewStatus?: true
+  shippingReviewResolvedAt?: true
   shippedFromCart?: true
   shippedFromCartAt?: true
   cartShipmentId?: true
@@ -390,6 +402,8 @@ export type OfferGroupByOutputType = {
   canEditUntil: Date | null
   isWithdrawn: boolean
   withdrawalType: string | null
+  shippingReviewStatus: string
+  shippingReviewResolvedAt: Date | null
   shippedFromCart: boolean
   shippedFromCartAt: Date | null
   cartShipmentId: string | null
@@ -450,6 +464,8 @@ export type OfferWhereInput = {
   canEditUntil?: Prisma.DateTimeNullableFilter<"Offer"> | Date | string | null
   isWithdrawn?: Prisma.BoolFilter<"Offer"> | boolean
   withdrawalType?: Prisma.StringNullableFilter<"Offer"> | string | null
+  shippingReviewStatus?: Prisma.StringFilter<"Offer"> | string
+  shippingReviewResolvedAt?: Prisma.DateTimeNullableFilter<"Offer"> | Date | string | null
   shippedFromCart?: Prisma.BoolFilter<"Offer"> | boolean
   shippedFromCartAt?: Prisma.DateTimeNullableFilter<"Offer"> | Date | string | null
   cartShipmentId?: Prisma.UuidNullableFilter<"Offer"> | string | null
@@ -499,6 +515,8 @@ export type OfferOrderByWithRelationInput = {
   canEditUntil?: Prisma.SortOrderInput | Prisma.SortOrder
   isWithdrawn?: Prisma.SortOrder
   withdrawalType?: Prisma.SortOrderInput | Prisma.SortOrder
+  shippingReviewStatus?: Prisma.SortOrder
+  shippingReviewResolvedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   shippedFromCart?: Prisma.SortOrder
   shippedFromCartAt?: Prisma.SortOrderInput | Prisma.SortOrder
   cartShipmentId?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -551,6 +569,8 @@ export type OfferWhereUniqueInput = Prisma.AtLeast<{
   canEditUntil?: Prisma.DateTimeNullableFilter<"Offer"> | Date | string | null
   isWithdrawn?: Prisma.BoolFilter<"Offer"> | boolean
   withdrawalType?: Prisma.StringNullableFilter<"Offer"> | string | null
+  shippingReviewStatus?: Prisma.StringFilter<"Offer"> | string
+  shippingReviewResolvedAt?: Prisma.DateTimeNullableFilter<"Offer"> | Date | string | null
   shippedFromCart?: Prisma.BoolFilter<"Offer"> | boolean
   shippedFromCartAt?: Prisma.DateTimeNullableFilter<"Offer"> | Date | string | null
   cartShipmentId?: Prisma.UuidNullableFilter<"Offer"> | string | null
@@ -600,6 +620,8 @@ export type OfferOrderByWithAggregationInput = {
   canEditUntil?: Prisma.SortOrderInput | Prisma.SortOrder
   isWithdrawn?: Prisma.SortOrder
   withdrawalType?: Prisma.SortOrderInput | Prisma.SortOrder
+  shippingReviewStatus?: Prisma.SortOrder
+  shippingReviewResolvedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   shippedFromCart?: Prisma.SortOrder
   shippedFromCartAt?: Prisma.SortOrderInput | Prisma.SortOrder
   cartShipmentId?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -645,6 +667,8 @@ export type OfferScalarWhereWithAggregatesInput = {
   canEditUntil?: Prisma.DateTimeNullableWithAggregatesFilter<"Offer"> | Date | string | null
   isWithdrawn?: Prisma.BoolWithAggregatesFilter<"Offer"> | boolean
   withdrawalType?: Prisma.StringNullableWithAggregatesFilter<"Offer"> | string | null
+  shippingReviewStatus?: Prisma.StringWithAggregatesFilter<"Offer"> | string
+  shippingReviewResolvedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Offer"> | Date | string | null
   shippedFromCart?: Prisma.BoolWithAggregatesFilter<"Offer"> | boolean
   shippedFromCartAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Offer"> | Date | string | null
   cartShipmentId?: Prisma.UuidNullableWithAggregatesFilter<"Offer"> | string | null
@@ -679,6 +703,8 @@ export type OfferCreateInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   deliveredAt?: Date | string | null
@@ -727,6 +753,8 @@ export type OfferUncheckedCreateInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   cartShipmentId?: string | null
@@ -769,6 +797,8 @@ export type OfferUpdateInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -817,6 +847,8 @@ export type OfferUncheckedUpdateInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cartShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -862,6 +894,8 @@ export type OfferCreateManyInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   cartShipmentId?: string | null
@@ -896,6 +930,8 @@ export type OfferUpdateManyMutationInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -932,6 +968,8 @@ export type OfferUncheckedUpdateManyInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cartShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -984,6 +1022,8 @@ export type OfferCountOrderByAggregateInput = {
   canEditUntil?: Prisma.SortOrder
   isWithdrawn?: Prisma.SortOrder
   withdrawalType?: Prisma.SortOrder
+  shippingReviewStatus?: Prisma.SortOrder
+  shippingReviewResolvedAt?: Prisma.SortOrder
   shippedFromCart?: Prisma.SortOrder
   shippedFromCartAt?: Prisma.SortOrder
   cartShipmentId?: Prisma.SortOrder
@@ -1028,6 +1068,8 @@ export type OfferMaxOrderByAggregateInput = {
   canEditUntil?: Prisma.SortOrder
   isWithdrawn?: Prisma.SortOrder
   withdrawalType?: Prisma.SortOrder
+  shippingReviewStatus?: Prisma.SortOrder
+  shippingReviewResolvedAt?: Prisma.SortOrder
   shippedFromCart?: Prisma.SortOrder
   shippedFromCartAt?: Prisma.SortOrder
   cartShipmentId?: Prisma.SortOrder
@@ -1065,6 +1107,8 @@ export type OfferMinOrderByAggregateInput = {
   canEditUntil?: Prisma.SortOrder
   isWithdrawn?: Prisma.SortOrder
   withdrawalType?: Prisma.SortOrder
+  shippingReviewStatus?: Prisma.SortOrder
+  shippingReviewResolvedAt?: Prisma.SortOrder
   shippedFromCart?: Prisma.SortOrder
   shippedFromCartAt?: Prisma.SortOrder
   cartShipmentId?: Prisma.SortOrder
@@ -1415,6 +1459,8 @@ export type OfferCreateWithoutStoreInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   deliveredAt?: Date | string | null
@@ -1461,6 +1507,8 @@ export type OfferUncheckedCreateWithoutStoreInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   cartShipmentId?: string | null
@@ -1535,6 +1583,8 @@ export type OfferScalarWhereInput = {
   canEditUntil?: Prisma.DateTimeNullableFilter<"Offer"> | Date | string | null
   isWithdrawn?: Prisma.BoolFilter<"Offer"> | boolean
   withdrawalType?: Prisma.StringNullableFilter<"Offer"> | string | null
+  shippingReviewStatus?: Prisma.StringFilter<"Offer"> | string
+  shippingReviewResolvedAt?: Prisma.DateTimeNullableFilter<"Offer"> | Date | string | null
   shippedFromCart?: Prisma.BoolFilter<"Offer"> | boolean
   shippedFromCartAt?: Prisma.DateTimeNullableFilter<"Offer"> | Date | string | null
   cartShipmentId?: Prisma.UuidNullableFilter<"Offer"> | string | null
@@ -1569,6 +1619,8 @@ export type OfferCreateWithoutOrderInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   deliveredAt?: Date | string | null
@@ -1615,6 +1667,8 @@ export type OfferUncheckedCreateWithoutOrderInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   cartShipmentId?: string | null
@@ -1667,6 +1721,8 @@ export type OfferCreateWithoutAcceptedByOrderInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   deliveredAt?: Date | string | null
@@ -1714,6 +1770,8 @@ export type OfferUncheckedCreateWithoutAcceptedByOrderInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   cartShipmentId?: string | null
@@ -1787,6 +1845,8 @@ export type OfferUpdateWithoutAcceptedByOrderInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1834,6 +1894,8 @@ export type OfferUncheckedUpdateWithoutAcceptedByOrderInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cartShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1875,6 +1937,8 @@ export type OfferCreateWithoutVerificationDocumentsInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   deliveredAt?: Date | string | null
@@ -1922,6 +1986,8 @@ export type OfferUncheckedCreateWithoutVerificationDocumentsInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   cartShipmentId?: string | null
@@ -1979,6 +2045,8 @@ export type OfferUpdateWithoutVerificationDocumentsInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2026,6 +2094,8 @@ export type OfferUncheckedUpdateWithoutVerificationDocumentsInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cartShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2067,6 +2137,8 @@ export type OfferCreateWithoutRejectionInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   deliveredAt?: Date | string | null
@@ -2114,6 +2186,8 @@ export type OfferUncheckedCreateWithoutRejectionInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   cartShipmentId?: string | null
@@ -2171,6 +2245,8 @@ export type OfferUpdateWithoutRejectionInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2218,6 +2294,8 @@ export type OfferUncheckedUpdateWithoutRejectionInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cartShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2259,6 +2337,8 @@ export type OfferCreateWithoutOrderPartInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   deliveredAt?: Date | string | null
@@ -2305,6 +2385,8 @@ export type OfferUncheckedCreateWithoutOrderPartInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   cartShipmentId?: string | null
@@ -2373,6 +2455,8 @@ export type OfferCreateWithoutReturnsInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   deliveredAt?: Date | string | null
@@ -2420,6 +2504,8 @@ export type OfferUncheckedCreateWithoutReturnsInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   cartShipmentId?: string | null
@@ -2477,6 +2563,8 @@ export type OfferUpdateWithoutReturnsInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2524,6 +2612,8 @@ export type OfferUncheckedUpdateWithoutReturnsInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cartShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2565,6 +2655,8 @@ export type OfferCreateWithoutDisputesInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   deliveredAt?: Date | string | null
@@ -2612,6 +2704,8 @@ export type OfferUncheckedCreateWithoutDisputesInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   cartShipmentId?: string | null
@@ -2669,6 +2763,8 @@ export type OfferUpdateWithoutDisputesInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2716,6 +2812,8 @@ export type OfferUncheckedUpdateWithoutDisputesInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cartShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2757,6 +2855,8 @@ export type OfferCreateWithoutPaymentsInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   deliveredAt?: Date | string | null
@@ -2804,6 +2904,8 @@ export type OfferUncheckedCreateWithoutPaymentsInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   cartShipmentId?: string | null
@@ -2861,6 +2963,8 @@ export type OfferUpdateWithoutPaymentsInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2908,6 +3012,8 @@ export type OfferUncheckedUpdateWithoutPaymentsInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cartShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2949,6 +3055,8 @@ export type OfferCreateWithoutCartShipmentInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   deliveredAt?: Date | string | null
@@ -2996,6 +3104,8 @@ export type OfferUncheckedCreateWithoutCartShipmentInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   deliveredAt?: Date | string | null
@@ -3063,6 +3173,8 @@ export type OfferCreateWithoutReviewsInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   deliveredAt?: Date | string | null
@@ -3110,6 +3222,8 @@ export type OfferUncheckedCreateWithoutReviewsInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   cartShipmentId?: string | null
@@ -3167,6 +3281,8 @@ export type OfferUpdateWithoutReviewsInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3214,6 +3330,8 @@ export type OfferUncheckedUpdateWithoutReviewsInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cartShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3255,6 +3373,8 @@ export type OfferCreateWithoutVerificationTasksInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   deliveredAt?: Date | string | null
@@ -3302,6 +3422,8 @@ export type OfferUncheckedCreateWithoutVerificationTasksInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   cartShipmentId?: string | null
@@ -3359,6 +3481,8 @@ export type OfferUpdateWithoutVerificationTasksInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3406,6 +3530,8 @@ export type OfferUncheckedUpdateWithoutVerificationTasksInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cartShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3449,6 +3575,8 @@ export type OfferCreateManyStoreInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   cartShipmentId?: string | null
@@ -3483,6 +3611,8 @@ export type OfferUpdateWithoutStoreInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3529,6 +3659,8 @@ export type OfferUncheckedUpdateWithoutStoreInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cartShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3573,6 +3705,8 @@ export type OfferUncheckedUpdateManyWithoutStoreInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cartShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3609,6 +3743,8 @@ export type OfferCreateManyOrderInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   cartShipmentId?: string | null
@@ -3643,6 +3779,8 @@ export type OfferUpdateWithoutOrderInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3689,6 +3827,8 @@ export type OfferUncheckedUpdateWithoutOrderInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cartShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3733,6 +3873,8 @@ export type OfferUncheckedUpdateManyWithoutOrderInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cartShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3769,6 +3911,8 @@ export type OfferCreateManyOrderPartInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   cartShipmentId?: string | null
@@ -3803,6 +3947,8 @@ export type OfferUpdateWithoutOrderPartInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3849,6 +3995,8 @@ export type OfferUncheckedUpdateWithoutOrderPartInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cartShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3893,6 +4041,8 @@ export type OfferUncheckedUpdateManyWithoutOrderPartInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cartShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3930,6 +4080,8 @@ export type OfferCreateManyCartShipmentInput = {
   canEditUntil?: Date | string | null
   isWithdrawn?: boolean
   withdrawalType?: string | null
+  shippingReviewStatus?: string
+  shippingReviewResolvedAt?: Date | string | null
   shippedFromCart?: boolean
   shippedFromCartAt?: Date | string | null
   deliveredAt?: Date | string | null
@@ -3963,6 +4115,8 @@ export type OfferUpdateWithoutCartShipmentInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4010,6 +4164,8 @@ export type OfferUncheckedUpdateWithoutCartShipmentInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4054,6 +4210,8 @@ export type OfferUncheckedUpdateManyWithoutCartShipmentInput = {
   canEditUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   isWithdrawn?: Prisma.BoolFieldUpdateOperationsInput | boolean
   withdrawalType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shippingReviewStatus?: Prisma.StringFieldUpdateOperationsInput | string
+  shippingReviewResolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   shippedFromCart?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shippedFromCartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4166,6 +4324,8 @@ export type OfferSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   canEditUntil?: boolean
   isWithdrawn?: boolean
   withdrawalType?: boolean
+  shippingReviewStatus?: boolean
+  shippingReviewResolvedAt?: boolean
   shippedFromCart?: boolean
   shippedFromCartAt?: boolean
   cartShipmentId?: boolean
@@ -4216,6 +4376,8 @@ export type OfferSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   canEditUntil?: boolean
   isWithdrawn?: boolean
   withdrawalType?: boolean
+  shippingReviewStatus?: boolean
+  shippingReviewResolvedAt?: boolean
   shippedFromCart?: boolean
   shippedFromCartAt?: boolean
   cartShipmentId?: boolean
@@ -4257,6 +4419,8 @@ export type OfferSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   canEditUntil?: boolean
   isWithdrawn?: boolean
   withdrawalType?: boolean
+  shippingReviewStatus?: boolean
+  shippingReviewResolvedAt?: boolean
   shippedFromCart?: boolean
   shippedFromCartAt?: boolean
   cartShipmentId?: boolean
@@ -4298,6 +4462,8 @@ export type OfferSelectScalar = {
   canEditUntil?: boolean
   isWithdrawn?: boolean
   withdrawalType?: boolean
+  shippingReviewStatus?: boolean
+  shippingReviewResolvedAt?: boolean
   shippedFromCart?: boolean
   shippedFromCartAt?: boolean
   cartShipmentId?: boolean
@@ -4310,7 +4476,7 @@ export type OfferSelectScalar = {
   updatedAt?: boolean
 }
 
-export type OfferOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "offerNumber" | "orderId" | "orderPartId" | "storeId" | "unitPrice" | "weightKg" | "shippingCost" | "hasWarranty" | "warrantyDuration" | "deliveryDays" | "condition" | "partType" | "notes" | "offerImage" | "cylinders" | "status" | "fulfillmentStatus" | "preparedAt" | "verificationSubmittedAt" | "readyForShippingAt" | "canEditUntil" | "isWithdrawn" | "withdrawalType" | "shippedFromCart" | "shippedFromCartAt" | "cartShipmentId" | "deliveredAt" | "completedAt" | "resolutionLocked" | "warrantyActiveAt" | "warrantyEndAt" | "createdAt" | "updatedAt", ExtArgs["result"]["offer"]>
+export type OfferOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "offerNumber" | "orderId" | "orderPartId" | "storeId" | "unitPrice" | "weightKg" | "shippingCost" | "hasWarranty" | "warrantyDuration" | "deliveryDays" | "condition" | "partType" | "notes" | "offerImage" | "cylinders" | "status" | "fulfillmentStatus" | "preparedAt" | "verificationSubmittedAt" | "readyForShippingAt" | "canEditUntil" | "isWithdrawn" | "withdrawalType" | "shippingReviewStatus" | "shippingReviewResolvedAt" | "shippedFromCart" | "shippedFromCartAt" | "cartShipmentId" | "deliveredAt" | "completedAt" | "resolutionLocked" | "warrantyActiveAt" | "warrantyEndAt" | "createdAt" | "updatedAt", ExtArgs["result"]["offer"]>
 export type OfferInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
   orderPart?: boolean | Prisma.Offer$orderPartArgs<ExtArgs>
@@ -4380,6 +4546,8 @@ export type $OfferPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     canEditUntil: Date | null
     isWithdrawn: boolean
     withdrawalType: string | null
+    shippingReviewStatus: string
+    shippingReviewResolvedAt: Date | null
     shippedFromCart: boolean
     shippedFromCartAt: Date | null
     cartShipmentId: string | null
@@ -4849,6 +5017,8 @@ export interface OfferFieldRefs {
   readonly canEditUntil: Prisma.FieldRef<"Offer", 'DateTime'>
   readonly isWithdrawn: Prisma.FieldRef<"Offer", 'Boolean'>
   readonly withdrawalType: Prisma.FieldRef<"Offer", 'String'>
+  readonly shippingReviewStatus: Prisma.FieldRef<"Offer", 'String'>
+  readonly shippingReviewResolvedAt: Prisma.FieldRef<"Offer", 'DateTime'>
   readonly shippedFromCart: Prisma.FieldRef<"Offer", 'Boolean'>
   readonly shippedFromCartAt: Prisma.FieldRef<"Offer", 'DateTime'>
   readonly cartShipmentId: Prisma.FieldRef<"Offer", 'String'>

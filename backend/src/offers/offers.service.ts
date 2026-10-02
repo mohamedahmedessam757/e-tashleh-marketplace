@@ -16,6 +16,13 @@ import { OfferBiddingRestrictionService } from './offer-bidding-restriction.serv
 import { LogisticsConfigService } from '../common/logistics-config.service';
 import { ViolationsService } from '../violations/violations.service';
 import { canSubmitOffers, denyReasonForOfferGate } from '../stores/store-activation.policy';
+import {
+    SHIPPING_REVIEW,
+    SHIPPING_REVIEW_EXPIRED_WITHDRAWAL,
+    CUSTOMER_VISIBLE_SHIPPING_REVIEW,
+    computeShippingReviewStatus,
+} from './shipping-review.util';
+import { ShippingReviewService } from './shipping-review.service';
 
 @Injectable()
 export class OffersService {
@@ -29,6 +36,7 @@ export class OffersService {
         private biddingRestriction: OfferBiddingRestrictionService,
         private logisticsConfig: LogisticsConfigService,
         private violationsService: ViolationsService,
+        private shippingReview: ShippingReviewService,
     ) { }
 
     async create(userId: string, createOfferDto: CreateOfferDto) {
@@ -171,6 +179,21 @@ export class OffersService {
             offerData.orderPartId = createOfferDto.orderPartId;
         }
 
+        // Shipping-class mismatch → hold the offer for an admin decision (hidden from customer)
+        let shippingReviewPart: { name: string | null; shippingClass: string | null } | null = null;
+        let shippingReviewStatus: 'NONE' | 'PENDING' = SHIPPING_REVIEW.NONE;
+        if (createOfferDto.orderPartId && createOfferDto.partType) {
+            shippingReviewPart = await this.prisma.orderPart.findFirst({
+                where: { id: createOfferDto.orderPartId, orderId: createOfferDto.orderId },
+                select: { name: true, shippingClass: true },
+            });
+            shippingReviewStatus = computeShippingReviewStatus(
+                shippingReviewPart?.shippingClass,
+                String(createOfferDto.partType),
+            );
+        }
+        offerData.shippingReviewStatus = shippingReviewStatus;
+
         // 4. Create Offer & Update Daily Count
         let offer;
         try {
@@ -251,14 +274,16 @@ export class OffersService {
                 metadata: { orderId: orderInfo.id, offerId: offer.id }
             }).catch(() => {});
 
-            // Shipping-class mismatch vs customer declaration
-            if (createOfferDto.orderPartId && createOfferDto.partType) {
-                void this.notifyShippingClassMismatchIfNeeded({
+            // Shipping-class mismatch vs customer declaration → urgent admin decision
+            if (shippingReviewStatus === SHIPPING_REVIEW.PENDING && createOfferDto.orderPartId) {
+                void this.shippingReview.notifyShippingClassMismatch({
                     orderId: orderInfo.id,
                     orderNumber: orderInfo.orderNumber,
                     offerId: offer.id,
                     storeName: store.name,
                     orderPartId: createOfferDto.orderPartId,
+                    partName: shippingReviewPart?.name ?? null,
+                    customerShippingClass: String(shippingReviewPart?.shippingClass ?? ''),
                     merchantPartType: String(createOfferDto.partType),
                 });
             }
@@ -279,9 +304,28 @@ export class OffersService {
         return offer;
     }
 
-    async findByOrder(orderId: string) {
+    async findByOrder(orderId: string, role?: string) {
+        if (role === 'CUSTOMER') {
+            // Blind auction: same visibility rule as OrdersService.findOneWithContext
+            const order = await this.prisma.order.findUnique({
+                where: { id: orderId },
+                select: { status: true, revealOffersAt: true },
+            });
+            if (
+                !order ||
+                (order.status !== OrderStatus.AWAITING_SELECTION &&
+                    order.revealOffersAt &&
+                    order.revealOffersAt > new Date())
+            ) {
+                return [];
+            }
+        }
+        const customerOnly =
+            role === 'CUSTOMER'
+                ? { isWithdrawn: false, status: { notIn: ['rejected', 'withdrawn'] }, ...CUSTOMER_VISIBLE_SHIPPING_REVIEW }
+                : {};
         return this.prisma.offer.findMany({
-            where: { orderId },
+            where: { orderId, ...customerOnly },
             include: {
                 store: {
                     select: {
@@ -307,7 +351,7 @@ export class OffersService {
             return { activeOffers: [], isBlockedFromOrder: false, blockedPartIds: [] as string[] };
         }
 
-        const [activeOffers, allWithdrawn] = await Promise.all([
+        const [activeOffers, withdrawnRows, restrictedOffers] = await Promise.all([
             this.prisma.offer.findMany({
                 where: {
                     orderId,
@@ -327,7 +371,27 @@ export class OffersService {
                 },
                 select: { orderPartId: true, withdrawalType: true },
             }),
+            this.prisma.offer.findMany({
+                where: {
+                    orderId,
+                    storeId: store.id,
+                    shippingReviewStatus: SHIPPING_REVIEW.EXPIRED,
+                },
+                select: {
+                    id: true,
+                    orderPartId: true,
+                    offerNumber: true,
+                    partType: true,
+                    shippingReviewResolvedAt: true,
+                },
+                orderBy: { createdAt: 'desc' },
+            }),
         ]);
+
+        // Admin-restricted (expired shipping review) offers are not merchant deletions.
+        const allWithdrawn = withdrawnRows.filter(
+            (w) => w.withdrawalType !== SHIPPING_REVIEW_EXPIRED_WITHDRAWAL,
+        );
 
         // Cancel no longer locks parts for re-bidding (violation still recorded on cancel).
         const blockedPartIds = blockedPartIdsAfterWithdrawals(allWithdrawn);
@@ -341,6 +405,7 @@ export class OffersService {
 
         return {
             activeOffers,
+            restrictedOffers,
             isBlockedFromOrder: legacyWholeOrderBlock,
             blockedPartIds,
             partDeletionCounts,
@@ -371,7 +436,10 @@ export class OffersService {
                 cylinders: true,
                 unitPrice: true,
                 shippingCost: true,
+                orderPartId: true,
+                shippingReviewStatus: true,
                 order: { select: { orderNumber: true } },
+                orderPart: { select: { name: true, shippingClass: true } },
             },
         });
 
@@ -445,6 +513,22 @@ export class OffersService {
         data.shippingCost = computedShipping;
         data.updatedAt = new Date();
 
+        // Re-evaluate shipping review when the merchant changes the shipping class.
+        // A prior APPROVED decision applied to the old class, so it is reset.
+        let shippingReviewBecamePending = false;
+        if (
+            updateDto.partType !== undefined &&
+            String(updateDto.partType ?? '') !== String(existing.partType ?? '')
+        ) {
+            const nextReview = computeShippingReviewStatus(
+                existing.orderPart?.shippingClass,
+                updateDto.partType != null ? String(updateDto.partType) : null,
+            );
+            data.shippingReviewStatus = nextReview;
+            data.shippingReviewResolvedAt = null;
+            shippingReviewBecamePending = nextReview === SHIPPING_REVIEW.PENDING;
+        }
+
         const updated = await this.prisma.$transaction(async (tx) => {
             // Historical edit counter (does NOT count toward monthly deletion limit)
             await tx.store.update({
@@ -493,6 +577,19 @@ export class OffersService {
             offerNumber: existing.offerNumber,
             kind: 'EDIT',
         });
+
+        if (shippingReviewBecamePending && existing.orderPartId) {
+            void this.shippingReview.notifyShippingClassMismatch({
+                orderId: existing.orderId,
+                orderNumber: existing.order?.orderNumber || existing.orderId,
+                offerId,
+                storeName: updated.store?.name || store.name,
+                orderPartId: existing.orderPartId,
+                partName: existing.orderPart?.name ?? null,
+                customerShippingClass: String(existing.orderPart?.shippingClass ?? ''),
+                merchantPartType: String(updateDto.partType),
+            });
+        }
 
         return updated;
     }
@@ -925,45 +1022,6 @@ export class OffersService {
             }).catch(e => console.error('Failed to notify customer of admin delete', e));
         }
         return { message: 'Offer deleted successfully by admin' };
-    }
-
-    private async notifyShippingClassMismatchIfNeeded(params: {
-        orderId: string;
-        orderNumber: string;
-        offerId: string;
-        storeName: string;
-        orderPartId: string;
-        merchantPartType: string;
-    }) {
-        try {
-            const part = await this.prisma.orderPart.findUnique({
-                where: { id: params.orderPartId },
-                select: { id: true, name: true, shippingClass: true },
-            });
-            const customerClass = part?.shippingClass ? String(part.shippingClass) : null;
-            if (!customerClass) return;
-            if (customerClass === params.merchantPartType) return;
-
-            await this.notificationsService.notifyAdmins({
-                titleAr: '⚠️ اختلاف نوع الشحن بين العميل والتاجر',
-                titleEn: '⚠️ Shipping class mismatch (customer vs merchant)',
-                messageAr: `الطلب #${params.orderNumber} — القطعة «${part?.name || params.orderPartId}»: العميل=${customerClass} / التاجر (${params.storeName})=${params.merchantPartType}. يرجى المراجعة وتصحيح التصنيف قبل الدفع.`,
-                messageEn: `Order #${params.orderNumber} — part "${part?.name || params.orderPartId}": customer=${customerClass} / merchant (${params.storeName})=${params.merchantPartType}. Please review and correct before payment.`,
-                type: 'alert',
-                link: `/admin/orders/${params.orderId}`,
-                metadata: {
-                    orderId: params.orderId,
-                    offerId: params.offerId,
-                    orderPartId: params.orderPartId,
-                    customerShippingClass: customerClass,
-                    merchantPartType: params.merchantPartType,
-                    urgent: true,
-                    shippingClassMismatch: true,
-                },
-            });
-        } catch (e) {
-            console.error('notifyShippingClassMismatchIfNeeded failed', e);
-        }
     }
 
     /** Notify admins on every offer edit/cancel/withdraw with monthly deletion stats. */
