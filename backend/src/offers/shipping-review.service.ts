@@ -3,7 +3,10 @@ import { ActorType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
-import { getVoluntaryWithdrawEnd } from './offer-governance.util';
+import { BIDDING_STOP_BEFORE_REVEAL_MS, getVoluntaryWithdrawEnd } from './offer-governance.util';
+
+/** Mirrors REVEAL_OFFSET_MS in offer-governance.util (reveal = createdAt + 24h when unset). */
+const REVEAL_FALLBACK_MS = 24 * 60 * 60 * 1000;
 import { SHIPPING_REVIEW, SHIPPING_REVIEW_EXPIRED_WITHDRAWAL } from './shipping-review.util';
 import { runDetached } from '../common/utils/run-detached';
 
@@ -66,13 +69,32 @@ export class ShippingReviewService {
      */
     async expireUnresolvedShippingReviews(orderId?: string): Promise<number> {
         const now = new Date();
+        const nowMs = now.getTime();
+        // Same timing chain as getVoluntaryWithdrawEnd, pushed into SQL so only due offers are
+        // fetched (a plain take:200 could starve due offers behind not-yet-due ones).
         const candidates = await this.prisma.offer.findMany({
             where: {
                 shippingReviewStatus: SHIPPING_REVIEW.PENDING,
                 status: 'pending',
                 isWithdrawn: false,
                 ...(orderId ? { orderId } : {}),
+                order: {
+                    status: { in: ['COLLECTING_OFFERS', 'AWAITING_SELECTION'] },
+                    OR: [
+                        { offersStopAt: { lte: now } },
+                        {
+                            offersStopAt: null,
+                            revealOffersAt: { lte: new Date(nowMs + BIDDING_STOP_BEFORE_REVEAL_MS) },
+                        },
+                        {
+                            offersStopAt: null,
+                            revealOffersAt: null,
+                            createdAt: { lte: new Date(nowMs + BIDDING_STOP_BEFORE_REVEAL_MS - REVEAL_FALLBACK_MS) },
+                        },
+                    ],
+                },
             },
+            orderBy: { createdAt: 'asc' },
             select: {
                 id: true,
                 offerNumber: true,

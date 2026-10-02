@@ -182,11 +182,17 @@ export class OffersService {
         // Shipping-class mismatch → hold the offer for an admin decision (hidden from customer)
         let shippingReviewPart: { name: string | null; shippingClass: string | null } | null = null;
         let shippingReviewStatus: 'NONE' | 'PENDING' = SHIPPING_REVIEW.NONE;
-        if (createOfferDto.orderPartId && createOfferDto.partType) {
+        if (createOfferDto.orderPartId) {
             shippingReviewPart = await this.prisma.orderPart.findFirst({
                 where: { id: createOfferDto.orderPartId, orderId: createOfferDto.orderId },
                 select: { name: true, shippingClass: true },
             });
+            // A part from another order would silently skip the shipping review.
+            if (!shippingReviewPart) {
+                throw new BadRequestException('Selected part does not belong to this order.');
+            }
+        }
+        if (shippingReviewPart && createOfferDto.partType) {
             shippingReviewStatus = computeShippingReviewStatus(
                 shippingReviewPart?.shippingClass,
                 String(createOfferDto.partType),

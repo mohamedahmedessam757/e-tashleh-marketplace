@@ -38,7 +38,7 @@ import {
 } from './merchant-fault-cancel-wa.util';
 import { OrderCreateQuotaService } from './order-create-quota.service';
 import { ORDER_CREATE_RULES } from './order-create-rules.util';
-import { computeOffersStopAt } from '../offers/offer-governance.util';
+import { computeOffersStopAt, getVoluntaryWithdrawEnd } from '../offers/offer-governance.util';
 import {
     isMultiItemOrder,
     offerAcceptedPartial,
@@ -3810,7 +3810,17 @@ export class OrdersService {
             include: {
                 orderPart: true,
                 store: { select: { id: true, name: true, ownerId: true } },
-                order: { select: { id: true, orderNumber: true, customerId: true, status: true } },
+                order: {
+                    select: {
+                        id: true,
+                        orderNumber: true,
+                        customerId: true,
+                        status: true,
+                        createdAt: true,
+                        offersStopAt: true,
+                        revealOffersAt: true,
+                    },
+                },
                 payments: {
                     where: { status: 'SUCCESS' },
                     take: 1,
@@ -3832,6 +3842,14 @@ export class OrdersService {
             code: 'SHIPPING_REVIEW_EXPIRED',
         };
         if (offer.shippingReviewStatus === SHIPPING_REVIEW.EXPIRED || offer.isWithdrawn) {
+            throw new BadRequestException(shippingDecisionExpired);
+        }
+        // Deadline is hour 23 even if the scheduler has not ticked yet.
+        if (
+            offer.shippingReviewStatus === SHIPPING_REVIEW.PENDING &&
+            getVoluntaryWithdrawEnd(offer.order).getTime() <= Date.now()
+        ) {
+            await this.shippingReview.expireUnresolvedShippingReviews(orderId).catch(() => undefined);
             throw new BadRequestException(shippingDecisionExpired);
         }
 
@@ -3983,7 +4001,9 @@ export class OrdersService {
             });
         }
 
-        if (offer.order.customerId) {
+        // Customer is only told when their own part's class changed (merchant-only fixes are internal).
+        const customerSideChanged = body.applyTo === 'customer' || body.applyTo === 'both';
+        if (offer.order.customerId && customerSideChanged) {
             await this.notifications.create({
                 recipientId: offer.order.customerId,
                 recipientRole: 'CUSTOMER',

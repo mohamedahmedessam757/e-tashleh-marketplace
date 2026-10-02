@@ -241,6 +241,11 @@ const OfferRow = memo(function OfferRow({
                     {isAr ? 'نوع الشحن معتمد من الإدارة' : 'Shipping type approved by admin'}
                 </div>
             )}
+            {readOnly && review === 'EXPIRED' && (
+                <div className="mb-2 text-[11px] font-bold text-white/60 bg-white/5 border border-white/15 px-3 py-1.5 rounded-lg">
+                    {isAr ? 'أُلغي لانتهاء مهلة قرار نوع الشحن' : 'Cancelled — shipping decision deadline passed'}
+                </div>
+            )}
             <OfferCard
                 {...offer}
                 storeName={offer.merchantName}

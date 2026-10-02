@@ -161,6 +161,7 @@ export class DashboardService {
                     shippingReviewStatus: 'PENDING',
                     isWithdrawn: false,
                     status: 'pending',
+                    order: { status: 'COLLECTING_OFFERS' },
                 },
             }),
             this.prisma.order.findMany({
