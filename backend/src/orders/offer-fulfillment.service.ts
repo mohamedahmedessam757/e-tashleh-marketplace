@@ -609,6 +609,17 @@ export class OfferFulfillmentService {
                 `Offer cannot be marked prepared from ${offer.fulfillmentStatus}`,
             );
         }
+        const delayedDeadline = (offer as { delayedPreparationDeadlineAt?: Date | null })
+            .delayedPreparationDeadlineAt;
+        if (
+            offer.fulfillmentStatus === OfferFulfillmentStatus.IN_PREPARATION &&
+            delayedDeadline &&
+            delayedDeadline.getTime() <= Date.now()
+        ) {
+            throw new BadRequestException(
+                'انتهت مهلة التجهيز الإضافية لهذه القطعة وجارٍ إلغاؤها تلقائياً. / The extra preparation grace for this part has ended; it is being cancelled automatically.',
+            );
+        }
 
         // Conditional claim: a concurrent verification submit cannot be downgraded back to PREPARED.
         const claimed = await this.prisma.offer.updateMany({

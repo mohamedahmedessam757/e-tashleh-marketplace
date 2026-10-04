@@ -23,12 +23,61 @@ export interface PartReturnWindowOffer {
     warrantyEndAt?: string | null;
 }
 
+type PartResolutionHint = {
+    deliveredAt?: string | null;
+    completedAt?: string | null;
+    returnWindowEndsAt?: string | null;
+    isReturnEligible?: boolean;
+    isWarrantyEligible?: boolean;
+    resolutionLocked?: boolean;
+    hasOpenCase?: boolean;
+    warrantyEndAt?: string | null;
+};
+
+/** Merchant/admin: build the card model from the offer row + fulfillment-summary hint. */
+export function buildPartReturnWindowOffer(
+    offer: {
+        id: string;
+        fulfillmentStatus?: string | null;
+        deliveredAt?: string | null;
+        completedAt?: string | null;
+        resolutionLocked?: boolean | null;
+        warrantyEndAt?: string | null;
+        store?: { name?: string | null } | null;
+    },
+    part: { id?: string | null; name: string },
+    meta: PartResolutionHint | undefined,
+    merchantName?: string | null,
+): PartReturnWindowOffer {
+    return {
+        offerId: String(offer.id),
+        orderPartId: part.id ?? null,
+        partName: part.name,
+        merchantName: offer.store?.name || merchantName || 'Store',
+        fulfillmentStatus: offer.fulfillmentStatus || undefined,
+        deliveredAt: meta?.deliveredAt ?? offer.deliveredAt ?? null,
+        completedAt: meta?.completedAt ?? offer.completedAt ?? null,
+        returnWindowEndsAt: meta?.returnWindowEndsAt ?? null,
+        isReturnEligible:
+            typeof meta?.isReturnEligible === 'boolean' ? meta.isReturnEligible : undefined,
+        isWarrantyEligible: Boolean(meta?.isWarrantyEligible),
+        resolutionLocked: Boolean(meta?.resolutionLocked ?? offer.resolutionLocked),
+        hasOpenCase: Boolean(meta?.hasOpenCase),
+        warrantyEndAt:
+            (typeof meta?.warrantyEndAt === 'string' ? meta.warrantyEndAt : null) ||
+            offer.warrantyEndAt ||
+            null,
+    };
+}
+
 interface PartReturnWindowCardProps {
     offer: PartReturnWindowOffer;
     isAr: boolean;
-    onReturn: (offer: PartReturnWindowOffer) => void;
-    onDispute: (offer: PartReturnWindowOffer) => void;
+    onReturn?: (offer: PartReturnWindowOffer) => void;
+    onDispute?: (offer: PartReturnWindowOffer) => void;
     className?: string;
+    /** Merchant/admin view: countdown + status only, no customer CTAs. */
+    readOnly?: boolean;
 }
 
 function isShortWindowOpen(offer: PartReturnWindowOffer): boolean {
@@ -50,6 +99,7 @@ export const PartReturnWindowCard: React.FC<PartReturnWindowCardProps> = ({
     onReturn,
     onDispute,
     className = '',
+    readOnly = false,
 }) => {
     const status = String(offer.fulfillmentStatus || '').toUpperCase();
     const isDelivered = status === 'DELIVERED';
@@ -118,9 +168,13 @@ export const PartReturnWindowCard: React.FC<PartReturnWindowCardProps> = ({
                 {canAct && (
                     <>
                         <p className="text-[11px] text-cyan-300/80 mb-3">
-                            {isAr
-                                ? `لديك ${POST_DELIVERY_RETURN_DISPUTE_HOURS} ساعة من وصول هذه القطعة لطلب الإرجاع أو النزاع`
-                                : `${POST_DELIVERY_RETURN_DISPUTE_HOURS}h from delivery to return or dispute this item`}
+                            {readOnly
+                                ? isAr
+                                    ? `مهلة إرجاع/نزاع العميل لهذه القطعة (${POST_DELIVERY_RETURN_DISPUTE_HOURS} ساعة من الوصول)`
+                                    : `Customer return/dispute window for this item (${POST_DELIVERY_RETURN_DISPUTE_HOURS}h from delivery)`
+                                : isAr
+                                  ? `لديك ${POST_DELIVERY_RETURN_DISPUTE_HOURS} ساعة من وصول هذه القطعة لطلب الإرجاع أو النزاع`
+                                  : `${POST_DELIVERY_RETURN_DISPUTE_HOURS}h from delivery to return or dispute this item`}
                         </p>
                         {offer.deliveredAt && (
                             <OrderCountdown
@@ -129,10 +183,11 @@ export const PartReturnWindowCard: React.FC<PartReturnWindowCardProps> = ({
                                 variant="full"
                             />
                         )}
+                        {!readOnly && (
                         <div className="flex flex-col sm:flex-row flex-wrap gap-2 mt-3 w-full">
                             <button
                                 type="button"
-                                onClick={() => onReturn(offer)}
+                                onClick={() => onReturn?.(offer)}
                                 className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-3 bg-cyan-500/15 hover:bg-cyan-500 text-cyan-300 hover:text-white border border-cyan-400/50 rounded-xl transition-all font-bold text-sm shadow-[0_0_18px_rgba(34,211,238,0.35)]"
                             >
                                 <RefreshCcw size={16} />
@@ -140,13 +195,14 @@ export const PartReturnWindowCard: React.FC<PartReturnWindowCardProps> = ({
                             </button>
                             <button
                                 type="button"
-                                onClick={() => onDispute(offer)}
+                                onClick={() => onDispute?.(offer)}
                                 className="flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-3 bg-red-500/15 hover:bg-red-600 text-red-300 hover:text-white border border-red-400/50 rounded-xl transition-all font-bold text-sm shadow-[0_0_18px_rgba(239,68,68,0.4)]"
                             >
                                 <AlertTriangle size={16} />
                                 {isAr ? 'فتح نزاع' : 'Dispute'}
                             </button>
                         </div>
+                        )}
                     </>
                 )}
                 {isDelivered && !canAct && !hasOpenCase && !isCompleted && !inWarrantyPhase && (

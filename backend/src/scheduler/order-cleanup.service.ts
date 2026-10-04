@@ -65,6 +65,9 @@ export class OrderCleanupService {
                 await this.expireAwaitingPayment();
                 await this.handlePreparationDelays();
                 await this.handleCriticalPreparationFailures(pending);
+                await this.handleOfferPreparationDeadlines(pending).catch((err) =>
+                    this.logger.error('handleOfferPreparationDeadlines failed (continuing cleanup):', err),
+                );
                 await this.handleNonMatchingToCorrection();
                 await this.handleCorrectionPeriodExpiry(pending);
                 const correctionPending = await this.handleExpiredOfferCorrectionDocs().catch(
@@ -1072,6 +1075,185 @@ export class OrderCleanupService {
         }
     }
 
+    /**
+     * Multi-part orders: per-part prep / delayed-prep SLA, including when the order-level
+     * status no longer tracks preparation (e.g. PARTIALLY_SHIPPED after sibling parts shipped).
+     */
+    private async handleOfferPreparationDeadlines(
+        pendingRefunds: Array<{
+            orderId: string;
+            offerIds: string[];
+            previousStatus?: string | null;
+            reason?: string;
+        }>,
+    ) {
+        const now = new Date();
+        const cfg = await this.orderDurationConfig.getConfig();
+        const prepMs = this.orderDurationConfig.hoursToMs(cfg.preparationHours);
+        const graceMs = this.orderDurationConfig.hoursToMs(cfg.delayedPreparationGraceHours);
+        const terminal: OrderStatus[] = [
+            OrderStatus.CANCELLED,
+            OrderStatus.CLOSED,
+            OrderStatus.REFUNDED,
+            OrderStatus.COMPLETED,
+            OrderStatus.RESOLVED,
+        ];
+        const inPrepMulti = (excludeStatuses: OrderStatus[]) => ({
+            status: { in: ['accepted', 'ACCEPTED'] },
+            fulfillmentStatus: OfferFulfillmentStatus.IN_PREPARATION,
+            order: {
+                requestType: { equals: 'multiple', mode: 'insensitive' as const },
+                status: { notIn: excludeStatuses },
+            },
+        });
+
+        // A) Fill missing per-part prep deadlines (all non-terminal multi orders).
+        const missing = await this.prisma.offer.findMany({
+            where: { ...inPrepMulti(terminal), preparationDeadlineAt: null },
+            select: {
+                id: true,
+                order: { select: { preparationDeadlineAt: true } },
+                payments: {
+                    where: { status: 'SUCCESS' },
+                    orderBy: { createdAt: 'asc' },
+                    take: 1,
+                    select: { paidAt: true, createdAt: true },
+                },
+            },
+            take: 200,
+        });
+        for (const o of missing) {
+            const pay = o.payments?.[0];
+            const paidAt = pay?.paidAt || pay?.createdAt;
+            const deadline =
+                o.order?.preparationDeadlineAt ??
+                (paidAt ? new Date(new Date(paidAt).getTime() + prepMs) : null);
+            if (!deadline) continue;
+            await this.prisma.offer.updateMany({
+                where: { id: o.id, preparationDeadlineAt: null },
+                data: { preparationDeadlineAt: deadline },
+            });
+        }
+
+        // Order-level flow still owns PREPARATION / DELAYED_PREPARATION orders.
+        const gapExclusions: OrderStatus[] = [
+            ...terminal,
+            OrderStatus.PREPARATION,
+            OrderStatus.DELAYED_PREPARATION,
+        ];
+
+        // B) Base prep expired → start delayed-prep grace for that part only.
+        const toDelay = await this.prisma.offer.findMany({
+            where: {
+                ...inPrepMulti(gapExclusions),
+                preparationDeadlineAt: { lte: now },
+                delayedPreparationDeadlineAt: null,
+            },
+            select: {
+                id: true,
+                storeId: true,
+                orderId: true,
+                order: { select: { orderNumber: true } },
+            },
+            orderBy: { preparationDeadlineAt: 'asc' },
+            take: 100,
+        });
+        for (const o of toDelay) {
+            try {
+                const claimed = await this.prisma.offer.updateMany({
+                    where: {
+                        id: o.id,
+                        delayedPreparationDeadlineAt: null,
+                        fulfillmentStatus: OfferFulfillmentStatus.IN_PREPARATION,
+                    },
+                    data: { delayedPreparationDeadlineAt: new Date(now.getTime() + graceMs) },
+                });
+                if (claimed.count === 0 || !o.storeId) continue;
+                const store = await this.prisma.store.findUnique({
+                    where: { id: o.storeId },
+                    select: { id: true, ownerId: true },
+                });
+                const orderNumber = o.order?.orderNumber || '';
+                if (store) {
+                    await this.violationsService
+                        .autoIssue({
+                            code: 'LATE_SHIPPING',
+                            targetUserId: store.ownerId,
+                            targetStoreId: store.id,
+                            targetType: ViolationTargetType.MERCHANT,
+                            orderId: o.orderId,
+                            reason: `Order #${orderNumber}: part preparation SLA exceeded. Extra grace started before auto-cancel.`,
+                            metadata: {
+                                orderNumber,
+                                phase: 'DELAYED_PREPARATION',
+                                graceHours: cfg.delayedPreparationGraceHours,
+                                offerId: o.id,
+                            },
+                            dedupSuffix: `${store.id}:prep48:${o.id}`,
+                        })
+                        .catch((e) =>
+                            this.logger.warn(`part prep delay violation failed: ${e?.message || e}`),
+                        );
+                }
+                await this.notificationsService
+                    .notifyMerchantByStoreId(o.storeId, {
+                        titleAr: '⚠ تنبيه: تأخر تجهيز قطعة',
+                        titleEn: 'Warning: Late part preparation',
+                        messageAr: `تأخر تجهيز قطعة في الطلب #${orderNumber}. تم تسجيل مخالفة، ولديك مهلة إضافية قدرها ${cfg.delayedPreparationGraceHours} ساعة. عند انتهائها ستُلغى القطعة ويُرد مبلغها للعميل مع تطبيق الرسوم على المتجر.`,
+                        messageEn: `A part on order #${orderNumber} is late. A violation was recorded and you have ${cfg.delayedPreparationGraceHours} extra hours. After that the part is cancelled, refunded, and merchant fees apply.`,
+                        type: 'VIOLATION',
+                        link: `/merchant/orders/${o.orderId}`,
+                        metadata: {
+                            orderId: o.orderId,
+                            orderNumber,
+                            offerId: o.id,
+                            waEvent: 'ORDER_STATUS',
+                            status: 'DELAYED_PREPARATION',
+                        },
+                    })
+                    .catch(() => undefined);
+            } catch (err: any) {
+                this.logger.error(
+                    `part delayed-prep start failed for offer ${o.id}: ${err?.message || err}`,
+                );
+            }
+        }
+
+        // C) Delayed-prep grace expired → cancel + refund (deferred) that part only.
+        const expired = await this.prisma.offer.findMany({
+            where: {
+                ...inPrepMulti(gapExclusions),
+                delayedPreparationDeadlineAt: { lte: now },
+            },
+            select: { id: true, orderId: true },
+            orderBy: { delayedPreparationDeadlineAt: 'asc' },
+            take: 100,
+        });
+        const byOrder = new Map<string, string[]>();
+        for (const o of expired) {
+            const list = byOrder.get(o.orderId) || [];
+            list.push(o.id);
+            byOrder.set(o.orderId, list);
+        }
+        for (const [orderId, offerIds] of byOrder) {
+            try {
+                const r = await this.ordersService.cancelLateOffersAfterDelayedPrep(orderId, offerIds, {
+                    skipRefund: true,
+                });
+                if (r.pendingRefundOfferIds.length) {
+                    pendingRefunds.push({
+                        orderId,
+                        offerIds: r.pendingRefundOfferIds,
+                        previousStatus: OrderStatus.DELAYED_PREPARATION,
+                        reason: 'System: Exceeded extra grace period for preparation. Part abandoned by merchant.',
+                    });
+                }
+            } catch (err: any) {
+                this.logger.error(`part delayed-prep cancel failed for ${orderId}: ${err?.message || err}`);
+            }
+        }
+    }
+
     private async handleNonMatchingToCorrection() {
         const orders = await this.prisma.order.findMany({
             where: { status: OrderStatus.NON_MATCHING },
@@ -1144,6 +1326,13 @@ export class OrderCleanupService {
                 adminStatus: 'REJECTED',
                 correctionDeadlineAt: { lt: now },
                 offerId: { not: null },
+                offer: {
+                    is: {
+                        fulfillmentStatus: {
+                            in: [OfferFulfillmentStatus.VERIFICATION, OfferFulfillmentStatus.PREPARED],
+                        },
+                    },
+                },
                 order: {
                     requestType: 'multiple',
                     status: {
@@ -1156,13 +1345,26 @@ export class OrderCleanupService {
                     },
                 },
             },
-            select: { id: true, orderId: true, offerId: true, order: { select: { status: true } } },
+            select: {
+                id: true,
+                orderId: true,
+                offerId: true,
+                createdAt: true,
+                order: { select: { status: true } },
+            },
+            orderBy: { correctionDeadlineAt: 'asc' },
             take: 50,
         });
 
         const byOrder = new Map<string, { offerIds: string[]; previousStatus: string | null }>();
         for (const doc of expiredDocs) {
             if (!doc.offerId) continue;
+            // Merchant already re-submitted a correction (newer doc) — wait for admin review.
+            const newerDoc = await this.prisma.verificationDocument.findFirst({
+                where: { offerId: doc.offerId, createdAt: { gt: doc.createdAt } },
+                select: { id: true },
+            });
+            if (newerDoc) continue;
             const entry = byOrder.get(doc.orderId) || {
                 offerIds: [],
                 previousStatus: doc.order?.status ?? null,

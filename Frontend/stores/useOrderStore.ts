@@ -1078,6 +1078,10 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                     cartBatchSize: offer.cartBatchSize ?? null,
                     handoverPending: offer.handoverPending ?? offer.fulfillmentStatus === 'VERIFICATION_SUCCESS',
                     fulfillmentStatus: offer.fulfillmentStatus || offer.fulfillment_status,
+                    preparationDeadlineAt:
+                        offer.preparationDeadlineAt ?? offer.preparation_deadline_at ?? null,
+                    delayedPreparationDeadlineAt:
+                        offer.delayedPreparationDeadlineAt ?? offer.delayed_prep_deadline_at ?? null,
                     payments: Array.isArray(offer.payments)
                         ? offer.payments.map((p: any) => ({
                               id: p.id,

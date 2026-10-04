@@ -20,6 +20,7 @@ type ObligationRow = {
   status: string;
   shippingAmount: number;
   stripeFeesAmount: number;
+  partPriceAmount?: number;
   refundAmount: number;
   createdAt: string;
   settlements: {
@@ -213,6 +214,7 @@ export const AdminShippingCompanyObligations: React.FC = () => {
                 <th className="p-4 font-black">{isAr ? 'الاسترداد' : 'Refund'}</th>
                 <th className="p-4 font-black">{isAr ? 'رسوم Stripe' : 'Stripe fees'}</th>
                 <th className="p-4 font-black">{isAr ? 'الشحن' : 'Shipping'}</th>
+                <th className="p-4 font-black">{isAr ? 'سعر القطعة' : 'Part price'}</th>
                 <th className="p-4 font-black">{isAr ? 'الأصل' : 'Original'}</th>
                 <th className="p-4 font-black">{isAr ? 'المتبقي' : 'Remaining'}</th>
                 <th className="p-4 font-black">{isAr ? 'الحالة' : 'Status'}</th>
@@ -222,7 +224,7 @@ export const AdminShippingCompanyObligations: React.FC = () => {
             <tbody>
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-white/30">
+                  <td colSpan={9} className="p-8 text-center text-white/30">
                     {loading
                       ? isAr
                         ? 'جاري التحميل…'
@@ -244,6 +246,7 @@ export const AdminShippingCompanyObligations: React.FC = () => {
                   <td className="p-4 font-mono text-emerald-400/80">{row.refundAmount.toFixed(2)}</td>
                   <td className="p-4 font-mono text-orange-400/80">{row.stripeFeesAmount.toFixed(2)}</td>
                   <td className="p-4 font-mono text-cyan-400/80">{row.shippingAmount.toFixed(2)}</td>
+                  <td className="p-4 font-mono text-gold-500/80">{Number(row.partPriceAmount || 0).toFixed(2)}</td>
                   <td className="p-4 font-mono text-white/70">{row.amountOriginal.toFixed(2)}</td>
                   <td className="p-4 font-mono text-purple-300 font-black">
                     {row.amountRemaining.toFixed(2)}

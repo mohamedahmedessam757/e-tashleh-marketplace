@@ -57,11 +57,25 @@ export function canSelectOfferForShipping(
 export function merchantCanMarkPrepared(
     fulfillmentStatus?: string,
     orderStatus?: string | null,
+    offer?: { delayedPreparationDeadlineAt?: string | Date | null } | null,
+    nowMs: number = Date.now(),
 ): boolean {
     if (isMerchantFulfillmentLocked(orderStatus)) return false;
     // Hard gate: payment must have moved the offer into IN_PREPARATION first.
     // Never allow Prepare while still AWAITING_PAYMENT (or missing status).
-    return String(fulfillmentStatus || '').toUpperCase() === 'IN_PREPARATION';
+    if (String(fulfillmentStatus || '').toUpperCase() !== 'IN_PREPARATION') return false;
+    return !isOfferDelayedPrepExpired(offer, nowMs);
+}
+
+/** Delayed-prep grace ended for this part (server will cancel within ~1 minute). */
+export function isOfferDelayedPrepExpired(
+    offer?: { delayedPreparationDeadlineAt?: string | Date | null } | null,
+    nowMs: number = Date.now(),
+): boolean {
+    const raw = offer?.delayedPreparationDeadlineAt;
+    if (!raw) return false;
+    const ms = new Date(raw).getTime();
+    return Number.isFinite(ms) && nowMs >= ms;
 }
 
 export function normalizeOfferFulfillmentStatus(status?: string | null): OfferFulfillmentStatus {
@@ -404,7 +418,10 @@ export function merchantOfferAdminRejected(
     if (isMerchantFulfillmentLocked(orderStatus)) return false;
     // Correction already sent — hide rematch CTAs while awaiting admin review
     if (String(orderStatus || '').toUpperCase() === 'CORRECTION_SUBMITTED') return false;
-    if (isPostVerificationSuccessOrderStatus(orderStatus)) {
+    const os = String(orderStatus || '').toUpperCase();
+    // PARTIALLY_* only happen on multi-part orders: a sibling shipped, this part is still in correction.
+    const partialMulti = os === 'PARTIALLY_SHIPPED' || os === 'PARTIALLY_DELIVERED';
+    if (!partialMulti && isPostVerificationSuccessOrderStatus(orderStatus)) {
         return false;
     }
     if (String(doc?.adminStatus || '').toUpperCase() !== 'REJECTED') return false;

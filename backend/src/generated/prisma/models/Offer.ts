@@ -59,6 +59,8 @@ export type OfferMinAggregateOutputType = {
   cylinders: number | null
   status: string | null
   fulfillmentStatus: $Enums.OfferFulfillmentStatus | null
+  preparationDeadlineAt: Date | null
+  delayedPreparationDeadlineAt: Date | null
   preparedAt: Date | null
   verificationSubmittedAt: Date | null
   readyForShippingAt: Date | null
@@ -98,6 +100,8 @@ export type OfferMaxAggregateOutputType = {
   cylinders: number | null
   status: string | null
   fulfillmentStatus: $Enums.OfferFulfillmentStatus | null
+  preparationDeadlineAt: Date | null
+  delayedPreparationDeadlineAt: Date | null
   preparedAt: Date | null
   verificationSubmittedAt: Date | null
   readyForShippingAt: Date | null
@@ -137,6 +141,8 @@ export type OfferCountAggregateOutputType = {
   cylinders: number
   status: number
   fulfillmentStatus: number
+  preparationDeadlineAt: number
+  delayedPreparationDeadlineAt: number
   preparedAt: number
   verificationSubmittedAt: number
   readyForShippingAt: number
@@ -192,6 +198,8 @@ export type OfferMinAggregateInputType = {
   cylinders?: true
   status?: true
   fulfillmentStatus?: true
+  preparationDeadlineAt?: true
+  delayedPreparationDeadlineAt?: true
   preparedAt?: true
   verificationSubmittedAt?: true
   readyForShippingAt?: true
@@ -231,6 +239,8 @@ export type OfferMaxAggregateInputType = {
   cylinders?: true
   status?: true
   fulfillmentStatus?: true
+  preparationDeadlineAt?: true
+  delayedPreparationDeadlineAt?: true
   preparedAt?: true
   verificationSubmittedAt?: true
   readyForShippingAt?: true
@@ -270,6 +280,8 @@ export type OfferCountAggregateInputType = {
   cylinders?: true
   status?: true
   fulfillmentStatus?: true
+  preparationDeadlineAt?: true
+  delayedPreparationDeadlineAt?: true
   preparedAt?: true
   verificationSubmittedAt?: true
   readyForShippingAt?: true
@@ -396,6 +408,8 @@ export type OfferGroupByOutputType = {
   cylinders: number | null
   status: string
   fulfillmentStatus: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt: Date | null
+  delayedPreparationDeadlineAt: Date | null
   preparedAt: Date | null
   verificationSubmittedAt: Date | null
   readyForShippingAt: Date | null
@@ -458,6 +472,8 @@ export type OfferWhereInput = {
   cylinders?: Prisma.IntNullableFilter<"Offer"> | number | null
   status?: Prisma.StringFilter<"Offer"> | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFilter<"Offer"> | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.DateTimeNullableFilter<"Offer"> | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.DateTimeNullableFilter<"Offer"> | Date | string | null
   preparedAt?: Prisma.DateTimeNullableFilter<"Offer"> | Date | string | null
   verificationSubmittedAt?: Prisma.DateTimeNullableFilter<"Offer"> | Date | string | null
   readyForShippingAt?: Prisma.DateTimeNullableFilter<"Offer"> | Date | string | null
@@ -509,6 +525,8 @@ export type OfferOrderByWithRelationInput = {
   cylinders?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   fulfillmentStatus?: Prisma.SortOrder
+  preparationDeadlineAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  delayedPreparationDeadlineAt?: Prisma.SortOrderInput | Prisma.SortOrder
   preparedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   verificationSubmittedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   readyForShippingAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -563,6 +581,8 @@ export type OfferWhereUniqueInput = Prisma.AtLeast<{
   cylinders?: Prisma.IntNullableFilter<"Offer"> | number | null
   status?: Prisma.StringFilter<"Offer"> | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFilter<"Offer"> | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.DateTimeNullableFilter<"Offer"> | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.DateTimeNullableFilter<"Offer"> | Date | string | null
   preparedAt?: Prisma.DateTimeNullableFilter<"Offer"> | Date | string | null
   verificationSubmittedAt?: Prisma.DateTimeNullableFilter<"Offer"> | Date | string | null
   readyForShippingAt?: Prisma.DateTimeNullableFilter<"Offer"> | Date | string | null
@@ -614,6 +634,8 @@ export type OfferOrderByWithAggregationInput = {
   cylinders?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   fulfillmentStatus?: Prisma.SortOrder
+  preparationDeadlineAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  delayedPreparationDeadlineAt?: Prisma.SortOrderInput | Prisma.SortOrder
   preparedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   verificationSubmittedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   readyForShippingAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -661,6 +683,8 @@ export type OfferScalarWhereWithAggregatesInput = {
   cylinders?: Prisma.IntNullableWithAggregatesFilter<"Offer"> | number | null
   status?: Prisma.StringWithAggregatesFilter<"Offer"> | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusWithAggregatesFilter<"Offer"> | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Offer"> | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Offer"> | Date | string | null
   preparedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Offer"> | Date | string | null
   verificationSubmittedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Offer"> | Date | string | null
   readyForShippingAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Offer"> | Date | string | null
@@ -697,6 +721,8 @@ export type OfferCreateInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -747,6 +773,8 @@ export type OfferUncheckedCreateInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -791,6 +819,8 @@ export type OfferUpdateInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -841,6 +871,8 @@ export type OfferUncheckedUpdateInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -888,6 +920,8 @@ export type OfferCreateManyInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -924,6 +958,8 @@ export type OfferUpdateManyMutationInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -962,6 +998,8 @@ export type OfferUncheckedUpdateManyInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1016,6 +1054,8 @@ export type OfferCountOrderByAggregateInput = {
   cylinders?: Prisma.SortOrder
   status?: Prisma.SortOrder
   fulfillmentStatus?: Prisma.SortOrder
+  preparationDeadlineAt?: Prisma.SortOrder
+  delayedPreparationDeadlineAt?: Prisma.SortOrder
   preparedAt?: Prisma.SortOrder
   verificationSubmittedAt?: Prisma.SortOrder
   readyForShippingAt?: Prisma.SortOrder
@@ -1062,6 +1102,8 @@ export type OfferMaxOrderByAggregateInput = {
   cylinders?: Prisma.SortOrder
   status?: Prisma.SortOrder
   fulfillmentStatus?: Prisma.SortOrder
+  preparationDeadlineAt?: Prisma.SortOrder
+  delayedPreparationDeadlineAt?: Prisma.SortOrder
   preparedAt?: Prisma.SortOrder
   verificationSubmittedAt?: Prisma.SortOrder
   readyForShippingAt?: Prisma.SortOrder
@@ -1101,6 +1143,8 @@ export type OfferMinOrderByAggregateInput = {
   cylinders?: Prisma.SortOrder
   status?: Prisma.SortOrder
   fulfillmentStatus?: Prisma.SortOrder
+  preparationDeadlineAt?: Prisma.SortOrder
+  delayedPreparationDeadlineAt?: Prisma.SortOrder
   preparedAt?: Prisma.SortOrder
   verificationSubmittedAt?: Prisma.SortOrder
   readyForShippingAt?: Prisma.SortOrder
@@ -1453,6 +1497,8 @@ export type OfferCreateWithoutStoreInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -1501,6 +1547,8 @@ export type OfferUncheckedCreateWithoutStoreInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -1577,6 +1625,8 @@ export type OfferScalarWhereInput = {
   cylinders?: Prisma.IntNullableFilter<"Offer"> | number | null
   status?: Prisma.StringFilter<"Offer"> | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFilter<"Offer"> | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.DateTimeNullableFilter<"Offer"> | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.DateTimeNullableFilter<"Offer"> | Date | string | null
   preparedAt?: Prisma.DateTimeNullableFilter<"Offer"> | Date | string | null
   verificationSubmittedAt?: Prisma.DateTimeNullableFilter<"Offer"> | Date | string | null
   readyForShippingAt?: Prisma.DateTimeNullableFilter<"Offer"> | Date | string | null
@@ -1613,6 +1663,8 @@ export type OfferCreateWithoutOrderInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -1661,6 +1713,8 @@ export type OfferUncheckedCreateWithoutOrderInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -1715,6 +1769,8 @@ export type OfferCreateWithoutAcceptedByOrderInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -1764,6 +1820,8 @@ export type OfferUncheckedCreateWithoutAcceptedByOrderInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -1839,6 +1897,8 @@ export type OfferUpdateWithoutAcceptedByOrderInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1888,6 +1948,8 @@ export type OfferUncheckedUpdateWithoutAcceptedByOrderInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1931,6 +1993,8 @@ export type OfferCreateWithoutVerificationDocumentsInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -1980,6 +2044,8 @@ export type OfferUncheckedCreateWithoutVerificationDocumentsInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -2039,6 +2105,8 @@ export type OfferUpdateWithoutVerificationDocumentsInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2088,6 +2156,8 @@ export type OfferUncheckedUpdateWithoutVerificationDocumentsInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2131,6 +2201,8 @@ export type OfferCreateWithoutRejectionInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -2180,6 +2252,8 @@ export type OfferUncheckedCreateWithoutRejectionInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -2239,6 +2313,8 @@ export type OfferUpdateWithoutRejectionInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2288,6 +2364,8 @@ export type OfferUncheckedUpdateWithoutRejectionInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2331,6 +2409,8 @@ export type OfferCreateWithoutOrderPartInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -2379,6 +2459,8 @@ export type OfferUncheckedCreateWithoutOrderPartInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -2449,6 +2531,8 @@ export type OfferCreateWithoutReturnsInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -2498,6 +2582,8 @@ export type OfferUncheckedCreateWithoutReturnsInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -2557,6 +2643,8 @@ export type OfferUpdateWithoutReturnsInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2606,6 +2694,8 @@ export type OfferUncheckedUpdateWithoutReturnsInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2649,6 +2739,8 @@ export type OfferCreateWithoutDisputesInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -2698,6 +2790,8 @@ export type OfferUncheckedCreateWithoutDisputesInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -2757,6 +2851,8 @@ export type OfferUpdateWithoutDisputesInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2806,6 +2902,8 @@ export type OfferUncheckedUpdateWithoutDisputesInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2849,6 +2947,8 @@ export type OfferCreateWithoutPaymentsInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -2898,6 +2998,8 @@ export type OfferUncheckedCreateWithoutPaymentsInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -2957,6 +3059,8 @@ export type OfferUpdateWithoutPaymentsInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3006,6 +3110,8 @@ export type OfferUncheckedUpdateWithoutPaymentsInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3049,6 +3155,8 @@ export type OfferCreateWithoutCartShipmentInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -3098,6 +3206,8 @@ export type OfferUncheckedCreateWithoutCartShipmentInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -3167,6 +3277,8 @@ export type OfferCreateWithoutReviewsInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -3216,6 +3328,8 @@ export type OfferUncheckedCreateWithoutReviewsInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -3275,6 +3389,8 @@ export type OfferUpdateWithoutReviewsInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3324,6 +3440,8 @@ export type OfferUncheckedUpdateWithoutReviewsInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3367,6 +3485,8 @@ export type OfferCreateWithoutVerificationTasksInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -3416,6 +3536,8 @@ export type OfferUncheckedCreateWithoutVerificationTasksInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -3475,6 +3597,8 @@ export type OfferUpdateWithoutVerificationTasksInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3524,6 +3648,8 @@ export type OfferUncheckedUpdateWithoutVerificationTasksInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3569,6 +3695,8 @@ export type OfferCreateManyStoreInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -3605,6 +3733,8 @@ export type OfferUpdateWithoutStoreInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3653,6 +3783,8 @@ export type OfferUncheckedUpdateWithoutStoreInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3699,6 +3831,8 @@ export type OfferUncheckedUpdateManyWithoutStoreInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3737,6 +3871,8 @@ export type OfferCreateManyOrderInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -3773,6 +3909,8 @@ export type OfferUpdateWithoutOrderInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3821,6 +3959,8 @@ export type OfferUncheckedUpdateWithoutOrderInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3867,6 +4007,8 @@ export type OfferUncheckedUpdateManyWithoutOrderInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3905,6 +4047,8 @@ export type OfferCreateManyOrderPartInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -3941,6 +4085,8 @@ export type OfferUpdateWithoutOrderPartInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -3989,6 +4135,8 @@ export type OfferUncheckedUpdateWithoutOrderPartInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4035,6 +4183,8 @@ export type OfferUncheckedUpdateManyWithoutOrderPartInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4074,6 +4224,8 @@ export type OfferCreateManyCartShipmentInput = {
   cylinders?: number | null
   status?: string
   fulfillmentStatus?: $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Date | string | null
+  delayedPreparationDeadlineAt?: Date | string | null
   preparedAt?: Date | string | null
   verificationSubmittedAt?: Date | string | null
   readyForShippingAt?: Date | string | null
@@ -4109,6 +4261,8 @@ export type OfferUpdateWithoutCartShipmentInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4158,6 +4312,8 @@ export type OfferUncheckedUpdateWithoutCartShipmentInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4204,6 +4360,8 @@ export type OfferUncheckedUpdateManyWithoutCartShipmentInput = {
   cylinders?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   fulfillmentStatus?: Prisma.EnumOfferFulfillmentStatusFieldUpdateOperationsInput | $Enums.OfferFulfillmentStatus
+  preparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  delayedPreparationDeadlineAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   preparedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationSubmittedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   readyForShippingAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -4318,6 +4476,8 @@ export type OfferSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   cylinders?: boolean
   status?: boolean
   fulfillmentStatus?: boolean
+  preparationDeadlineAt?: boolean
+  delayedPreparationDeadlineAt?: boolean
   preparedAt?: boolean
   verificationSubmittedAt?: boolean
   readyForShippingAt?: boolean
@@ -4370,6 +4530,8 @@ export type OfferSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   cylinders?: boolean
   status?: boolean
   fulfillmentStatus?: boolean
+  preparationDeadlineAt?: boolean
+  delayedPreparationDeadlineAt?: boolean
   preparedAt?: boolean
   verificationSubmittedAt?: boolean
   readyForShippingAt?: boolean
@@ -4413,6 +4575,8 @@ export type OfferSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   cylinders?: boolean
   status?: boolean
   fulfillmentStatus?: boolean
+  preparationDeadlineAt?: boolean
+  delayedPreparationDeadlineAt?: boolean
   preparedAt?: boolean
   verificationSubmittedAt?: boolean
   readyForShippingAt?: boolean
@@ -4456,6 +4620,8 @@ export type OfferSelectScalar = {
   cylinders?: boolean
   status?: boolean
   fulfillmentStatus?: boolean
+  preparationDeadlineAt?: boolean
+  delayedPreparationDeadlineAt?: boolean
   preparedAt?: boolean
   verificationSubmittedAt?: boolean
   readyForShippingAt?: boolean
@@ -4476,7 +4642,7 @@ export type OfferSelectScalar = {
   updatedAt?: boolean
 }
 
-export type OfferOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "offerNumber" | "orderId" | "orderPartId" | "storeId" | "unitPrice" | "weightKg" | "shippingCost" | "hasWarranty" | "warrantyDuration" | "deliveryDays" | "condition" | "partType" | "notes" | "offerImage" | "cylinders" | "status" | "fulfillmentStatus" | "preparedAt" | "verificationSubmittedAt" | "readyForShippingAt" | "canEditUntil" | "isWithdrawn" | "withdrawalType" | "shippingReviewStatus" | "shippingReviewResolvedAt" | "shippedFromCart" | "shippedFromCartAt" | "cartShipmentId" | "deliveredAt" | "completedAt" | "resolutionLocked" | "warrantyActiveAt" | "warrantyEndAt" | "createdAt" | "updatedAt", ExtArgs["result"]["offer"]>
+export type OfferOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "offerNumber" | "orderId" | "orderPartId" | "storeId" | "unitPrice" | "weightKg" | "shippingCost" | "hasWarranty" | "warrantyDuration" | "deliveryDays" | "condition" | "partType" | "notes" | "offerImage" | "cylinders" | "status" | "fulfillmentStatus" | "preparationDeadlineAt" | "delayedPreparationDeadlineAt" | "preparedAt" | "verificationSubmittedAt" | "readyForShippingAt" | "canEditUntil" | "isWithdrawn" | "withdrawalType" | "shippingReviewStatus" | "shippingReviewResolvedAt" | "shippedFromCart" | "shippedFromCartAt" | "cartShipmentId" | "deliveredAt" | "completedAt" | "resolutionLocked" | "warrantyActiveAt" | "warrantyEndAt" | "createdAt" | "updatedAt", ExtArgs["result"]["offer"]>
 export type OfferInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
   orderPart?: boolean | Prisma.Offer$orderPartArgs<ExtArgs>
@@ -4540,6 +4706,8 @@ export type $OfferPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     cylinders: number | null
     status: string
     fulfillmentStatus: $Enums.OfferFulfillmentStatus
+    preparationDeadlineAt: Date | null
+    delayedPreparationDeadlineAt: Date | null
     preparedAt: Date | null
     verificationSubmittedAt: Date | null
     readyForShippingAt: Date | null
@@ -5011,6 +5179,8 @@ export interface OfferFieldRefs {
   readonly cylinders: Prisma.FieldRef<"Offer", 'Int'>
   readonly status: Prisma.FieldRef<"Offer", 'String'>
   readonly fulfillmentStatus: Prisma.FieldRef<"Offer", 'OfferFulfillmentStatus'>
+  readonly preparationDeadlineAt: Prisma.FieldRef<"Offer", 'DateTime'>
+  readonly delayedPreparationDeadlineAt: Prisma.FieldRef<"Offer", 'DateTime'>
   readonly preparedAt: Prisma.FieldRef<"Offer", 'DateTime'>
   readonly verificationSubmittedAt: Prisma.FieldRef<"Offer", 'DateTime'>
   readonly readyForShippingAt: Prisma.FieldRef<"Offer", 'DateTime'>

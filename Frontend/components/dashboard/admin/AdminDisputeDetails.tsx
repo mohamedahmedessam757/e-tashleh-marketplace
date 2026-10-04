@@ -127,6 +127,9 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
     /** When SHIPPING_COMPANY: include Stripe gateway + refund fees in carrier liability (default ON). */
     const [includePlatformFeesInCarrierLiability, setIncludePlatformFeesInCarrierLiability] =
         useState(true);
+    /** When SHIPPING_COMPANY: include the merchant's original part price in carrier liability (default ON). */
+    const [includePartPriceInCarrierLiability, setIncludePartPriceInCarrierLiability] =
+        useState(true);
     const [penaltyType, setPenaltyType] = useState<'FRAUD' | 'NEGLIGENCE' | null>(null);
     const [penaltyAmount, setPenaltyAmount] = useState<number>(50000);
     const [merchantBalance, setMerchantBalance] = useState<number | null>(null);
@@ -161,6 +164,7 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
         setFaultParty(next);
         if (next === 'SHIPPING_COMPANY') {
             setIncludePlatformFeesInCarrierLiability(true);
+            setIncludePartPriceInCarrierLiability(true);
         }
     };
 
@@ -190,6 +194,10 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
             : dispute?.paidTotal != null && dispute.paidTotal > 0
               ? Number(dispute.paidTotal)
               : catalogOrderTotal;
+    const caseOfferUnitPrice = (dispute as { offer?: { unitPrice?: number | string | null } } | null | undefined)
+        ?.offer?.unitPrice;
+    const partOriginalPrice =
+        caseOfferUnitPrice != null ? Math.max(0, Number(caseOfferUnitPrice) || 0) : 0;
     const paymentMismatch =
         dispute?.paidTotal != null &&
         dispute.paidTotal > 0 &&
@@ -212,6 +220,8 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                     ? dispute.maxRefundable
                     : null,
             includePlatformFeesInCarrierLiability,
+            partOriginalPrice,
+            includePartPriceInCarrierLiability,
         });
         return {
             gatewayFee: preview.gatewayFee,
@@ -235,6 +245,8 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
             faultParty,
             finalRefundDecision,
             includePlatformFeesInCarrierLiability,
+            partOriginalPrice,
+            includePartPriceInCarrierLiability,
             dispute?.maxRefundable,
         ],
     );
@@ -501,6 +513,8 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
             shippingCompanyLiability: breakdown.shippingCompanyLiability,
             includePlatformFeesInCarrierLiability:
                 faultParty === 'SHIPPING_COMPANY' ? includePlatformFeesInCarrierLiability : undefined,
+            includePartPriceInCarrierLiability:
+                faultParty === 'SHIPPING_COMPANY' ? includePartPriceInCarrierLiability : undefined,
             resolutionMode: isCloseCompleteRefund ? 'CLOSE_COMPLETE_REFUND' : undefined,
             shippingRefund:
                 Number(breakdown.merchantDebits?.shipping || 0) > 0
@@ -1296,13 +1310,47 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                                  </span>
                                                              </div>
                                                              <p className="text-[10px] leading-relaxed text-white/50">
-                                                                 {includePlatformFeesInCarrierLiability
-                                                                     ? (isAr
-                                                                           ? `الالتزام = شحن (${shippingRoundtrip.toFixed(2)}) + رسوم (${finPreview.platformFees.toFixed(2)}) = ${finPreview.shippingCompanyLiability.toFixed(2)} AED`
-                                                                           : `Liability = shipping (${shippingRoundtrip.toFixed(2)}) + fees (${finPreview.platformFees.toFixed(2)}) = ${finPreview.shippingCompanyLiability.toFixed(2)} AED`)
-                                                                     : (isAr
-                                                                           ? `الالتزام = شحن فقط (${shippingRoundtrip.toFixed(2)} AED) — الرسوم لن تُسجَّل على شركة الشحن`
-                                                                           : `Liability = shipping only (${shippingRoundtrip.toFixed(2)} AED) — fees will not be charged to the carrier`)}
+                                                                 {isAr
+                                                                     ? `الالتزام = شحن (${shippingRoundtrip.toFixed(2)})${includePlatformFeesInCarrierLiability ? ` + رسوم (${finPreview.platformFees.toFixed(2)})` : ''}${finPreview.shippingCompanyPartPriceInLiability > 0 ? ` + سعر القطعة (${finPreview.shippingCompanyPartPriceInLiability.toFixed(2)})` : ''} = ${finPreview.shippingCompanyLiability.toFixed(2)} AED${includePlatformFeesInCarrierLiability ? '' : ' — الرسوم لن تُسجَّل على شركة الشحن'}`
+                                                                     : `Liability = shipping (${shippingRoundtrip.toFixed(2)})${includePlatformFeesInCarrierLiability ? ` + fees (${finPreview.platformFees.toFixed(2)})` : ''}${finPreview.shippingCompanyPartPriceInLiability > 0 ? ` + part price (${finPreview.shippingCompanyPartPriceInLiability.toFixed(2)})` : ''} = ${finPreview.shippingCompanyLiability.toFixed(2)} AED${includePlatformFeesInCarrierLiability ? '' : ' — fees will not be charged to the carrier'}`}
+                                                             </p>
+                                                         </button>
+                                                     )}
+
+                                                     {faultParty === 'SHIPPING_COMPANY' && (
+                                                         <button
+                                                             type="button"
+                                                             onClick={() =>
+                                                                 setIncludePartPriceInCarrierLiability((v) => !v)
+                                                             }
+                                                             className={`w-full p-4 rounded-2xl border text-right transition-all ${
+                                                                 includePartPriceInCarrierLiability
+                                                                     ? 'bg-purple-500/15 border-purple-500/40 text-white'
+                                                                     : 'bg-white/5 border-white/10 text-white/50 hover:bg-white/10'
+                                                             }`}
+                                                         >
+                                                             <div className="flex items-center justify-between gap-3 mb-2">
+                                                                 <span className="text-xs font-black">
+                                                                     {isAr
+                                                                         ? 'إضافة سعر القطعة الأصلي للتاجر على التزامات شركة الشحن'
+                                                                         : "Add the merchant's original part price to the carrier's liability"}
+                                                                 </span>
+                                                                 <span
+                                                                     className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                                                                         includePartPriceInCarrierLiability
+                                                                             ? 'bg-purple-500 text-black'
+                                                                             : 'bg-white/10 text-white/40'
+                                                                     }`}
+                                                                 >
+                                                                     {includePartPriceInCarrierLiability
+                                                                         ? (isAr ? 'مفعّل' : 'ON')
+                                                                         : (isAr ? 'متوقف' : 'OFF')}
+                                                                 </span>
+                                                             </div>
+                                                             <p className="text-[10px] leading-relaxed text-white/50">
+                                                                 {isAr
+                                                                     ? `سعر القطعة: ${partOriginalPrice.toFixed(2)} AED — يُسجَّل للمنصة عند سداد شركة الشحن (المنصة ردّت المبلغ للعميل).`
+                                                                     : `Part price: ${partOriginalPrice.toFixed(2)} AED — recovered to the platform when the carrier pays (the platform refunded the customer).`}
                                                              </p>
                                                          </button>
                                                      )}
@@ -1399,6 +1447,13 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                              <span className="text-purple-400 font-mono">{finPreview.refundFee.toFixed(2)} AED</span>
                                                          </div>
                                                          </>
+                                                         )}
+                                                         {faultParty === 'SHIPPING_COMPANY' &&
+                                                          finPreview.shippingCompanyPartPriceInLiability > 0 && (
+                                                            <div className="flex justify-between text-[10px]">
+                                                                <span className="text-purple-400/60 flex items-center gap-2"><Truck size={10} /> {isAr ? 'سعر القطعة الأصلي (ضمن التزام شركة الشحن)' : 'Original part price (within carrier liability)'}</span>
+                                                                <span className="text-purple-400 font-mono">{finPreview.shippingCompanyPartPriceInLiability.toFixed(2)} AED</span>
+                                                            </div>
                                                          )}
                                                          {faultParty === 'SHIPPING_COMPANY' &&
                                                           !includePlatformFeesInCarrierLiability &&
@@ -1643,7 +1698,7 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                          : 'A shipping-company liability will be recorded in Billing.'}
                                                  </span>
                                              )}
-                                             {faultParty === 'SHIPPING_COMPANY' && shippingRoundtrip <= 0 && (
+                                             {faultParty === 'SHIPPING_COMPANY' && shippingRoundtrip <= 0 && finPreview.shippingCompanyLiability <= 0 && (
                                                  <span className="block mt-1 font-bold text-[10px] text-amber-300">
                                                      {isAr
                                                          ? 'تنبيه: تكلفة الشحن = 0 — لن يُسجَّل التزام. أدخل شحن الذهاب والإياب في المرحلة 2.'
@@ -1692,10 +1747,16 @@ export const AdminDisputeDetails: React.FC<AdminDisputeDetailsProps> = ({ caseId
                                                                  (isAr ? 'شحن ذهاباً وإياباً (على التاجر)' : 'Round-trip shipping (merchant)')
                                                                : (isAr ? 'شحن ذهاباً وإياباً (على العميل)' : 'Round-trip shipping (customer)')}
                                                      </span>
-                                                     <span className="text-cyan-400 font-mono">{shippingRoundtrip.toFixed(2)} AED</span>
-                                                 </div>
-                                             )}
-                                             {faultParty === 'SHIPPING_COMPANY' && finPreview.shippingCompanyLiability > 0 && (
+                                                    <span className="text-cyan-400 font-mono">{shippingRoundtrip.toFixed(2)} AED</span>
+                                                </div>
+                                            )}
+                                            {faultParty === 'SHIPPING_COMPANY' && finPreview.shippingCompanyPartPriceInLiability > 0 && (
+                                                <div className="flex justify-between gap-3 text-white/60">
+                                                    <span>{isAr ? 'سعر القطعة الأصلي (على شركة الشحن)' : 'Original part price (carrier)'}</span>
+                                                    <span className="text-purple-400 font-mono">{finPreview.shippingCompanyPartPriceInLiability.toFixed(2)} AED</span>
+                                                </div>
+                                            )}
+                                            {faultParty === 'SHIPPING_COMPANY' && finPreview.shippingCompanyLiability > 0 && (
                                                  <div className="flex justify-between gap-3 text-purple-300 font-bold pt-1 border-t border-white/10">
                                                      <span>{(t.admin.disputeManager.verdictTerminal as any).shippingCompanyLiability}</span>
                                                      <span className="font-mono">{finPreview.shippingCompanyLiability.toFixed(2)} AED</span>

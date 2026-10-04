@@ -11,8 +11,8 @@ const DEBOUNCE_MS = 400;
  * This relay listens with the service role (post-commit changes) and fans out
  * `shipment_updated` over the JWT-authenticated notifications socket to the
  * order's customer, the store owners on that order, and admins.
- * Order / accepted-offer changes are relayed the same way as `order_updated`
- * (customer + accepted store owners only; payload is just the order id).
+ * Order / accepted-offer / return / dispute / verification-doc changes are relayed
+ * as `order_updated` (customer + accepted store owners + admins; payload is just the order id).
  */
 @Injectable()
 export class ShipmentsRealtimeRelayService implements OnModuleInit, OnModuleDestroy {
@@ -53,6 +53,15 @@ export class ShipmentsRealtimeRelayService implements OnModuleInit, OnModuleDest
             )
             .on('postgres_changes', { event: '*', schema: 'public', table: 'offers' }, (p) =>
                 this.onOrderRow('offers', p),
+            )
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'returns' }, (p) =>
+                this.onOrderRow('returns', p),
+            )
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'disputes' }, (p) =>
+                this.onOrderRow('disputes', p),
+            )
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'verification_documents' }, (p) =>
+                this.onOrderRow('verification_documents', p),
             )
             .subscribe((status) => {
                 if (status === 'SUBSCRIBED') this.logger.log('Shipment realtime relay subscribed');
@@ -105,13 +114,18 @@ export class ShipmentsRealtimeRelayService implements OnModuleInit, OnModuleDest
      * Orders / accepted offers → `order_updated` hint (assembly cart, order details).
      * Bids that are not accepted are ignored so bidding traffic doesn't fan out.
      */
-    private onOrderRow(table: 'orders' | 'offers', payload: any) {
+    private onOrderRow(
+        table: 'orders' | 'offers' | 'returns' | 'disputes' | 'verification_documents',
+        payload: any,
+    ) {
         const row = (payload?.new && Object.keys(payload.new).length ? payload.new : payload?.old) || {};
         let orderId: string | null = null;
         if (table === 'orders') {
             orderId = row.id ?? null;
-        } else {
+        } else if (table === 'offers') {
             if (String(row.status || '').toLowerCase() !== 'accepted') return;
+            orderId = row.order_id ?? null;
+        } else {
             orderId = row.order_id ?? null;
         }
         if (!orderId || this.pendingOrders.has(orderId)) return;

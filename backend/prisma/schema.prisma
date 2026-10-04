@@ -696,6 +696,8 @@ model Offer {
   cylinders        Int?      @map("cylinders")
   status           String    @default("pending") // pending | accepted | rejected | withdrawn
   fulfillmentStatus OfferFulfillmentStatus @default(AWAITING_PAYMENT) @map("fulfillment_status")
+  preparationDeadlineAt        DateTime? @map("preparation_deadline_at") @db.Timestamptz
+  delayedPreparationDeadlineAt DateTime? @map("delayed_prep_deadline_at") @db.Timestamptz
   preparedAt              DateTime? @map("prepared_at") @db.Timestamptz
   verificationSubmittedAt DateTime? @map("verification_submitted_at") @db.Timestamptz
   readyForShippingAt      DateTime? @map("ready_for_shipping_at") @db.Timestamptz
@@ -2359,6 +2361,7 @@ model ShippingCompanyObligation {
   shippingAmount  Decimal  @default(0) @map("shipping_amount") @db.Decimal(14, 2)
   stripeFeesAmount Decimal @default(0) @map("stripe_fees_amount") @db.Decimal(14, 2)
   refundAmount    Decimal  @default(0) @map("refund_amount") @db.Decimal(14, 2)
+  partPriceAmount Decimal  @default(0) @map("part_price_amount") @db.Decimal(14, 2)
   notes           String?
   metadata        Json?    @default("{}")
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz

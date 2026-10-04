@@ -204,4 +204,43 @@ describe('computeAdjudicationFinancials — explicit refund decision', () => {
         expect(fin.shippingBearer).toBe('MERCHANT');
         expect(fin.refundExecutionStatusSeed).toBe('NOT_REQUIRED');
     });
+
+    it('shipping company: part price is added to carrier liability by default', () => {
+        const r = computeAdjudicationFinancials({
+            ...BASE,
+            faultParty: 'SHIPPING_COMPANY',
+            finalRefundDecision: 'REFUND_CUSTOMER',
+            partOriginalPrice: 80,
+        });
+        // RT shipping (20) + fees (4.5) + part price (80)
+        expect(r.shippingCompanyLiability).toBeCloseTo(104.5);
+        expect(r.shippingCompanyPartPriceInLiability).toBe(80);
+        expect(r.includePartPriceInCarrierLiability).toBe(true);
+        expect(r.finalCustomerRefundAmount).toBe(100);
+    });
+
+    it('shipping company: admin can exclude the part price from carrier liability', () => {
+        const r = computeAdjudicationFinancials({
+            ...BASE,
+            faultParty: 'SHIPPING_COMPANY',
+            finalRefundDecision: 'REFUND_CUSTOMER',
+            partOriginalPrice: 80,
+            includePartPriceInCarrierLiability: false,
+        });
+        expect(r.shippingCompanyLiability).toBeCloseTo(24.5);
+        expect(r.shippingCompanyPartPriceInLiability).toBe(0);
+        expect(r.includePartPriceInCarrierLiability).toBe(false);
+    });
+
+    it('merchant fault never puts the part price on the carrier', () => {
+        const r = computeAdjudicationFinancials({
+            ...BASE,
+            faultParty: 'MERCHANT',
+            finalRefundDecision: 'REFUND_CUSTOMER',
+            partOriginalPrice: 80,
+        });
+        expect(r.shippingCompanyLiability).toBe(0);
+        expect(r.shippingCompanyPartPriceInLiability).toBe(0);
+        expect(r.includePartPriceInCarrierLiability).toBe(false);
+    });
 });

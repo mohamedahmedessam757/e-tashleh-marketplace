@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { CountdownTimer } from '../OrderDetails';
 import { PartCorrectionStatus } from '../shared/PartCorrectionStatus';
+import { PartReturnWindowCard, buildPartReturnWindowOffer } from '../shared/PartReturnWindowCard';
+import { shouldShowWaybillTab } from '../../../utils/waybillTabVisibility';
 import { OrderStatusCountdown } from '../../ui/OrderStatusCountdown';
 import {
     PartPreparationAlert,
@@ -53,6 +55,7 @@ import {
     getVerificationDocForOffer,
     isCorrectionFamilyOrderStatus,
     isMerchantFulfillmentLocked,
+    isOfferDelayedPrepExpired,
     isOfferPaidForFulfillment,
     merchantCanMarkPrepared,
     merchantCanSubmitVerification,
@@ -336,7 +339,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
         }
     }, [order?.status, showVerificationForm]);
 
-    const activeShippingCase = cases.find((c) => {
+    const isShippingDueCase = (c: any) => {
         if (String(c.orderId) !== String(orderId)) return false;
         if (c.shippingPayee !== 'MERCHANT') return false;
         if (isMerchantCombinedSettlementDue(c) || isMerchantCombinedSettlementPaid(c)) return false;
@@ -347,9 +350,9 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
             return true;
         }
         return c.shippingPaymentStatus === 'PAID' && !c.shippingPaymentMethod;
-    });
+    };
 
-    const activeAdjudicationFeeCase = cases.find((c) => {
+    const isAdjudicationFeeCase = (c: any) => {
         if (String(c.orderId) !== String(orderId)) return false;
         if (c.adjudicationFeePayee !== 'MERCHANT') return false;
         if (Number(c.adjudicationFeeAmount || 0) <= 0) return false;
@@ -358,12 +361,25 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
             c.adjudicationFeePaymentStatus === 'PENDING' ||
             c.adjudicationFeePaymentStatus === 'PAID'
         );
-    });
+    };
 
-    const activeSettlementCase = cases.find((c) => {
-        if (String(c.orderId) !== String(orderId)) return false;
-        return isMerchantCombinedSettlementDue(c) || isMerchantCombinedSettlementPaid(c);
-    });
+    const isSettlementCase = (c: any) =>
+        String(c.orderId) === String(orderId) &&
+        (isMerchantCombinedSettlementDue(c) || isMerchantCombinedSettlementPaid(c));
+
+    /** Every merchant payment case on this order (one per refunded part), unpaid first. */
+    const merchantPaymentCases = useMemo(() => {
+        const list = cases.filter(
+            (c) => isSettlementCase(c) || isShippingDueCase(c) || isAdjudicationFeeCase(c),
+        );
+        const isUnpaid = (c: any) =>
+            isMerchantCombinedSettlementDue(c) ||
+            c.shippingPaymentStatus === 'PENDING' ||
+            c.shippingPaymentStatus === 'INSUFFICIENT_FUNDS' ||
+            c.adjudicationFeePaymentStatus === 'PENDING';
+        return [...list].sort((a, b) => Number(isUnpaid(b)) - Number(isUnpaid(a)));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [cases, orderId]);
 
     const openResolutionCase = useMemo(() => {
         return cases.find((c) => {
@@ -425,9 +441,15 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
             fulfillmentLocked
                 ? []
                 : merchantAcceptedOffers.filter((o) =>
-                      merchantCanMarkPrepared(o.fulfillmentStatus, order?.status),
+                      merchantCanMarkPrepared(
+                          o.fulfillmentStatus,
+                          order?.status,
+                          o as { delayedPreparationDeadlineAt?: string | null },
+                          getServerNowMs(),
+                      ),
                   ),
-        [merchantAcceptedOffers, order?.status, fulfillmentLocked],
+        // govTick flips the list the moment the delayed-prep deadline passes.
+        [merchantAcceptedOffers, order?.status, fulfillmentLocked, govTick],
     );
     const offersAwaitingCustomerPayment = useMemo(
         () => {
@@ -1411,27 +1433,45 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
 
                 {/* LEFT COLUMN: Request Intel */}
                 <div className="lg:col-span-2 space-y-6">
-                    {activeSettlementCase && (
-                        <MerchantSettlementPaymentCard
-                            caseRecord={activeSettlementCase}
-                            role="MERCHANT"
-                            onSuccess={() => fetchCases('merchant')}
-                        />
-                    )}
-                    {!activeSettlementCase && activeShippingCase && (
-                        <ShippingPaymentCard 
-                            caseRecord={activeShippingCase} 
-                            role="MERCHANT" 
-                            onSuccess={() => fetchCases('merchant')}
-                        />
-                    )}
-                    {!activeSettlementCase && activeAdjudicationFeeCase && (
-                        <AdjudicationFeePaymentCard
-                            caseRecord={activeAdjudicationFeeCase}
-                            role="MERCHANT"
-                            onSuccess={() => fetchCases('merchant')}
-                        />
-                    )}
+                    {merchantPaymentCases.map((c: any) => {
+                        const partName =
+                            order.parts?.find(
+                                (p: any) => String(p.id) === String(c.orderPartId),
+                            )?.name || (c.orderPartId ? c.partName : undefined);
+                        return (
+                            <div key={`${c.type}-${c.id}`} className="space-y-2">
+                                {merchantPaymentCases.length > 1 && partName && (
+                                    <p className="text-xs font-black text-gold-500/80 px-1">
+                                        {isAr ? `القطعة: ${partName}` : `Part: ${partName}`}
+                                    </p>
+                                )}
+                                {isSettlementCase(c) ? (
+                                    <MerchantSettlementPaymentCard
+                                        caseRecord={c}
+                                        role="MERCHANT"
+                                        onSuccess={() => fetchCases('merchant')}
+                                    />
+                                ) : (
+                                    <>
+                                        {isShippingDueCase(c) && (
+                                            <ShippingPaymentCard
+                                                caseRecord={c}
+                                                role="MERCHANT"
+                                                onSuccess={() => fetchCases('merchant')}
+                                            />
+                                        )}
+                                        {isAdjudicationFeeCase(c) && (
+                                            <AdjudicationFeePaymentCard
+                                                caseRecord={c}
+                                                role="MERCHANT"
+                                                onSuccess={() => fetchCases('merchant')}
+                                            />
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                        );
+                    })}
 
                     {/* Tab Navigation */}
                     <div className="flex gap-2 sm:gap-3 border-b border-white/10 pb-2 overflow-x-auto shrink-0 min-h-[44px] hide-scrollbar">
@@ -1452,7 +1492,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                             <FileText size={16} />
                             {isAr ? 'الفواتير' : 'Invoices'}
                         </button>
-                        {['VERIFICATION_SUCCESS', 'READY_FOR_SHIPPING', 'SHIPPED', 'DELIVERED', 'COMPLETED', 'DISPUTED', 'RETURNED', 'RETURN_REQUESTED', 'RETURN_APPROVED', 'REFUNDED', 'WARRANTY_ACTIVE', 'WARRANTY_EXPIRED'].includes(order.status) && (
+                        {shouldShowWaybillTab(order as any) && (
                             <button
                                 onClick={() => setActiveTab('waybills')}
                                 className={`px-4 py-2 text-sm font-bold uppercase tracking-wider rounded-lg transition-colors whitespace-nowrap flex items-center gap-2 ${
@@ -1474,7 +1514,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                         />
                     </div>
                     <div className={activeTab === 'waybills' ? 'block' : 'hidden'}>
-                        {['VERIFICATION_SUCCESS', 'READY_FOR_SHIPPING', 'SHIPPED', 'DELIVERED', 'COMPLETED', 'DISPUTED', 'RETURNED', 'RETURN_REQUESTED', 'RETURN_APPROVED', 'REFUNDED', 'WARRANTY_ACTIVE', 'WARRANTY_EXPIRED'].includes(order.status) && (
+                        {shouldShowWaybillTab(order as any) && (
                             <OrderWaybillsPanel 
                                 orderId={order.id} 
                                 orderStatus={order.status} 
@@ -2144,7 +2184,25 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                                         {isAr ? 'مقفل — بانتظار دفع العميل' : 'Locked — awaiting customer payment'}
                                                                     </span>
                                                                 )}
-                                                                {merchantCanMarkPrepared(partOffer.fulfillmentStatus, order?.status) && (
+                                                                {!fulfillmentLocked &&
+                                                                    normalizeOfferFulfillmentStatus(partOffer.fulfillmentStatus) === 'IN_PREPARATION' &&
+                                                                    isOfferDelayedPrepExpired(
+                                                                        partOffer as { delayedPreparationDeadlineAt?: string | null },
+                                                                        getServerNowMs(),
+                                                                    ) && (
+                                                                    <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-rose-500/40 bg-rose-500/15 text-rose-200 text-xs font-black">
+                                                                        <Loader2 size={14} className="animate-spin" />
+                                                                        {isAr
+                                                                            ? 'انتهت المهلة — جارٍ إلغاء القطعة واسترجاع المبلغ'
+                                                                            : 'Deadline ended — part is being cancelled & refunded'}
+                                                                    </span>
+                                                                )}
+                                                                {merchantCanMarkPrepared(
+                                                                    partOffer.fulfillmentStatus,
+                                                                    order?.status,
+                                                                    partOffer as { delayedPreparationDeadlineAt?: string | null },
+                                                                    getServerNowMs(),
+                                                                ) && (
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => {
@@ -2290,6 +2348,7 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                         <PartPreparationAlert
                                                             order={order}
                                                             fulfillmentStatus={partOffer.fulfillmentStatus}
+                                                            offer={partOffer as any}
                                                             isAr={isAr}
                                                             className="mt-3"
                                                         />
@@ -2304,6 +2363,19 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                             offerId={partOffer.id}
                                                             orderCorrectionDeadlineAt={order?.correctionDeadlineAt}
                                                         />
+
+                                                        {order?.requestType === 'multiple' && (
+                                                            <PartReturnWindowCard
+                                                                readOnly
+                                                                className="mt-3"
+                                                                isAr={isAr}
+                                                                offer={buildPartReturnWindowOffer(
+                                                                    partOffer as any,
+                                                                    { id: part.id, name: part.name },
+                                                                    partResolutionByOfferId.get(partOffer.id),
+                                                                )}
+                                                            />
+                                                        )}
 
                                                         {(() => {
                                                             const meta = partResolutionByOfferId.get(partOffer.id);

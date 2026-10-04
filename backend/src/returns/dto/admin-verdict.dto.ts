@@ -138,6 +138,11 @@ export class AdminVerdictExtraDto {
   @IsBoolean()
   includePlatformFeesInCarrierLiability?: boolean;
 
+  /** When SHIPPING_COMPANY fault: include the merchant's original part price in carrier liability (default true). */
+  @IsOptional()
+  @IsBoolean()
+  includePartPriceInCarrierLiability?: boolean;
+
   @IsOptional()
   @IsString()
   @MaxLength(64)

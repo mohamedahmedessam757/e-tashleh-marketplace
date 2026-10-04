@@ -184,11 +184,26 @@ export class ReturnsService {
             caseRecord.shippingRoundtrip || caseRecord.shippingRefund || 0,
         );
         const storedLiability = Number(caseRecord.shippingCompanyLiability || 0);
-        // Reconstruct fee toggle from persisted liability when replaying invoices.
-        const includeFees =
-            String(caseRecord.faultParty || '').toUpperCase() === 'SHIPPING_COMPANY'
-                ? storedLiability > shippingRoundtrip + 0.009
-                : undefined;
+        // Reconstruct carrier toggles from the persisted obligation when replaying invoices.
+        const isCarrierFault =
+            String(caseRecord.faultParty || '').toUpperCase() === 'SHIPPING_COMPANY';
+        const obligation =
+            isCarrierFault && caseRecord.id
+                ? await (this.prisma as any).shippingCompanyObligation.findUnique({
+                      where: { caseId: caseRecord.id },
+                      select: { stripeFeesAmount: true, partPriceAmount: true },
+                  })
+                : null;
+        const includeFees = isCarrierFault
+            ? obligation
+                ? Number(obligation.stripeFeesAmount || 0) > 0.009
+                : storedLiability > shippingRoundtrip + 0.009
+            : undefined;
+        const includePartPrice = isCarrierFault
+            ? obligation
+                ? Number(obligation.partPriceAmount || 0) > 0.009
+                : false
+            : undefined;
         return computeAdjudicationFinancials({
             orderPaidTotal: orderAmount,
             gatewayFeePct: Number(caseRecord.gatewayFeePct ?? 3),
@@ -197,6 +212,8 @@ export class ReturnsService {
             faultParty: caseRecord.faultParty || 'MERCHANT',
             finalRefundDecision: caseRecord.finalRefundDecision,
             includePlatformFeesInCarrierLiability: includeFees,
+            partOriginalPrice: await this.resolveCasePartOriginalPrice(caseRecord.offerId),
+            includePartPriceInCarrierLiability: includePartPrice,
         });
     }
 
@@ -1816,6 +1833,11 @@ export class ReturnsService {
                 extra?.includePlatformFeesInCarrierLiability === undefined
                     ? undefined
                     : Boolean(extra.includePlatformFeesInCarrierLiability),
+            partOriginalPrice: await this.resolveCasePartOriginalPrice(caseRecord.offerId),
+            includePartPriceInCarrierLiability:
+                extra?.includePartPriceInCarrierLiability === undefined
+                    ? undefined
+                    : Boolean(extra.includePartPriceInCarrierLiability),
         });
 
         return {
@@ -1823,6 +1845,17 @@ export class ReturnsService {
             refundCapped: fin.stripeCapped,
             refundCappedFrom: fin.refundCappedFrom,
         };
+    }
+
+    /** Merchant's original part price for a part-scoped case (0 when unknown). */
+    private async resolveCasePartOriginalPrice(offerId?: string | null): Promise<number> {
+        if (!offerId) return 0;
+        const offer = await this.prisma.offer.findUnique({
+            where: { id: offerId },
+            select: { unitPrice: true },
+        });
+        const n = Number(offer?.unitPrice ?? 0);
+        return Number.isFinite(n) && n > 0 ? n : 0;
     }
 
     /** Paid capture amount for adjudication — offer-scoped when case has offerId. */
@@ -1965,6 +1998,11 @@ export class ReturnsService {
                     extra?.includePlatformFeesInCarrierLiability === undefined
                         ? undefined
                         : Boolean(extra.includePlatformFeesInCarrierLiability),
+                partOriginalPrice: await this.resolveCasePartOriginalPrice(caseRecord.offerId),
+                includePartPriceInCarrierLiability:
+                    extra?.includePartPriceInCarrierLiability === undefined
+                        ? undefined
+                        : Boolean(extra.includePartPriceInCarrierLiability),
             });
             const netRefundAmount = preFin.customerStripeRefund;
             if (netRefundAmount > 0 && orderAmount > 0 && maxRefundablePre <= 0) {
@@ -2454,7 +2492,8 @@ export class ReturnsService {
                                     refundFinancials.shippingCompanyFeesInLiability ??
                                         Math.round(
                                             (liabilityAmount -
-                                                Number(shipObligation || 0) +
+                                                Number(shipObligation || 0) -
+                                                Number(refundFinancials.shippingCompanyPartPriceInLiability || 0) +
                                                 Number.EPSILON) *
                                                 100,
                                         ) / 100,
@@ -2486,6 +2525,9 @@ export class ReturnsService {
                                             status: 'OPEN',
                                             shippingAmount: shipObligation,
                                             stripeFeesAmount: stripeFeesInLiability,
+                                            partPriceAmount: Number(
+                                                refundFinancials.shippingCompanyPartPriceInLiability || 0,
+                                            ),
                                             refundAmount: Number(
                                                 refundFinancials.finalCustomerRefundAmount || 0,
                                             ),
@@ -2494,6 +2536,11 @@ export class ReturnsService {
                                                 faultParty: 'SHIPPING_COMPANY',
                                                 includePlatformFeesInCarrierLiability:
                                                     refundFinancials.includePlatformFeesInCarrierLiability,
+                                                includePartPriceInCarrierLiability:
+                                                    refundFinancials.includePartPriceInCarrierLiability,
+                                                partPriceAmount: Number(
+                                                    refundFinancials.shippingCompanyPartPriceInLiability || 0,
+                                                ),
                                                 gatewayFeeAmount:
                                                     stripeFeesInLiability > 0
                                                         ? refundFinancials.gatewayFeeAmount
@@ -2537,10 +2584,13 @@ export class ReturnsService {
                                         transactionType: 'SHIPPING_COMPANY_LIABILITY',
                                         amount: liabilityAmount,
                                         currency: 'AED',
-                                        description:
-                                            stripeFeesInLiability > 0
-                                                ? `Shipping company liability — Case #${caseId.substring(0, 8)} (RT shipping + Stripe fees)`
-                                                : `Shipping company liability — Case #${caseId.substring(0, 8)} (RT shipping only)`,
+                                        description: `Shipping company liability — Case #${caseId.substring(0, 8)} (RT shipping${
+                                            stripeFeesInLiability > 0 ? ' + Stripe fees' : ''
+                                        }${
+                                            Number(refundFinancials.shippingCompanyPartPriceInLiability || 0) > 0
+                                                ? ' + part price'
+                                                : ''
+                                        })`,
                                         balanceAfter: Number(
                                             (updatedPw as any).shippingCompanyLiabilityBalance ||
                                                 liabilityAmount,
@@ -2551,6 +2601,9 @@ export class ReturnsService {
                                             orderId: caseRecord.orderId,
                                             shippingAmount: shipObligation,
                                             stripeFeesAmount: stripeFeesInLiability,
+                                            partPriceAmount: Number(
+                                                refundFinancials.shippingCompanyPartPriceInLiability || 0,
+                                            ),
                                             refundAmount: Number(
                                                 refundFinancials.finalCustomerRefundAmount || 0,
                                             ),

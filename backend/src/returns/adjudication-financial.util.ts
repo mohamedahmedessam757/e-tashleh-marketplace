@@ -8,8 +8,11 @@
  * - CUSTOMER + NO_CUSTOMER_REFUND → 0 customer refund; 0 fees/shipping charges (claim dismissed)
  * - SHIPPING_COMPANY + REFUND_CUSTOMER → full paid; platform absorbs Stripe fees initially;
  *   shipping-company liability = RT shipping + (optional) Stripe/refund fees
+ *   + (optional) merchant's original part price
  * - SHIPPING_COMPANY + NO_CUSTOMER_REFUND → 0 refund; liability = RT shipping + (optional) fees
- *   (includePlatformFeesInCarrierLiability defaults to true for SHIPPING_COMPANY)
+ *   + (optional) part price
+ *   (includePlatformFeesInCarrierLiability / includePartPriceInCarrierLiability default to true
+ *   for SHIPPING_COMPANY)
  * - WARRANTY / WARRANTY_EXCHANGE → 0 customer refund; 0 platform fees; merchant pays round-trip shipping only
  * - CLOSE_COMPLETE_REFUND → forced REFUND_CUSTOMER; paid − fees; no shipping
  * - Stripe call only when REFUND_CUSTOMER and amount > 0
@@ -50,6 +53,10 @@ export interface AdjudicationFinancialInput {
      * Defaults to true (admin can turn off via verdict UI).
      */
     includePlatformFeesInCarrierLiability?: boolean;
+    /** Merchant's original part price (offer.unitPrice) — carrier-fault liability only. */
+    partOriginalPrice?: number;
+    /** SHIPPING_COMPANY fault: add the part price to carrier liability. Default true. */
+    includePartPriceInCarrierLiability?: boolean;
 }
 
 export interface AdjudicationFinancialResult {
@@ -69,6 +76,9 @@ export interface AdjudicationFinancialResult {
     /** Fees portion inside shippingCompanyLiability (0 when toggle off). */
     shippingCompanyFeesInLiability: number;
     includePlatformFeesInCarrierLiability: boolean;
+    /** Part-price portion inside shippingCompanyLiability (0 when toggle off). */
+    shippingCompanyPartPriceInLiability: number;
+    includePartPriceInCarrierLiability: boolean;
     stripeCapped: boolean;
     refundCappedFrom?: number;
     gatewayFeePct: number;
@@ -140,6 +150,11 @@ export function computeAdjudicationFinancials(
         fault,
         input.includePlatformFeesInCarrierLiability,
     );
+    const includePartPriceInCarrierLiability = resolveIncludeFeesOnCarrier(
+        fault,
+        input.includePartPriceInCarrierLiability,
+    );
+    const partOriginalPrice = roundMoney2(Math.max(0, Number(input.partOriginalPrice) || 0));
 
     const gatewayFeeAmount = (orderPaidTotal * gatewayFeePct) / 100;
     const refundFeeAmount = (orderPaidTotal * refundFeePct) / 100;
@@ -153,13 +168,17 @@ export function computeAdjudicationFinancials(
     let merchantPlatformFeesDebit = 0;
     let shippingCompanyLiability = 0;
     let shippingCompanyFeesInLiability = 0;
+    let shippingCompanyPartPriceInLiability = 0;
 
     const applyShippingCompanyLiability = () => {
         shippingCompanyFeesInLiability = includePlatformFeesInCarrierLiability
             ? roundMoney2(platformFeesTotal)
             : 0;
+        shippingCompanyPartPriceInLiability = includePartPriceInCarrierLiability
+            ? partOriginalPrice
+            : 0;
         shippingCompanyLiability = roundMoney2(
-            shippingRoundtrip + shippingCompanyFeesInLiability,
+            shippingRoundtrip + shippingCompanyFeesInLiability + shippingCompanyPartPriceInLiability,
         );
         shippingBearer = shippingCompanyLiability > 0 ? 'SHIPPING_COMPANY' : 'NONE';
         feeBearer = 'PLATFORM';
@@ -265,6 +284,8 @@ export function computeAdjudicationFinancials(
         shippingCompanyLiability: roundMoney2(shippingCompanyLiability),
         shippingCompanyFeesInLiability: roundMoney2(shippingCompanyFeesInLiability),
         includePlatformFeesInCarrierLiability,
+        shippingCompanyPartPriceInLiability: roundMoney2(shippingCompanyPartPriceInLiability),
+        includePartPriceInCarrierLiability,
         stripeCapped,
         refundCappedFrom: refundCappedFrom != null ? roundMoney2(refundCappedFrom) : undefined,
         gatewayFeePct,

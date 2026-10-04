@@ -1,10 +1,16 @@
 import React from 'react';
 import { AlertTriangle, Clock, Package } from 'lucide-react';
 import { OrderStatusCountdown } from '../../ui/OrderStatusCountdown';
-import { normalizeOfferFulfillmentStatus } from '../../../utils/offerFulfillmentHelpers';
+import { CorrectionCountdown } from './PartCorrectionStatus';
+import { getServerNowMs } from '../../../utils/serverClock';
+import {
+  isMerchantFulfillmentLocked,
+  normalizeOfferFulfillmentStatus,
+} from '../../../utils/offerFulfillmentHelpers';
 
 type OrderLike = {
   status?: string | null;
+  requestType?: string | null;
   offers?: Array<{ fulfillmentStatus?: string | null; status?: string | null }> | null;
   preparationDeadlineAt?: string | Date | null;
   delayedPreparationDeadlineAt?: string | Date | null;
@@ -23,6 +29,27 @@ export function isPartInActivePreparation(
     fs === 'IN_PREPARATION' &&
     (os === 'PREPARATION' || os === 'DELAYED_PREPARATION')
   );
+}
+
+type PartPrepOffer = {
+  preparationDeadlineAt?: string | Date | null;
+  delayedPreparationDeadlineAt?: string | Date | null;
+} | null | undefined;
+
+/** Multi-part: per-part deadline from the offer row (works for any non-terminal order status). */
+export function resolvePartPrepDeadline(
+  order: OrderLike | null | undefined,
+  fulfillmentStatus: string | null | undefined,
+  offer: PartPrepOffer,
+): { deadlineAt: string; delayed: boolean } | null {
+  if (!order || String(order.requestType || '').toLowerCase() !== 'multiple') return null;
+  if (normalizeOfferFulfillmentStatus(fulfillmentStatus) !== 'IN_PREPARATION') return null;
+  if (isMerchantFulfillmentLocked(order.status)) return null;
+  const raw = offer?.delayedPreparationDeadlineAt || offer?.preparationDeadlineAt;
+  if (!raw) return null;
+  const ms = new Date(raw).getTime();
+  if (!Number.isFinite(ms)) return null;
+  return { deadlineAt: new Date(ms).toISOString(), delayed: !!offer?.delayedPreparationDeadlineAt };
 }
 
 /** True when any accepted offer still needs the shared prep countdown on its card. */
@@ -66,6 +93,8 @@ interface PartPreparationAlertProps {
   className?: string;
   /** When false, only status alert — timer rendered elsewhere (should stay true: one timer here). */
   showTimer?: boolean;
+  /** Offer row carrying per-part prep deadlines (multi-part orders). */
+  offer?: PartPrepOffer;
 }
 
 /**
@@ -78,7 +107,40 @@ export const PartPreparationAlert: React.FC<PartPreparationAlertProps> = ({
   isAr,
   className = '',
   showTimer = true,
+  offer,
 }) => {
+  const partDeadline = resolvePartPrepDeadline(order, fulfillmentStatus, offer);
+  if (partDeadline) {
+    const copy = partPrepCopy(partDeadline.delayed ? 'DELAYED_PREPARATION' : 'PREPARATION', isAr);
+    const Icon = copy.icon;
+    const expired = new Date(partDeadline.deadlineAt).getTime() <= getServerNowMs();
+    return (
+      <div className={`rounded-xl border px-3 py-2.5 space-y-2 ${copy.badgeClass} ${className}`} role="status">
+        <div className="flex items-start gap-2">
+          <Icon size={16} className="shrink-0 mt-0.5" />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-black uppercase tracking-wide flex items-center gap-1.5">
+              <Clock size={12} className="opacity-80" />
+              {copy.title}
+            </p>
+            <p className="text-[11px] font-bold opacity-80 mt-0.5 leading-snug">
+              {expired
+                ? isAr
+                  ? 'انتهت المهلة — جارٍ إلغاء هذه القطعة واسترجاع مبلغها تلقائياً.'
+                  : 'Deadline ended — this part is being cancelled and refunded automatically.'
+                : copy.desc}
+            </p>
+          </div>
+        </div>
+        {showTimer && (
+          <div className="rounded-lg bg-black/20 px-3 py-2">
+            <CorrectionCountdown deadlineAt={partDeadline.deadlineAt} isAr={isAr} labeled />
+          </div>
+        )}
+      </div>
+    );
+  }
+
   if (!isPartInActivePreparation(fulfillmentStatus, order?.status)) {
     return null;
   }

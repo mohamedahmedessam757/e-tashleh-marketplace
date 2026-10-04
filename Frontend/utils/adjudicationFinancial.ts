@@ -22,6 +22,10 @@ export interface AdjudicationPreviewInput {
     maxRefundable?: number | null;
     /** Default true for SHIPPING_COMPANY — include gateway + refund fees in carrier liability. */
     includePlatformFeesInCarrierLiability?: boolean;
+    /** Merchant's original part price (offer.unitPrice) — carrier-fault liability only. */
+    partOriginalPrice?: number;
+    /** Default true for SHIPPING_COMPANY — include the part price in carrier liability. */
+    includePartPriceInCarrierLiability?: boolean;
 }
 
 export interface AdjudicationPreviewResult {
@@ -39,6 +43,8 @@ export interface AdjudicationPreviewResult {
     shippingCompanyLiability: number;
     shippingCompanyFeesInLiability: number;
     includePlatformFeesInCarrierLiability: boolean;
+    shippingCompanyPartPriceInLiability: number;
+    includePartPriceInCarrierLiability: boolean;
     showFeesOnCustomerNet: boolean;
     showShippingOnCustomerNet: boolean;
     finalRefundDecision: FinalRefundDecision;
@@ -94,6 +100,11 @@ export function computeAdjudicationPreview(
         fault,
         input.includePlatformFeesInCarrierLiability,
     );
+    const includePartPriceInCarrierLiability = resolveIncludeFeesOnCarrier(
+        fault,
+        input.includePartPriceInCarrierLiability,
+    );
+    const partOriginalPrice = Math.max(0, Number(input.partOriginalPrice) || 0);
 
     const gatewayFee = (orderPaidTotal * gatewayFeePct) / 100;
     const refundFee = (orderPaidTotal * refundFeePct) / 100;
@@ -106,6 +117,7 @@ export function computeAdjudicationPreview(
     let merchantDebits = { shipping: 0, platformFees: 0 };
     let shippingCompanyLiability = 0;
     let shippingCompanyFeesInLiability = 0;
+    let shippingCompanyPartPriceInLiability = 0;
     let customerFullRefund = false;
     let showFeesOnCustomerNet = true;
     let showShippingOnCustomerNet = false;
@@ -114,7 +126,11 @@ export function computeAdjudicationPreview(
         shippingCompanyFeesInLiability = includePlatformFeesInCarrierLiability
             ? platformFees
             : 0;
-        shippingCompanyLiability = shippingRoundtrip + shippingCompanyFeesInLiability;
+        shippingCompanyPartPriceInLiability = includePartPriceInCarrierLiability
+            ? partOriginalPrice
+            : 0;
+        shippingCompanyLiability =
+            shippingRoundtrip + shippingCompanyFeesInLiability + shippingCompanyPartPriceInLiability;
         shippingBearer = shippingCompanyLiability > 0 ? 'SHIPPING_COMPANY' : 'NONE';
         feeBearer = 'PLATFORM';
         retained = 0;
@@ -213,6 +229,8 @@ export function computeAdjudicationPreview(
         shippingCompanyLiability,
         shippingCompanyFeesInLiability,
         includePlatformFeesInCarrierLiability,
+        shippingCompanyPartPriceInLiability,
+        includePartPriceInCarrierLiability,
         showFeesOnCustomerNet,
         showShippingOnCustomerNet,
         finalRefundDecision,

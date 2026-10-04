@@ -120,6 +120,10 @@ export interface Offer {
   shippedFromCartAt?: string;
   cartShipmentId?: string;
 
+  // Per-part preparation SLA (multi-part orders)
+  preparationDeadlineAt?: string | null;
+  delayedPreparationDeadlineAt?: string | null;
+
   createdAt: string;
 
   // Computed/Joined

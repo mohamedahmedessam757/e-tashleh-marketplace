@@ -417,6 +417,17 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     // so the backend relays shipment / status-log / waybill changes over this socket.
     socket.on('order_updated', (payload: { orderId?: string }) => {
       window.dispatchEvent(new CustomEvent('order-updated', { detail: payload || {} }));
+      const oid = payload?.orderId ? String(payload.orderId) : '';
+      if (!oid) return;
+      // Only the open detail page refetches (server already debounces ~400ms per order).
+      void Promise.all([import('./useOrderStore'), import('../utils/fulfillmentSummarySync')]).then(
+        ([{ useOrderStore }, { bumpFulfillmentSummary }]) => {
+          const store = useOrderStore.getState();
+          if (store.activeOrderId && String(store.activeOrderId) === oid) {
+            void store.fetchOrder(oid).finally(() => bumpFulfillmentSummary(oid));
+          }
+        },
+      );
     });
 
     socket.on('shipment_updated', (payload: { orderId?: string; shipmentIds?: string[] }) => {

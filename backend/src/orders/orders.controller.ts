@@ -220,7 +220,9 @@ export class OrdersController {
     @Get(':id/fulfillment-summary')
     async getFulfillmentSummary(@Request() req, @Param('id') orderId: string) {
         await this.resourceAccess.assertUserCanAccessOrder(this.actorFrom(req), orderId);
-        return this.ordersService.getOfferFulfillmentSummary(orderId);
+        const role = String(req.user?.role || '').toUpperCase();
+        const isStaff = ['ADMIN', 'SUPER_ADMIN', 'SUPPORT', 'VERIFICATION_OFFICER', 'ACCOUNTANT'].includes(role);
+        return this.ordersService.getOfferFulfillmentSummary(orderId, { includeCases: isStaff });
     }
 
     @Patch(':id/prepare')

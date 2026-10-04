@@ -42,6 +42,8 @@ import { formatOrderDisplayId } from '../../../utils/orderDisplayId';
 import { CartShipmentBadge } from '../shared/CartShipmentBadge';
 import { PartShipmentStatus } from '../shared/PartShipmentStatus';
 import { PartCorrectionStatus } from '../shared/PartCorrectionStatus';
+import { PartReturnWindowCard, buildPartReturnWindowOffer } from '../shared/PartReturnWindowCard';
+import { PartCaseBadges } from '../shared/PartCaseBadge';
 import { PartialShippingProgressCard } from '../shared/PartialShippingProgressCard';
 import { PartialDeliveryProgressCard } from '../shared/PartialDeliveryProgressCard';
 import { shippingClassShortLabel } from '../../../utils/shippingClass';
@@ -977,6 +979,12 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                                                         )}
                                                                 </span>
                                                             )}
+                                                            <PartCaseBadges
+                                                                cases={fulfillmentSummary?.cases}
+                                                                offerId={primaryOffer?.id}
+                                                                orderPartId={p.id}
+                                                                isAr={isAr}
+                                                            />
                                                             {!primaryOffer && hasOffers && (
                                                                 <span className="inline-flex items-center px-2 py-0.5 rounded-md border border-white/15 bg-white/5 text-white/50 text-[10px] font-bold">
                                                                     {isAr ? 'بانتظار قبول عرض' : 'Awaiting accepted offer'}
@@ -1043,6 +1051,7 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                                     <PartPreparationAlert
                                                         order={order}
                                                         fulfillmentStatus={primaryOffer.fulfillmentStatus}
+                                                        offer={primaryOffer as any}
                                                         isAr={isAr}
                                                     />
                                                     <PartCorrectionStatus
@@ -1054,6 +1063,18 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                                         offerId={primaryOffer.id}
                                                         orderCorrectionDeadlineAt={order.correctionDeadlineAt}
                                                     />
+                                                    {order.requestType === 'multiple' && (
+                                                        <PartReturnWindowCard
+                                                            readOnly
+                                                            isAr={isAr}
+                                                            offer={buildPartReturnWindowOffer(
+                                                                primaryOffer as any,
+                                                                { id: p.id, name: p.name },
+                                                                partResolutionByOfferId.get(String(primaryOffer.id)) as any,
+                                                                order.merchantName,
+                                                            )}
+                                                        />
+                                                    )}
                                                     {(() => {
                                                         const meta = partResolutionByOfferId.get(String(primaryOffer.id));
                                                         const warrantyEndAt =

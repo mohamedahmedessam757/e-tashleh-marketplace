@@ -39,6 +39,16 @@ export interface FulfillmentSummaryHint {
     inCart?: number;
   };
   parts?: FulfillmentSummaryPartHint[];
+  /** Staff-only: every return/dispute on the order, for per-part badges. */
+  cases?: Array<{
+    id: string;
+    type: 'return' | 'dispute';
+    offerId?: string | null;
+    orderPartId?: string | null;
+    status: string;
+    caseReference?: string | null;
+    createdAt?: string;
+  }>;
 }
 
 interface StatusTimelineProps {

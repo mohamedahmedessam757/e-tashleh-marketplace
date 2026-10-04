@@ -1832,6 +1832,15 @@ export class OrdersService {
                         o.fulfillmentStatus as OfferFulfillmentStatus,
                     ),
             );
+            if (isMultiPrep && lateOffers.length) {
+                await this.prisma.offer.updateMany({
+                    where: {
+                        id: { in: lateOffers.map((o: any) => o.id as string) },
+                        delayedPreparationDeadlineAt: null,
+                    },
+                    data: { delayedPreparationDeadlineAt: delayedDeadline },
+                });
+            }
             const storesToWarn = isMultiPrep
                 ? lateOffers
                 : order.offers.filter((o: any) => o.status === 'accepted' && o.storeId);
@@ -1911,12 +1920,10 @@ export class OrdersService {
                     };
                 }
 
-                const { cancelledOfferIds, nextStatus } =
-                    await this.offerFulfillment.cancelOffersFulfillment(
-                        orderId,
-                        lateOfferIds,
-                        cancelReason,
-                    );
+                const { cancelledOfferIds, pendingRefundOfferIds, nextStatus } =
+                    await this.cancelLateOffersAfterDelayedPrep(orderId, lateOfferIds, {
+                        skipRefund: opts?.skipRefund,
+                    });
 
                 // Concurrent enforce may win the cancel race — never notify/refund with empty ids.
                 if (!cancelledOfferIds.length) {
@@ -1927,97 +1934,6 @@ export class OrdersService {
                         reason: 'delayed_prep_already_cancelled',
                     };
                 }
-
-                const pendingRefundOfferIds = opts?.skipRefund ? [...cancelledOfferIds] : [];
-                if (!opts?.skipRefund) {
-                    // Near-realtime / non-cron path: refund immediately (outside any advisory lock).
-                    await this.refundCancelledCorrectionOffers(orderId, cancelledOfferIds, {
-                        previousStatus: OrderStatus.DELAYED_PREPARATION,
-                        reason: cancelReason,
-                    });
-                }
-
-                const lateOffers = order.offers.filter((o: any) =>
-                    cancelledOfferIds.includes(o.id),
-                );
-                const notifiedStores = new Set<string>();
-                for (const offer of lateOffers) {
-                    if (!offer.storeId || notifiedStores.has(offer.storeId)) continue;
-                    notifiedStores.add(offer.storeId);
-                    const store = await this.prisma.store.findUnique({
-                        where: { id: offer.storeId },
-                        select: { id: true, ownerId: true },
-                    });
-                    if (store) {
-                        await this.violationsService.autoIssue({
-                            code: 'LATE_PREPARATION_AUTO_CANCEL',
-                            targetUserId: store.ownerId,
-                            targetStoreId: store.id,
-                            targetType: ViolationTargetType.MERCHANT,
-                            orderId: order.id,
-                            reason: `Offer on order #${order.orderNumber} auto-cancelled after delayed preparation grace.`,
-                            metadata: {
-                                orderNumber: order.orderNumber,
-                                offerId: offer.id,
-                                partialCancel: true,
-                            },
-                            dedupSuffix: `${store.id}:delayed_prep:${offer.id}`,
-                        }).catch((e) =>
-                            this.logger.warn(`delayed prep offer violation failed: ${e?.message || e}`),
-                        );
-                    }
-                    await this.notifications.notifyMerchantByStoreId(offer.storeId, {
-                        titleAr: 'تم إلغاء قطعة لتأخر التجهيز',
-                        titleEn: 'Part cancelled — late preparation',
-                        messageAr: `تم إلغاء قطعة من الطلب #${order.orderNumber} لانتهاء مهلة التجهيز الإضافية. جاري استرجاع مبلغ هذه القطعة للعميل وتطبيق الرسوم على المتجر.`,
-                        messageEn: `A part on order #${order.orderNumber} was cancelled after the extra preparation grace ended. That part is being refunded; merchant fees apply.`,
-                        type: 'ORDER',
-                        link: `/merchant/orders/${order.id}`,
-                        metadata: {
-                            orderId: order.id,
-                            orderNumber: order.orderNumber,
-                            offerId: offer.id,
-                            waEvent: 'ORDER_STATUS',
-                            status: 'CANCELLED',
-                            partialCancel: true,
-                        },
-                    }).catch(() => undefined);
-                }
-
-                const partLabels = lateOffers.map((o: any) => {
-                    const part = order.parts?.find((p: any) => p.id === o.orderPartId);
-                    return part?.name;
-                });
-                await this.notifications
-                    .notifyWithDedup(
-                        order.customerId,
-                        `wa:ORDER_CANCEL_MERCHANT_FAULT:${order.id}:delayed_prep_partial:${cancelledOfferIds.sort().join(',')}`,
-                        120,
-                        {
-                            recipientId: order.customerId,
-                            recipientRole: 'CUSTOMER',
-                            titleAr: 'إلغاء قطعة من الطلب',
-                            titleEn: 'Part cancelled from order',
-                            messageAr: `تم إلغاء قطعة/قطع من الطلب #${order.orderNumber} لعدم التزام التاجر بوقت التجهيز. باقي القطع إن وُجدت تتابع مسارها، وجاري استرجاع مبلغ القطعة الملغاة.`,
-                            messageEn: `One or more parts on order #${order.orderNumber} were cancelled because the merchant missed the preparation deadline. Remaining parts continue; refund for cancelled parts is processing.`,
-                            type: 'ORDER',
-                            link: `/dashboard/orders/${order.id}`,
-                            metadata: {
-                                orderId: order.id,
-                                orderNumber: order.orderNumber,
-                                waEvent: 'ORDER_CANCEL_MERCHANT_FAULT',
-                                status: nextStatus === OrderStatus.CANCELLED ? 'CANCELLED' : order.status,
-                                cancelKind: 'LATE_PREP',
-                                partialCancel: true,
-                                offerIds: cancelledOfferIds,
-                                partName: resolveCancelPartLabel({ partNames: partLabels }),
-                                part_name: resolveCancelPartLabel({ partNames: partLabels }),
-                                cancel_reason_ar: merchantFaultCancelReasonAr('LATE_PREP'),
-                                status_detail: merchantFaultCancelReasonAr('LATE_PREP'),
-                            },
-                        },
-                    )
-                    .catch(() => undefined);
 
                 if (nextStatus === OrderStatus.CANCELLED) {
                     // recompute already set CANCELLED; avoid double transition/refund
@@ -2778,18 +2694,52 @@ export class OrdersService {
         return order;
     }
 
-    async getOfferFulfillmentSummary(orderId: string) {
+    /**
+     * @param opts.includeCases Staff only — per-part return/dispute list for admin part badges.
+     *   Never exposed to customers/merchants (would leak other merchants' cases on shared orders).
+     */
+    async getOfferFulfillmentSummary(orderId: string, opts?: { includeCases?: boolean }) {
         const paidOffers = await this.offerFulfillment.getPaidAcceptedOffers(orderId);
-        const enriched = await Promise.all(
-            paidOffers.map(async (o) => ({
-                ...o,
-                hasOpenCase: await this.offerFulfillment.hasOpenCaseForOffer(
-                    o.id,
-                    o.orderPartId,
-                ),
-            })),
-        );
-        return this.offerFulfillment.getFulfillmentSummary(enriched);
+        const caseSelect = {
+            id: true,
+            offerId: true,
+            orderPartId: true,
+            status: true,
+            caseReference: true,
+            createdAt: true,
+        } as const;
+        const [enriched, returns, disputes] = await Promise.all([
+            Promise.all(
+                paidOffers.map(async (o) => ({
+                    ...o,
+                    hasOpenCase: await this.offerFulfillment.hasOpenCaseForOffer(
+                        o.id,
+                        o.orderPartId,
+                    ),
+                })),
+            ),
+            opts?.includeCases
+                ? this.prisma.returnRequest.findMany({
+                      where: { orderId },
+                      select: caseSelect,
+                      orderBy: { createdAt: 'desc' },
+                  })
+                : Promise.resolve([]),
+            opts?.includeCases
+                ? this.prisma.dispute.findMany({
+                      where: { orderId },
+                      select: caseSelect,
+                      orderBy: { createdAt: 'desc' },
+                  })
+                : Promise.resolve([]),
+        ]);
+        const summary = this.offerFulfillment.getFulfillmentSummary(enriched);
+        if (!opts?.includeCases) return summary;
+        const cases = [
+            ...returns.map((r) => ({ ...r, type: 'return' as const })),
+            ...disputes.map((d) => ({ ...d, type: 'dispute' as const })),
+        ];
+        return { ...summary, cases };
     }
     async rejectOffer(orderId: string, offerId: string, customerId: string, reason: string, customReason?: string) {
         // 1. Verify existence and ownership
@@ -5225,6 +5175,127 @@ export class OrdersService {
             cancelledOfferIds,
             pendingRefundOfferIds: opts?.skipRefund ? cancelledOfferIds : [],
         };
+    }
+
+    /**
+     * Multi-part: cancel parts whose delayed-preparation grace expired, refund (or defer),
+     * record LATE_PREPARATION_AUTO_CANCEL and notify merchant + customer.
+     */
+    async cancelLateOffersAfterDelayedPrep(
+        orderId: string,
+        offerIds: string[],
+        opts?: { skipRefund?: boolean },
+    ): Promise<{
+        cancelledOfferIds: string[];
+        pendingRefundOfferIds: string[];
+        nextStatus: OrderStatus | null;
+    }> {
+        const order: any = await this.prisma.order.findUnique({
+            where: { id: orderId },
+            include: { offers: true, parts: { select: { id: true, name: true } } },
+        });
+        if (!order) return { cancelledOfferIds: [], pendingRefundOfferIds: [], nextStatus: null };
+        const cancelReason =
+            'System: Exceeded extra grace period for preparation. Order abandoned by merchant.';
+
+        const { cancelledOfferIds, nextStatus } =
+            await this.offerFulfillment.cancelOffersFulfillment(orderId, offerIds, cancelReason);
+        if (!cancelledOfferIds.length) {
+            return { cancelledOfferIds: [], pendingRefundOfferIds: [], nextStatus };
+        }
+
+        const pendingRefundOfferIds = opts?.skipRefund ? [...cancelledOfferIds] : [];
+        if (!opts?.skipRefund) {
+            // Near-realtime / non-cron path: refund immediately (outside any advisory lock).
+            await this.refundCancelledCorrectionOffers(orderId, cancelledOfferIds, {
+                previousStatus: OrderStatus.DELAYED_PREPARATION,
+                reason: cancelReason,
+            });
+        }
+
+        const lateOffers = order.offers.filter((o: any) =>
+            cancelledOfferIds.includes(o.id),
+        );
+        const notifiedStores = new Set<string>();
+        for (const offer of lateOffers) {
+            if (!offer.storeId || notifiedStores.has(offer.storeId)) continue;
+            notifiedStores.add(offer.storeId);
+            const store = await this.prisma.store.findUnique({
+                where: { id: offer.storeId },
+                select: { id: true, ownerId: true },
+            });
+            if (store) {
+                await this.violationsService.autoIssue({
+                    code: 'LATE_PREPARATION_AUTO_CANCEL',
+                    targetUserId: store.ownerId,
+                    targetStoreId: store.id,
+                    targetType: ViolationTargetType.MERCHANT,
+                    orderId: order.id,
+                    reason: `Offer on order #${order.orderNumber} auto-cancelled after delayed preparation grace.`,
+                    metadata: {
+                        orderNumber: order.orderNumber,
+                        offerId: offer.id,
+                        partialCancel: true,
+                    },
+                    dedupSuffix: `${store.id}:delayed_prep:${offer.id}`,
+                }).catch((e) =>
+                    this.logger.warn(`delayed prep offer violation failed: ${e?.message || e}`),
+                );
+            }
+            await this.notifications.notifyMerchantByStoreId(offer.storeId, {
+                titleAr: 'تم إلغاء قطعة لتأخر التجهيز',
+                titleEn: 'Part cancelled — late preparation',
+                messageAr: `تم إلغاء قطعة من الطلب #${order.orderNumber} لانتهاء مهلة التجهيز الإضافية. جاري استرجاع مبلغ هذه القطعة للعميل وتطبيق الرسوم على المتجر.`,
+                messageEn: `A part on order #${order.orderNumber} was cancelled after the extra preparation grace ended. That part is being refunded; merchant fees apply.`,
+                type: 'ORDER',
+                link: `/merchant/orders/${order.id}`,
+                metadata: {
+                    orderId: order.id,
+                    orderNumber: order.orderNumber,
+                    offerId: offer.id,
+                    waEvent: 'ORDER_STATUS',
+                    status: 'CANCELLED',
+                    partialCancel: true,
+                },
+            }).catch(() => undefined);
+        }
+
+        const partLabels = lateOffers.map((o: any) => {
+            const part = order.parts?.find((p: any) => p.id === o.orderPartId);
+            return part?.name;
+        });
+        await this.notifications
+            .notifyWithDedup(
+                order.customerId,
+                `wa:ORDER_CANCEL_MERCHANT_FAULT:${order.id}:delayed_prep_partial:${cancelledOfferIds.sort().join(',')}`,
+                120,
+                {
+                    recipientId: order.customerId,
+                    recipientRole: 'CUSTOMER',
+                    titleAr: 'إلغاء قطعة من الطلب',
+                    titleEn: 'Part cancelled from order',
+                    messageAr: `تم إلغاء قطعة/قطع من الطلب #${order.orderNumber} لعدم التزام التاجر بوقت التجهيز. باقي القطع إن وُجدت تتابع مسارها، وجاري استرجاع مبلغ القطعة الملغاة.`,
+                    messageEn: `One or more parts on order #${order.orderNumber} were cancelled because the merchant missed the preparation deadline. Remaining parts continue; refund for cancelled parts is processing.`,
+                    type: 'ORDER',
+                    link: `/dashboard/orders/${order.id}`,
+                    metadata: {
+                        orderId: order.id,
+                        orderNumber: order.orderNumber,
+                        waEvent: 'ORDER_CANCEL_MERCHANT_FAULT',
+                        status: nextStatus === OrderStatus.CANCELLED ? 'CANCELLED' : order.status,
+                        cancelKind: 'LATE_PREP',
+                        partialCancel: true,
+                        offerIds: cancelledOfferIds,
+                        partName: resolveCancelPartLabel({ partNames: partLabels }),
+                        part_name: resolveCancelPartLabel({ partNames: partLabels }),
+                        cancel_reason_ar: merchantFaultCancelReasonAr('LATE_PREP'),
+                        status_detail: merchantFaultCancelReasonAr('LATE_PREP'),
+                    },
+                },
+            )
+            .catch(() => undefined);
+
+        return { cancelledOfferIds, pendingRefundOfferIds, nextStatus };
     }
 
     /**

@@ -118,6 +118,7 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   emitOrderUpdated(userIds: string[], payload: { orderId: string }) {
     if (!this.server) return;
     const event = { orderId: payload.orderId, at: new Date().toISOString() };
+    this.server.to('admins').emit('order_updated', event);
     for (const id of new Set(userIds)) {
       this.server.to(`user_${id}`).emit('order_updated', event);
     }

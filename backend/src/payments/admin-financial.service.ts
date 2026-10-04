@@ -1560,6 +1560,7 @@ export class AdminFinancialService {
         status: r.status,
         shippingAmount: roundMoney(Number(r.shippingAmount)),
         stripeFeesAmount: roundMoney(Number(r.stripeFeesAmount)),
+        partPriceAmount: roundMoney(Number(r.partPriceAmount || 0)),
         refundAmount: roundMoney(Number(r.refundAmount)),
         notes: r.notes,
         createdAt: r.createdAt,
@@ -1681,6 +1682,43 @@ export class AdminFinancialService {
         },
       });
 
+      // Part-price portion goes to the platform (it refunded the customer). Allocated first.
+      const partPriceTotal = roundMoney(Number(obligation.partPriceAmount || 0));
+      const priorSettlements = await txAny.shippingCompanySettlement.findMany({
+        where: { obligationId },
+        select: { metadata: true },
+      });
+      const partAlreadyRecovered = roundMoney(
+        priorSettlements.reduce(
+          (sum: number, s: any) => sum + Number((s.metadata as any)?.partPriceRecovered || 0),
+          0,
+        ),
+      );
+      const partPriceRecovered = roundMoney(
+        Math.max(0, Math.min(amount, partPriceTotal - partAlreadyRecovered)),
+      );
+      if (partPriceRecovered > 0.009) {
+        await tx.walletTransaction.create({
+          data: {
+            userId: adminId,
+            role: 'PLATFORM',
+            type: 'CREDIT',
+            transactionType: 'SHIPPING_COMPANY_PART_PRICE_RECOVERY',
+            amount: partPriceRecovered,
+            currency: obligation.currency || 'AED',
+            balanceAfter: balAfter,
+            description: `Part price recovered from shipping company — case ${String(obligation.caseId).substring(0, 8)}`,
+            metadata: {
+              obligationId,
+              caseId: obligation.caseId,
+              caseType: obligation.caseType,
+              orderId: obligation.orderId,
+              settlementWalletTxId: walletTx.id,
+            },
+          },
+        });
+      }
+
       // Issue a payment receipt invoice (admin-visible) for the carrier payment
       let invoiceId: string | null = null;
       const payment = await tx.paymentTransaction.findFirst({
@@ -1719,8 +1757,8 @@ export class AdminFinancialService {
               orderId: obligation.orderId,
               paymentId: payment.id,
               customerId: adminId,
-              subtotal: 0,
-              shipping: amount,
+              subtotal: partPriceRecovered,
+              shipping: roundMoney(amount - partPriceRecovered),
               commission: 0,
               total: amount,
               currency: master?.currency || obligation.currency || 'AED',
@@ -1733,12 +1771,23 @@ export class AdminFinancialService {
               lineItems: [
                 {
                   kind: 'SHIPPING_COMPANY_SETTLEMENT',
-                  amount,
+                  amount: roundMoney(amount - partPriceRecovered),
                   payer: 'SHIPPING_COMPANY',
                   obligationId,
                   caseId: obligation.caseId,
                   note: body.note || null,
                 },
+                ...(partPriceRecovered > 0.009
+                  ? [
+                      {
+                        kind: 'SHIPPING_COMPANY_PART_PRICE_RECOVERY',
+                        amount: partPriceRecovered,
+                        payer: 'SHIPPING_COMPANY',
+                        obligationId,
+                        caseId: obligation.caseId,
+                      },
+                    ]
+                  : []),
               ] as unknown as Prisma.InputJsonValue,
             },
           });
@@ -1761,6 +1810,7 @@ export class AdminFinancialService {
             previousRemaining: remaining,
             newRemaining,
             newStatus,
+            partPriceRecovered,
           },
         },
       });

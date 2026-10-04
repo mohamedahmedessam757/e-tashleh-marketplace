@@ -2044,6 +2044,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                                     <PartPreparationAlert
                                                         order={order}
                                                         fulfillmentStatus={acceptedPartOffer.fulfillmentStatus}
+                                                        offer={acceptedPartOffer as any}
                                                         isAr={language === 'ar'}
                                                     />
                                                     <PartCorrectionStatus

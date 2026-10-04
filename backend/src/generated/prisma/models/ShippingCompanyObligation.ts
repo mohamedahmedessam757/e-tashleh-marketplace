@@ -33,6 +33,7 @@ export type ShippingCompanyObligationAvgAggregateOutputType = {
   shippingAmount: runtime.Decimal | null
   stripeFeesAmount: runtime.Decimal | null
   refundAmount: runtime.Decimal | null
+  partPriceAmount: runtime.Decimal | null
 }
 
 export type ShippingCompanyObligationSumAggregateOutputType = {
@@ -42,6 +43,7 @@ export type ShippingCompanyObligationSumAggregateOutputType = {
   shippingAmount: runtime.Decimal | null
   stripeFeesAmount: runtime.Decimal | null
   refundAmount: runtime.Decimal | null
+  partPriceAmount: runtime.Decimal | null
 }
 
 export type ShippingCompanyObligationMinAggregateOutputType = {
@@ -58,6 +60,7 @@ export type ShippingCompanyObligationMinAggregateOutputType = {
   shippingAmount: runtime.Decimal | null
   stripeFeesAmount: runtime.Decimal | null
   refundAmount: runtime.Decimal | null
+  partPriceAmount: runtime.Decimal | null
   notes: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -77,6 +80,7 @@ export type ShippingCompanyObligationMaxAggregateOutputType = {
   shippingAmount: runtime.Decimal | null
   stripeFeesAmount: runtime.Decimal | null
   refundAmount: runtime.Decimal | null
+  partPriceAmount: runtime.Decimal | null
   notes: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -96,6 +100,7 @@ export type ShippingCompanyObligationCountAggregateOutputType = {
   shippingAmount: number
   stripeFeesAmount: number
   refundAmount: number
+  partPriceAmount: number
   notes: number
   metadata: number
   createdAt: number
@@ -111,6 +116,7 @@ export type ShippingCompanyObligationAvgAggregateInputType = {
   shippingAmount?: true
   stripeFeesAmount?: true
   refundAmount?: true
+  partPriceAmount?: true
 }
 
 export type ShippingCompanyObligationSumAggregateInputType = {
@@ -120,6 +126,7 @@ export type ShippingCompanyObligationSumAggregateInputType = {
   shippingAmount?: true
   stripeFeesAmount?: true
   refundAmount?: true
+  partPriceAmount?: true
 }
 
 export type ShippingCompanyObligationMinAggregateInputType = {
@@ -136,6 +143,7 @@ export type ShippingCompanyObligationMinAggregateInputType = {
   shippingAmount?: true
   stripeFeesAmount?: true
   refundAmount?: true
+  partPriceAmount?: true
   notes?: true
   createdAt?: true
   updatedAt?: true
@@ -155,6 +163,7 @@ export type ShippingCompanyObligationMaxAggregateInputType = {
   shippingAmount?: true
   stripeFeesAmount?: true
   refundAmount?: true
+  partPriceAmount?: true
   notes?: true
   createdAt?: true
   updatedAt?: true
@@ -174,6 +183,7 @@ export type ShippingCompanyObligationCountAggregateInputType = {
   shippingAmount?: true
   stripeFeesAmount?: true
   refundAmount?: true
+  partPriceAmount?: true
   notes?: true
   metadata?: true
   createdAt?: true
@@ -281,6 +291,7 @@ export type ShippingCompanyObligationGroupByOutputType = {
   shippingAmount: runtime.Decimal
   stripeFeesAmount: runtime.Decimal
   refundAmount: runtime.Decimal
+  partPriceAmount: runtime.Decimal
   notes: string | null
   metadata: runtime.JsonValue | null
   createdAt: Date
@@ -324,6 +335,7 @@ export type ShippingCompanyObligationWhereInput = {
   shippingAmount?: Prisma.DecimalFilter<"ShippingCompanyObligation"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   stripeFeesAmount?: Prisma.DecimalFilter<"ShippingCompanyObligation"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundAmount?: Prisma.DecimalFilter<"ShippingCompanyObligation"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  partPriceAmount?: Prisma.DecimalFilter<"ShippingCompanyObligation"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   notes?: Prisma.StringNullableFilter<"ShippingCompanyObligation"> | string | null
   metadata?: Prisma.JsonNullableFilter<"ShippingCompanyObligation">
   createdAt?: Prisma.DateTimeFilter<"ShippingCompanyObligation"> | Date | string
@@ -345,6 +357,7 @@ export type ShippingCompanyObligationOrderByWithRelationInput = {
   shippingAmount?: Prisma.SortOrder
   stripeFeesAmount?: Prisma.SortOrder
   refundAmount?: Prisma.SortOrder
+  partPriceAmount?: Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
   metadata?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -369,6 +382,7 @@ export type ShippingCompanyObligationWhereUniqueInput = Prisma.AtLeast<{
   shippingAmount?: Prisma.DecimalFilter<"ShippingCompanyObligation"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   stripeFeesAmount?: Prisma.DecimalFilter<"ShippingCompanyObligation"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundAmount?: Prisma.DecimalFilter<"ShippingCompanyObligation"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  partPriceAmount?: Prisma.DecimalFilter<"ShippingCompanyObligation"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   notes?: Prisma.StringNullableFilter<"ShippingCompanyObligation"> | string | null
   metadata?: Prisma.JsonNullableFilter<"ShippingCompanyObligation">
   createdAt?: Prisma.DateTimeFilter<"ShippingCompanyObligation"> | Date | string
@@ -390,6 +404,7 @@ export type ShippingCompanyObligationOrderByWithAggregationInput = {
   shippingAmount?: Prisma.SortOrder
   stripeFeesAmount?: Prisma.SortOrder
   refundAmount?: Prisma.SortOrder
+  partPriceAmount?: Prisma.SortOrder
   notes?: Prisma.SortOrderInput | Prisma.SortOrder
   metadata?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -418,6 +433,7 @@ export type ShippingCompanyObligationScalarWhereWithAggregatesInput = {
   shippingAmount?: Prisma.DecimalWithAggregatesFilter<"ShippingCompanyObligation"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   stripeFeesAmount?: Prisma.DecimalWithAggregatesFilter<"ShippingCompanyObligation"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundAmount?: Prisma.DecimalWithAggregatesFilter<"ShippingCompanyObligation"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  partPriceAmount?: Prisma.DecimalWithAggregatesFilter<"ShippingCompanyObligation"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   notes?: Prisma.StringNullableWithAggregatesFilter<"ShippingCompanyObligation"> | string | null
   metadata?: Prisma.JsonNullableWithAggregatesFilter<"ShippingCompanyObligation">
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ShippingCompanyObligation"> | Date | string
@@ -438,6 +454,7 @@ export type ShippingCompanyObligationCreateInput = {
   shippingAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
   stripeFeesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
   refundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  partPriceAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
   notes?: string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -459,6 +476,7 @@ export type ShippingCompanyObligationUncheckedCreateInput = {
   shippingAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
   stripeFeesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
   refundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  partPriceAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
   notes?: string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -480,6 +498,7 @@ export type ShippingCompanyObligationUpdateInput = {
   shippingAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   stripeFeesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  partPriceAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -501,6 +520,7 @@ export type ShippingCompanyObligationUncheckedUpdateInput = {
   shippingAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   stripeFeesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  partPriceAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -522,6 +542,7 @@ export type ShippingCompanyObligationCreateManyInput = {
   shippingAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
   stripeFeesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
   refundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  partPriceAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
   notes?: string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -542,6 +563,7 @@ export type ShippingCompanyObligationUpdateManyMutationInput = {
   shippingAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   stripeFeesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  partPriceAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -562,6 +584,7 @@ export type ShippingCompanyObligationUncheckedUpdateManyInput = {
   shippingAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   stripeFeesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  partPriceAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -582,6 +605,7 @@ export type ShippingCompanyObligationCountOrderByAggregateInput = {
   shippingAmount?: Prisma.SortOrder
   stripeFeesAmount?: Prisma.SortOrder
   refundAmount?: Prisma.SortOrder
+  partPriceAmount?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   metadata?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -595,6 +619,7 @@ export type ShippingCompanyObligationAvgOrderByAggregateInput = {
   shippingAmount?: Prisma.SortOrder
   stripeFeesAmount?: Prisma.SortOrder
   refundAmount?: Prisma.SortOrder
+  partPriceAmount?: Prisma.SortOrder
 }
 
 export type ShippingCompanyObligationMaxOrderByAggregateInput = {
@@ -611,6 +636,7 @@ export type ShippingCompanyObligationMaxOrderByAggregateInput = {
   shippingAmount?: Prisma.SortOrder
   stripeFeesAmount?: Prisma.SortOrder
   refundAmount?: Prisma.SortOrder
+  partPriceAmount?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -630,6 +656,7 @@ export type ShippingCompanyObligationMinOrderByAggregateInput = {
   shippingAmount?: Prisma.SortOrder
   stripeFeesAmount?: Prisma.SortOrder
   refundAmount?: Prisma.SortOrder
+  partPriceAmount?: Prisma.SortOrder
   notes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -642,6 +669,7 @@ export type ShippingCompanyObligationSumOrderByAggregateInput = {
   shippingAmount?: Prisma.SortOrder
   stripeFeesAmount?: Prisma.SortOrder
   refundAmount?: Prisma.SortOrder
+  partPriceAmount?: Prisma.SortOrder
 }
 
 export type ShippingCompanyObligationScalarRelationFilter = {
@@ -677,6 +705,7 @@ export type ShippingCompanyObligationCreateWithoutSettlementsInput = {
   shippingAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
   stripeFeesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
   refundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  partPriceAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
   notes?: string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -697,6 +726,7 @@ export type ShippingCompanyObligationUncheckedCreateWithoutSettlementsInput = {
   shippingAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
   stripeFeesAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
   refundAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  partPriceAmount?: runtime.Decimal | runtime.DecimalJsLike | number | string
   notes?: string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
@@ -733,6 +763,7 @@ export type ShippingCompanyObligationUpdateWithoutSettlementsInput = {
   shippingAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   stripeFeesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  partPriceAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -753,6 +784,7 @@ export type ShippingCompanyObligationUncheckedUpdateWithoutSettlementsInput = {
   shippingAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   stripeFeesAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   refundAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  partPriceAmount?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   notes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   metadata?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -804,6 +836,7 @@ export type ShippingCompanyObligationSelect<ExtArgs extends runtime.Types.Extens
   shippingAmount?: boolean
   stripeFeesAmount?: boolean
   refundAmount?: boolean
+  partPriceAmount?: boolean
   notes?: boolean
   metadata?: boolean
   createdAt?: boolean
@@ -826,6 +859,7 @@ export type ShippingCompanyObligationSelectCreateManyAndReturn<ExtArgs extends r
   shippingAmount?: boolean
   stripeFeesAmount?: boolean
   refundAmount?: boolean
+  partPriceAmount?: boolean
   notes?: boolean
   metadata?: boolean
   createdAt?: boolean
@@ -846,6 +880,7 @@ export type ShippingCompanyObligationSelectUpdateManyAndReturn<ExtArgs extends r
   shippingAmount?: boolean
   stripeFeesAmount?: boolean
   refundAmount?: boolean
+  partPriceAmount?: boolean
   notes?: boolean
   metadata?: boolean
   createdAt?: boolean
@@ -866,13 +901,14 @@ export type ShippingCompanyObligationSelectScalar = {
   shippingAmount?: boolean
   stripeFeesAmount?: boolean
   refundAmount?: boolean
+  partPriceAmount?: boolean
   notes?: boolean
   metadata?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type ShippingCompanyObligationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "caseId" | "caseType" | "orderId" | "orderNumber" | "amountOriginal" | "amountRemaining" | "amountSettled" | "currency" | "status" | "shippingAmount" | "stripeFeesAmount" | "refundAmount" | "notes" | "metadata" | "createdAt" | "updatedAt", ExtArgs["result"]["shippingCompanyObligation"]>
+export type ShippingCompanyObligationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "caseId" | "caseType" | "orderId" | "orderNumber" | "amountOriginal" | "amountRemaining" | "amountSettled" | "currency" | "status" | "shippingAmount" | "stripeFeesAmount" | "refundAmount" | "partPriceAmount" | "notes" | "metadata" | "createdAt" | "updatedAt", ExtArgs["result"]["shippingCompanyObligation"]>
 export type ShippingCompanyObligationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   settlements?: boolean | Prisma.ShippingCompanyObligation$settlementsArgs<ExtArgs>
   _count?: boolean | Prisma.ShippingCompanyObligationCountOutputTypeDefaultArgs<ExtArgs>
@@ -899,6 +935,7 @@ export type $ShippingCompanyObligationPayload<ExtArgs extends runtime.Types.Exte
     shippingAmount: runtime.Decimal
     stripeFeesAmount: runtime.Decimal
     refundAmount: runtime.Decimal
+    partPriceAmount: runtime.Decimal
     notes: string | null
     metadata: runtime.JsonValue | null
     createdAt: Date
@@ -1340,6 +1377,7 @@ export interface ShippingCompanyObligationFieldRefs {
   readonly shippingAmount: Prisma.FieldRef<"ShippingCompanyObligation", 'Decimal'>
   readonly stripeFeesAmount: Prisma.FieldRef<"ShippingCompanyObligation", 'Decimal'>
   readonly refundAmount: Prisma.FieldRef<"ShippingCompanyObligation", 'Decimal'>
+  readonly partPriceAmount: Prisma.FieldRef<"ShippingCompanyObligation", 'Decimal'>
   readonly notes: Prisma.FieldRef<"ShippingCompanyObligation", 'String'>
   readonly metadata: Prisma.FieldRef<"ShippingCompanyObligation", 'Json'>
   readonly createdAt: Prisma.FieldRef<"ShippingCompanyObligation", 'DateTime'>
