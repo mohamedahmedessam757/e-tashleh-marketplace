@@ -44,6 +44,39 @@ export function wasOrderCancelledByCustomer(orderId: string): boolean {
   }
 }
 
+/**
+ * Expiry-modal acknowledgment (customer pressed موافق) — the modal must never auto-open
+ * again for the same order + scenario. Flags are per scenario so acknowledging the
+ * "expired" modal does not also suppress the "cancelled by you" confirmation.
+ */
+const EXPIRED_MODAL_SEEN_PREFIX = 'expired_modal_seen_';
+
+export function expiredModalSeenKey(orderId: string, scenario: OrderExpiryScenario): string {
+  return `${EXPIRED_MODAL_SEEN_PREFIX}${orderId}_${scenario}`;
+}
+
+/** Record that the customer acknowledged this expiry scenario for the order. */
+export function ackExpiryModalSeen(orderId: string, scenario: OrderExpiryScenario): void {
+  try {
+    localStorage.setItem(expiredModalSeenKey(orderId, scenario), '1');
+  } catch {
+    /* ignore storage errors */
+  }
+}
+
+/** True when this scenario was already acknowledged (or the legacy per-order flag was set). */
+export function isExpiryModalSeen(orderId: string, scenario: OrderExpiryScenario): boolean {
+  try {
+    return (
+      localStorage.getItem(expiredModalSeenKey(orderId, scenario)) === '1' ||
+      // Legacy: older builds stored a per-order flag only when the checkbox was ticked — honor it.
+      localStorage.getItem(`${EXPIRED_MODAL_SEEN_PREFIX}${orderId}`) === 'true'
+    );
+  } catch {
+    return false;
+  }
+}
+
 /** True when the customer cancelled before SLA/system expiry. */
 export function isCustomerInitiatedCancellation(
   order: OrderExpiryContext,

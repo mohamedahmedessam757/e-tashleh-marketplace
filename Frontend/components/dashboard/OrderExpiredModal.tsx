@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ArrowLeft, ArrowRight } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -10,7 +10,8 @@ interface OrderExpiredModalProps {
     orderNumber?: string;
     partName?: string;
     variant?: OrderExpiryScenario;
-    onClose: (dontShowAgain: boolean) => void;
+    /** موافق = acknowledged: the caller persists the "don't show again" flag. */
+    onClose: () => void;
 }
 
 export const OrderExpiredModal: React.FC<OrderExpiredModalProps> = ({
@@ -23,7 +24,6 @@ export const OrderExpiredModal: React.FC<OrderExpiredModalProps> = ({
 }) => {
     const { t, language } = useLanguage();
     const isRTL = language === 'ar';
-    const [dontShowAgain, setDontShowAgain] = useState(false);
 
     const copy =
         variant === 'customer_cancelled'
@@ -108,21 +108,9 @@ export const OrderExpiredModal: React.FC<OrderExpiredModalProps> = ({
                         </motion.div>
 
                         <motion.div className="space-y-4">
-                            <label className="flex items-center justify-center gap-2 cursor-pointer group pb-2">
-                                <input
-                                    type="checkbox"
-                                    className="w-4 h-4 rounded border-white/20 bg-white/5 text-gold-500 focus:ring-gold-500/20"
-                                    checked={dontShowAgain}
-                                    onChange={(e) => setDontShowAgain(e.target.checked)}
-                                />
-                                <span className="text-xs text-white/50 group-hover:text-white/70 transition-colors">
-                                    {copy?.dontShow || 'Do not show this message again'}
-                                </span>
-                            </label>
-
                             <button
                                 type="button"
-                                onClick={() => onClose(dontShowAgain)}
+                                onClick={() => onClose()}
                                 className="w-full bg-white/5 hover:bg-white/10 text-white border border-white/10 py-3.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2"
                             >
                                 {copy?.understood || 'OK'}

@@ -23,7 +23,7 @@ import { useOrderStore, Order, OrderOffer } from '../../stores/useOrderStore';
 import { useOrderById } from '../../hooks/useOrderById';
 import { useOrderRealtimeSync } from '../../hooks/useOrderRealtimeSync';
 import { isAcceptedOfferStatus, isVisibleMarketplaceOffer, isRejectedOfferStatus } from '../../utils/offerStatusHelpers';
-import { getOrderExpiryScenario, getExpiredPartsWithoutOffers, getDisplayOrderStatus, type OrderExpiryScenario } from '../../utils/orderExpiryHelpers';
+import { getOrderExpiryScenario, getExpiredPartsWithoutOffers, getDisplayOrderStatus, ackExpiryModalSeen, isExpiryModalSeen, type OrderExpiryScenario } from '../../utils/orderExpiryHelpers';
 import { getOrderPaymentDisplay, getOrderPaymentDisplayClasses } from '../../utils/orderPaymentDisplay';
 import { useEnforceExpiredOrderSla } from '../../hooks/useEnforceExpiredOrderSla';
 import { writeCreateOrderPrefill, useCreateOrderStore } from '../../stores/useCreateOrderStore';
@@ -388,8 +388,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
 
         if (!scenario) return;
 
-        const storageKey = `expired_modal_seen_${order.id}`;
-        if (localStorage.getItem(storageKey)) return;
+        if (isExpiryModalSeen(order.id, scenario)) return;
 
         setExpiredModalVariant(scenario);
         const timer = setTimeout(() => setShowExpiredModal(true), 500);
@@ -439,10 +438,9 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
             !['RESOLVED', 'CLOSED', 'CANCELLED', 'REFUNDED'].includes(c.status),
     );
 
-    const handleCloseExpiredModal = (dontShowAgain: boolean) => {
-        if (dontShowAgain && order) {
-            localStorage.setItem(`expired_modal_seen_${order.id}`, 'true');
-        }
+    // موافق = acknowledged: persist the "don't show again" flag for this scenario, always.
+    const handleCloseExpiredModal = () => {
+        if (order) ackExpiryModalSeen(order.id, expiredModalVariant);
         setShowExpiredModal(false);
     };
 
@@ -1068,8 +1066,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
         if (window.confirm(msg)) {
             const ok = await cancelOrder(order.id);
             if (ok) {
-                const storageKey = `expired_modal_seen_${order.id}`;
-                if (!localStorage.getItem(storageKey)) {
+                if (!isExpiryModalSeen(order.id, 'customer_cancelled')) {
                     setExpiredModalVariant('customer_cancelled');
                     setShowExpiredModal(true);
                 }
