@@ -1702,6 +1702,17 @@ export class VerificationTasksService {
           ),
         );
       if (isMulti) {
+        await this.startFieldPartCorrectionWindow({
+          orderId: task.orderId,
+          orderNumber: task.order.orderNumber,
+          offerId: offerScopeId,
+          adminId,
+          reason: dto.reason ?? null,
+        }).catch((e) =>
+          this.logger.warn(
+            `Field reject part correction window failed: ${e instanceof Error ? e.message : e}`,
+          ),
+        );
         newOrderStatus = await this.offerFulfillment.recomputeOrderStatus(task.orderId);
       }
     }
@@ -2162,6 +2173,85 @@ export class VerificationTasksService {
         correctionDeadlineAt: null,
       },
     });
+  }
+
+  /**
+   * Multi-part field reject (first strike): the order keeps moving for sibling parts, so the
+   * NON_MATCHING → CORRECTION_PERIOD clock must live on this part. The offer's latest verification
+   * doc becomes REJECTED with its own correction deadline — the same per-part contract used by
+   * document review (merchant rematch gate, part countdown UI, expiry cron).
+   */
+  private async startFieldPartCorrectionWindow(params: {
+    orderId: string;
+    orderNumber: string;
+    offerId: string;
+    adminId: string;
+    reason: string | null;
+  }) {
+    const cfg = await this.orderDurationConfig.getConfig();
+    const now = new Date();
+    const deadline = new Date(
+      now.getTime() + this.orderDurationConfig.hoursToMs(cfg.correctionPeriodHours),
+    );
+    const reviewData = {
+      adminStatus: 'REJECTED',
+      adminReviewedBy: params.adminId,
+      adminReviewedAt: now,
+      adminRejectionReason: params.reason,
+      correctionDeadlineAt: deadline,
+    };
+
+    const latestDoc = await this.prisma.verificationDocument.findFirst({
+      where: { orderId: params.orderId, offerId: params.offerId },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true },
+    });
+
+    let storeId: string | null = null;
+    if (latestDoc) {
+      const updated = await this.prisma.verificationDocument.update({
+        where: { id: latestDoc.id },
+        data: reviewData,
+        select: { storeId: true },
+      });
+      storeId = updated.storeId;
+    } else {
+      const offer = await this.prisma.offer.findUnique({
+        where: { id: params.offerId },
+        select: { storeId: true, orderId: true },
+      });
+      if (!offer?.storeId || offer.orderId !== params.orderId) return;
+      storeId = offer.storeId;
+      await this.prisma.verificationDocument.create({
+        data: {
+          orderId: params.orderId,
+          offerId: params.offerId,
+          storeId: offer.storeId,
+          images: [],
+          description: 'FIELD_VERIFICATION_REJECTED',
+          ...reviewData,
+        },
+      });
+    }
+
+    if (!storeId) return;
+    await this.notifications
+      .notifyMerchantByStoreId(storeId, {
+        titleAr: '⚠️ رفض مطابقة القطعة - مطلوب تصحيح',
+        titleEn: '⚠️ Part verification rejected - correction required',
+        messageAr: `تم رفض مطابقة قطعة في الطلب #${params.orderNumber}. لديك ${cfg.correctionPeriodHours} ساعة لتصحيح هذه القطعة، وإلا ستُلغى ويُرد مبلغها للعميل.`,
+        messageEn: `A part on order #${params.orderNumber} failed verification. You have ${cfg.correctionPeriodHours}h to correct it, otherwise it is cancelled and refunded.`,
+        type: 'system_alert',
+        link: `/merchant/orders/${params.orderId}`,
+        metadata: {
+          orderId: params.orderId,
+          offerId: params.offerId,
+          verification: true,
+          verificationCorrection: true,
+          waEvent: 'VERIFICATION',
+        },
+      })
+      .catch(() => undefined);
   }
 
   /** Merchant, customer, and officer alerts after admin confirms field verification (aligned with orders adminReviewVerification). */

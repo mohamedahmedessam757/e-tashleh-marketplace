@@ -24,6 +24,8 @@ export interface FulfillmentSummaryPartHint {
   resolutionLocked?: boolean;
   hasOpenCase?: boolean;
   warrantyEndAt?: string | null;
+  /** Server-computed auto-ship deadline while the part is selectable in the assembly cart. */
+  assemblyCartExpiresAt?: string | null;
 }
 
 export interface FulfillmentSummaryHint {

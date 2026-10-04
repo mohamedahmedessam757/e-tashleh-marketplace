@@ -40,6 +40,8 @@ import { DisputeModal } from './resolution/DisputeModal';
 import { OrderExpiredModal } from './OrderExpiredModal';
 import { OrderInvoicesPanel } from './shared/OrderInvoicesPanel';
 import { OrderWaybillsPanel } from './shared/OrderWaybillsPanel';
+import { shouldShowWaybillTab } from '../../utils/waybillTabVisibility';
+import { PartAssemblyCartTimer } from './shared/PartAssemblyCartTimer';
 import { ShipmentBatchCard } from './shared/ShipmentBatchCard';
 import { useShipmentsStore } from '../../stores/useShipmentsStore';
 import { ShipmentTracker } from './shipments/ShipmentTracker';
@@ -408,20 +410,27 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
         }
     }, [orderId]);
 
-    const activeShippingCase = cases.find(c => 
-        c.orderId === orderId && 
-        c.shippingPaymentStatus === 'PENDING' && 
-        !['RESOLVED', 'CLOSED', 'CANCELLED'].includes(c.status)
-    );
+    const isCustomerShippingDueCase = (c: (typeof cases)[number]) =>
+        String(c.orderId) === String(orderId) &&
+        c.shippingPaymentStatus === 'PENDING' &&
+        !['RESOLVED', 'CLOSED', 'CANCELLED'].includes(c.status);
 
-    const activeAdjudicationFeeCase = cases.find(
-        (c) =>
-            c.orderId === orderId &&
-            c.adjudicationFeePayee === 'CUSTOMER' &&
-            Number(c.adjudicationFeeAmount || 0) > 0 &&
-            (c.adjudicationFeePaymentStatus === 'PENDING' ||
-                c.adjudicationFeePaymentStatus === 'PAID'),
-    );
+    const isCustomerAdjudicationFeeCase = (c: (typeof cases)[number]) =>
+        String(c.orderId) === String(orderId) &&
+        c.adjudicationFeePayee === 'CUSTOMER' &&
+        Number(c.adjudicationFeeAmount || 0) > 0 &&
+        (c.adjudicationFeePaymentStatus === 'PENDING' || c.adjudicationFeePaymentStatus === 'PAID');
+
+    /** Every customer payment case on this order (one per part on multi-part orders), unpaid first. */
+    const customerPaymentCases = useMemo(() => {
+        const list = cases.filter(
+            (c) => isCustomerShippingDueCase(c) || isCustomerAdjudicationFeeCase(c),
+        );
+        const isUnpaid = (c: (typeof cases)[number]) =>
+            c.shippingPaymentStatus === 'PENDING' || c.adjudicationFeePaymentStatus === 'PENDING';
+        return [...list].sort((a, b) => Number(isUnpaid(b)) - Number(isUnpaid(a)));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [cases, orderId]);
 
     const openResolutionCase = cases.find(
         (c) =>
@@ -1649,20 +1658,34 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
 
                 {/* Main Content Area (Offers, Tracking, etc) - Spans 2 cols */}
                 <div className="lg:col-span-2 space-y-6 min-w-0">
-                    {activeShippingCase && (
-                        <ShippingPaymentCard 
-                            caseRecord={activeShippingCase} 
-                            role="CUSTOMER" 
-                            onSuccess={() => fetchCases('customer')}
-                        />
-                    )}
-                    {activeAdjudicationFeeCase && (
-                        <AdjudicationFeePaymentCard
-                            caseRecord={activeAdjudicationFeeCase}
-                            role="CUSTOMER"
-                            onSuccess={() => fetchCases('customer')}
-                        />
-                    )}
+                    {customerPaymentCases.map((c) => {
+                        const partName =
+                            order.parts?.find((p: any) => String(p.id) === String(c.orderPartId))?.name ||
+                            (c.orderPartId ? c.partName : undefined);
+                        return (
+                            <div key={`${c.type}-${c.id}`} className="space-y-2">
+                                {customerPaymentCases.length > 1 && partName && (
+                                    <p className="text-xs font-black text-gold-500/80 px-1">
+                                        {language === 'ar' ? `القطعة: ${partName}` : `Part: ${partName}`}
+                                    </p>
+                                )}
+                                {isCustomerShippingDueCase(c) && (
+                                    <ShippingPaymentCard
+                                        caseRecord={c}
+                                        role="CUSTOMER"
+                                        onSuccess={() => fetchCases('customer')}
+                                    />
+                                )}
+                                {isCustomerAdjudicationFeeCase(c) && (
+                                    <AdjudicationFeePaymentCard
+                                        caseRecord={c}
+                                        role="CUSTOMER"
+                                        onSuccess={() => fetchCases('customer')}
+                                    />
+                                )}
+                            </div>
+                        );
+                    })}
 
                     {/* Tab Navigation */}
                     <div className="flex gap-2 sm:gap-4 border-b border-white/10 pb-2 overflow-x-auto hide-scrollbar min-w-0">
@@ -1683,7 +1706,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                             <FileText size={16} />
                             {language === 'ar' ? 'الفواتير' : 'Invoices'}
                         </button>
-                        {!['AWAITING_OFFERS', 'AWAITING_PAYMENT', 'PREPARATION', 'DELAYED_PREPARATION', 'PREPARED', 'VERIFICATION', 'NON_MATCHING', 'CORRECTION_PERIOD', 'CORRECTION_SUBMITTED'].includes(order.status) && (
+                        {shouldShowWaybillTab(order as any) && (
                             <button
                                 onClick={() => setActiveTab('waybills')}
                                 className={`min-h-[44px] px-4 py-2 text-sm font-bold uppercase tracking-wider rounded-lg transition-colors whitespace-nowrap flex items-center gap-2 ${
@@ -1706,7 +1729,7 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                         />
                     </div>
                     <div className={activeTab === 'waybills' ? 'block' : 'hidden'}>
-                        {!['AWAITING_OFFERS', 'AWAITING_PAYMENT', 'PREPARATION', 'DELAYED_PREPARATION', 'PREPARED', 'VERIFICATION', 'NON_MATCHING', 'CORRECTION_PERIOD', 'CORRECTION_SUBMITTED'].includes(order.status) && (
+                        {shouldShowWaybillTab(order as any) && (
                             <OrderWaybillsPanel 
                                 orderId={order.id} 
                                 orderStatus={order.status} 
@@ -2055,6 +2078,14 @@ export const OrderDetails: React.FC<OrderDetailsProps> = ({ orderId, onBack, onN
                                                         verificationDocuments={order.verificationDocuments}
                                                         offerId={acceptedPartOffer.id}
                                                         orderCorrectionDeadlineAt={order.correctionDeadlineAt}
+                                                    />
+                                                    <PartAssemblyCartTimer
+                                                        role="customer"
+                                                        isAr={language === 'ar'}
+                                                        deadlineAt={
+                                                            partResolutionByOfferId.get(acceptedPartOffer.id)
+                                                                ?.assemblyCartExpiresAt
+                                                        }
                                                     />
                                                 </div>
                                             )}

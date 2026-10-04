@@ -7,6 +7,24 @@ export function getOfferReturnWindowEndsAt(deliveredAt: Date): Date {
 }
 
 /**
+ * Assembly-cart auto-ship deadline for one part: earliest successful payment of the offer
+ * (paidAt, else createdAt) + assemblyCartMs. Mirrors getAssemblyCart / auto-ship cron.
+ */
+export function computeAssemblyCartExpiresAt(
+    payments: Array<{ paidAt?: Date | string | null; createdAt?: Date | string | null }> | null | undefined,
+    assemblyCartMs: number,
+): string | null {
+    if (!Number.isFinite(assemblyCartMs) || assemblyCartMs <= 0) return null;
+    const paidMs = (payments || [])
+        .map((p) => p.paidAt || p.createdAt)
+        .filter((raw): raw is Date | string => !!raw)
+        .map((raw) => new Date(raw).getTime())
+        .filter((ms) => Number.isFinite(ms));
+    if (!paidMs.length) return null;
+    return new Date(Math.min(...paidMs) + assemblyCartMs).toISOString();
+}
+
+/**
  * Short post-delivery return/dispute window only.
  * Warranty claims after the window use isOfferWarrantyClaimEligible / warranty UI —
  * they must not keep generic return/dispute CTAs alive.

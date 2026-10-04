@@ -15,6 +15,7 @@ import {
 import { CountdownTimer } from '../OrderDetails';
 import { PartCorrectionStatus } from '../shared/PartCorrectionStatus';
 import { PartReturnWindowCard, buildPartReturnWindowOffer } from '../shared/PartReturnWindowCard';
+import { PartAssemblyCartTimer } from '../shared/PartAssemblyCartTimer';
 import { shouldShowWaybillTab } from '../../../utils/waybillTabVisibility';
 import { OrderStatusCountdown } from '../../ui/OrderStatusCountdown';
 import {
@@ -2363,6 +2364,18 @@ export const MarketplaceOfferDetails: React.FC<MarketplaceOfferDetailsProps> = (
                                                             offerId={partOffer.id}
                                                             orderCorrectionDeadlineAt={order?.correctionDeadlineAt}
                                                         />
+
+                                                        {order?.requestType === 'multiple' && (
+                                                            <PartAssemblyCartTimer
+                                                                className="mt-3"
+                                                                role="merchant"
+                                                                isAr={isAr}
+                                                                deadlineAt={
+                                                                    partResolutionByOfferId.get(partOffer.id)
+                                                                        ?.assemblyCartExpiresAt
+                                                                }
+                                                            />
+                                                        )}
 
                                                         {order?.requestType === 'multiple' && (
                                                             <PartReturnWindowCard

@@ -1334,7 +1334,7 @@ export class OrderCleanupService {
                     },
                 },
                 order: {
-                    requestType: 'multiple',
+                    requestType: { equals: 'multiple', mode: 'insensitive' },
                     status: {
                         notIn: [
                             OrderStatus.CANCELLED,
@@ -1365,6 +1365,12 @@ export class OrderCleanupService {
                 select: { id: true },
             });
             if (newerDoc) continue;
+            // Field rematch already inspected by the officer — admin decides (approve or 2nd strike).
+            const fieldAwaitingAdmin = await this.prisma.verificationTask.findFirst({
+                where: { offerId: doc.offerId, status: 'AWAITING_ADMIN_APPROVAL' },
+                select: { id: true },
+            });
+            if (fieldAwaitingAdmin) continue;
             const entry = byOrder.get(doc.orderId) || {
                 offerIds: [],
                 previousStatus: doc.order?.status ?? null,

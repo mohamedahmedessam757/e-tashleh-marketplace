@@ -139,7 +139,10 @@ export const ShippingPaymentCard: React.FC<ShippingPaymentCardProps> = ({ caseRe
                             </span>
                             <div className="flex items-baseline gap-2">
                                 <span className="text-5xl font-black tracking-tighter text-purple-300">
-                                    {amount.toLocaleString()}
+                                    {(role === 'ADMIN'
+                                        ? Number(caseRecord.shippingCompanyLiability || 0) || amount
+                                        : amount
+                                    ).toLocaleString()}
                                 </span>
                                 <span className="text-lg font-black text-white/30 uppercase">AED</span>
                             </div>

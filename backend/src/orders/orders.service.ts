@@ -15,6 +15,7 @@ import { OrderDurationConfigService } from '../common/order-duration-config.serv
 import { LogisticsConfigService } from '../common/logistics-config.service';
 import { WaybillsService } from '../waybills/waybills.service';
 import { OfferFulfillmentService } from './offer-fulfillment.service';
+import { computeAssemblyCartExpiresAt } from './offer-resolution.helpers';
 import { OrderSlaService } from './order-sla.service';
 import { OfferFulfillmentStatus } from '@prisma/client';
 import { ASSEMBLY_CART_ORDER_STATUSES } from './assembly-cart.util';
@@ -2733,7 +2734,25 @@ export class OrdersService {
                   })
                 : Promise.resolve([]),
         ]);
-        const summary = this.offerFulfillment.getFulfillmentSummary(enriched);
+        const baseSummary = this.offerFulfillment.getFulfillmentSummary(enriched);
+
+        // Per-part assembly-cart clock: same rule as getAssemblyCart / auto-ship
+        // (earliest successful payment of THIS offer + assemblyCartDays), only while selectable.
+        const assemblyCartMs = await this.orderDurationConfig.getAssemblyCartMs();
+        const offerById = new Map(enriched.map((o) => [o.id, o]));
+        const summary = {
+            ...baseSummary,
+            parts: baseSummary.parts.map((p) => {
+                const offer = offerById.get(p.offerId);
+                return {
+                    ...p,
+                    assemblyCartExpiresAt:
+                        offer && p.canSelectForShipping
+                            ? computeAssemblyCartExpiresAt(offer.payments, assemblyCartMs)
+                            : null,
+                };
+            }),
+        };
         if (!opts?.includeCases) return summary;
         const cases = [
             ...returns.map((r) => ({ ...r, type: 'return' as const })),

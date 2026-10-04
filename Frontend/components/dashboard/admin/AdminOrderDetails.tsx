@@ -31,6 +31,7 @@ import { VerificationTaskManager } from './VerificationTaskManager';
 import { ordersApi } from '../../../services/api/orders';
 import { OrderInvoicesPanel } from '../shared/OrderInvoicesPanel';
 import { OrderWaybillsPanel } from '../shared/OrderWaybillsPanel';
+import { shouldShowWaybillTab } from '../../../utils/waybillTabVisibility';
 import { POST_DELIVERY_RETURN_DISPUTE_HOURS } from '../../../utils/orderSla';
 import { shouldShowAdminVerificationSections } from '../../../utils/orderVerificationVisibility';
 import { VerificationPhaseBanner, shouldShowVerificationBanner } from '../../ui/VerificationPhaseBanner';
@@ -44,6 +45,7 @@ import { PartShipmentStatus } from '../shared/PartShipmentStatus';
 import { PartCorrectionStatus } from '../shared/PartCorrectionStatus';
 import { PartReturnWindowCard, buildPartReturnWindowOffer } from '../shared/PartReturnWindowCard';
 import { PartCaseBadges } from '../shared/PartCaseBadge';
+import { PartAssemblyCartTimer } from '../shared/PartAssemblyCartTimer';
 import { PartialShippingProgressCard } from '../shared/PartialShippingProgressCard';
 import { PartialDeliveryProgressCard } from '../shared/PartialDeliveryProgressCard';
 import { shippingClassShortLabel } from '../../../utils/shippingClass';
@@ -63,28 +65,6 @@ import { computeOfferFinalPrice, resolveDisplayFinalPrice } from '../../../utils
 import { isActiveMerchantOffer } from '../../../utils/merchantOffers';
 
 /** Statuses where admin Waybills tab is visible (includes partial ship/delivery). */
-const ADMIN_WAYBILL_TAB_STATUSES = [
-    'PREPARED',
-    'VERIFICATION',
-    'VERIFICATION_SUCCESS',
-    'READY_FOR_SHIPPING',
-    'PARTIALLY_SHIPPED',
-    'PARTIALLY_DELIVERED',
-    'SHIPPED',
-    'DELIVERED',
-    'COMPLETED',
-    'DISPUTED',
-    'RETURNED',
-    'RETURN_REQUESTED',
-    'RETURN_APPROVED',
-    'REFUNDED',
-    'WARRANTY_ACTIVE',
-    'WARRANTY_EXPIRED',
-    'NON_MATCHING',
-    'CORRECTION_PERIOD',
-    'CORRECTION_SUBMITTED',
-] as const;
-
 interface AdminOrderDetailsProps {
     orderId: any;
     onBack: () => void;
@@ -765,7 +745,7 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                             <FileText size={16} />
                             {isAr ? 'الفواتير' : 'Invoices'}
                         </button>
-                        {ADMIN_WAYBILL_TAB_STATUSES.includes(order.status as (typeof ADMIN_WAYBILL_TAB_STATUSES)[number]) && (
+                        {shouldShowWaybillTab(order as any) && (
                             <button
                                 onClick={() => setActiveTab('waybills')}
                                 className={`px-4 py-2 text-sm font-bold uppercase tracking-wider rounded-lg transition-colors whitespace-nowrap flex items-center gap-2 ${
@@ -1063,6 +1043,16 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                                                         offerId={primaryOffer.id}
                                                         orderCorrectionDeadlineAt={order.correctionDeadlineAt}
                                                     />
+                                                    {order.requestType === 'multiple' && (
+                                                        <PartAssemblyCartTimer
+                                                            role="admin"
+                                                            isAr={isAr}
+                                                            deadlineAt={
+                                                                partResolutionByOfferId.get(String(primaryOffer.id))
+                                                                    ?.assemblyCartExpiresAt
+                                                            }
+                                                        />
+                                                    )}
                                                     {order.requestType === 'multiple' && (
                                                         <PartReturnWindowCard
                                                             readOnly
@@ -1421,7 +1411,7 @@ export const AdminOrderDetails: React.FC<AdminOrderDetailsProps> = ({ orderId, o
                     </div>
                     {/* WAYBILLS TAB */}
                     <div className={activeTab === 'waybills' ? 'block' : 'hidden'}>
-                        {ADMIN_WAYBILL_TAB_STATUSES.includes(order.status as (typeof ADMIN_WAYBILL_TAB_STATUSES)[number]) && (
+                        {shouldShowWaybillTab(order as any) && (
                             <OrderWaybillsPanel 
                                 orderId={order.id} 
                                 orderStatus={order.status} 
