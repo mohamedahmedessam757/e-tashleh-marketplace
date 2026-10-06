@@ -129,7 +129,8 @@ CORS_ORIGINS=https://e-tashleh.net,https://www.e-tashleh.net
 ```bash
 npm ci --omit=dev
 npm run build
-pm2 start npm --name e-tashleh-api -- run start:prod
+cd ..
+pm2 start deploy/ecosystem.config.cjs   # يشغّل Node مباشرة (بدون npm) — مطلوب مع npm 12
 pm2 save
 pm2 startup
 ```
