@@ -60,6 +60,12 @@ interface CreateOrderWizardProps {
 
 type StepKey = 'vehicle' | 'part' | 'preferences' | 'review';
 
+/**
+ * Set in the wizard effect cleanup and cleared by the setup that follows it in the same flush.
+ * Stays true only when the screen actually unmounted (no following setup) — then the store resets.
+ */
+let createOrderWizardResync = false;
+
 export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete, onNavigate }) => {
   const {
     step,
@@ -98,12 +104,14 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
   const [quotaRefreshKey, setQuotaRefreshKey] = React.useState(0);
 
   useEffect(() => {
-    // React Strict Mode remounts once in dev: never reset() after a successful reorder apply.
-    const prefill = peekCreateOrderPrefill();
-    const state = useCreateOrderStore.getState();
-    const alreadyPrefilled =
-      state.isReorderPrefill && !!state.vehicle.make && state.parts.some((p) => !!p.name?.trim());
+    // True only for the setup that runs immediately after this effect's own cleanup
+    // (Strict Mode remount, or a dependency change). A real leave has no following setup,
+    // so the microtask below clears the singleton store — otherwise a reorder draft
+    // (isReorderPrefill) survives and the next "new order" opens prefilled.
+    const keepDraftAcrossResync = createOrderWizardResync;
+    createOrderWizardResync = false;
 
+    const prefill = peekCreateOrderPrefill();
     if (prefill?.parts?.length) {
       applyReorderPrefill(prefill);
       clearCreateOrderPrefill();
@@ -114,7 +122,7 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
         year: prefill.year,
       });
       clearCreateOrderPrefill();
-    } else if (!alreadyPrefilled) {
+    } else if (!keepDraftAcrossResync) {
       reset();
     }
 
@@ -123,6 +131,12 @@ export const CreateOrderWizard: React.FC<CreateOrderWizardProps> = ({ onComplete
     setIsReady(true);
     return () => {
       unsub();
+      createOrderWizardResync = true;
+      queueMicrotask(() => {
+        if (!createOrderWizardResync) return;
+        createOrderWizardResync = false;
+        useCreateOrderStore.getState().reset();
+      });
     };
   }, [fetchFeatureFlags, subscribeFeatureFlags, prefillVehicle, applyReorderPrefill, reset]);
 
