@@ -314,16 +314,38 @@ export class OrderCompletionFinanceService {
         }
 
         for (const offerId of offerIds) {
+            if (await this.hasOpenMoneyCase({ offerId })) continue;
             await this.settleCompletedOffer(offerId).catch((err) =>
                 this.logger.warn(`Warranty-end settle failed for offer ${offerId}: ${err?.message || err}`),
             );
         }
         for (const orderId of orderIds) {
+            if (await this.hasOpenMoneyCase({ orderId })) continue;
             await this.settleCompletedOrder(orderId).catch((err) =>
                 this.logger.warn(`Warranty-end settle failed for order ${orderId}: ${err?.message || err}`),
             );
         }
         return offerIds.size + orderIds.size;
+    }
+
+    /** Exchange returns do not block payout; refund returns and disputes do. */
+    private async hasOpenMoneyCase(scope: { offerId?: string; orderId?: string }): Promise<boolean> {
+        const where = scope.offerId ? { offerId: scope.offerId } : { orderId: scope.orderId };
+        const [openReturn, openDispute] = await Promise.all([
+            this.prisma.returnRequest.findFirst({
+                where: {
+                    ...where,
+                    returnType: { not: 'EXCHANGE' },
+                    status: { notIn: ['CANCELLED', 'REJECTED', 'REFUNDED', 'RESOLVED'] },
+                },
+                select: { id: true },
+            }),
+            this.prisma.dispute.findFirst({
+                where: { ...where, status: { notIn: ['CLOSED', 'RESOLVED'] } },
+                select: { id: true },
+            }),
+        ]);
+        return Boolean(openReturn || openDispute);
     }
 
     async healCustomerCompletionRewards(customerId: string, limit = 20): Promise<void> {
