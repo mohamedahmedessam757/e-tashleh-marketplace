@@ -6,7 +6,35 @@ import {
   isOfferInWarranty,
   isOfferPastWindowWarrantyEligible,
   isOfferWarrantyClaimEligible,
+  isOfferWarrantyHoldActive,
 } from './warranty-activation.util';
+
+describe('isOfferWarrantyHoldActive', () => {
+  const now = new Date('2026-10-07T12:00:00Z');
+
+  it('does not hold parts without a usable warranty', () => {
+    expect(isOfferWarrantyHoldActive({ hasWarranty: false }, null, now)).toBe(false);
+    expect(isOfferWarrantyHoldActive({ hasWarranty: true, warrantyDuration: 'no' }, null, now)).toBe(false);
+  });
+
+  it('holds until the offer warranty end', () => {
+    const offer = { hasWarranty: true, warrantyDuration: '1month', warrantyEndAt: new Date('2026-10-08T00:00:00Z') };
+    expect(isOfferWarrantyHoldActive(offer, null, now)).toBe(true);
+    expect(isOfferWarrantyHoldActive({ ...offer, warrantyEndAt: new Date('2026-10-01T00:00:00Z') }, null, now)).toBe(false);
+  });
+
+  it('falls back to the order warranty end for single orders', () => {
+    const offer = { hasWarranty: true, warrantyDuration: '1month' };
+    expect(isOfferWarrantyHoldActive(offer, new Date('2026-11-01T00:00:00Z'), now)).toBe(true);
+    expect(isOfferWarrantyHoldActive(offer, new Date('2026-10-01T00:00:00Z'), now)).toBe(false);
+  });
+
+  it('computes the end from completion when no end date is stored', () => {
+    const offer = { hasWarranty: true, warrantyDuration: '7 days', completedAt: new Date('2026-10-05T00:00:00Z') };
+    expect(isOfferWarrantyHoldActive(offer, null, now)).toBe(true);
+    expect(isOfferWarrantyHoldActive({ ...offer, completedAt: new Date('2026-09-01T00:00:00Z') }, null, now)).toBe(false);
+  });
+});
 
 describe('calculateWarrantyEndDate', () => {
   it('adds months for 1month', () => {

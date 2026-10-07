@@ -19,7 +19,11 @@ import {
   computeLoyaltyReverseProportion,
   computePartialReverseAmount,
 } from './loyalty-reverse.util';
-import { isWarrantyClaimReason } from '../orders/warranty-activation.util';
+import {
+  isOfferWarrantyHoldActive,
+  isWarrantyClaimReason,
+  WARRANTY_HOLD_OFFER_SELECT,
+} from '../orders/warranty-activation.util';
 
 const TERMINAL_REWARD_STATUSES = new Set([
   'COMPLETED',
@@ -171,6 +175,13 @@ export class LoyaltyService {
     if (offer.fulfillmentStatus !== 'COMPLETED') {
       this.logger.warn(
         `[LoyaltyEngine] Offer ${offerId} not COMPLETED (${offer.fulfillmentStatus}). Skipping.`,
+      );
+      return;
+    }
+
+    if (isOfferWarrantyHoldActive(offer, offer.order.warranty_end_at)) {
+      this.logger.log(
+        `[LoyaltyEngine] Offer ${offerId} still under warranty — rewards deferred.`,
       );
       return;
     }
@@ -452,6 +463,24 @@ export class LoyaltyService {
         );
         return;
       }
+    }
+
+    // The order-level fallback must not pay out rewards for parts still under warranty.
+    const warrantyCheck = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: {
+        warranty_end_at: true,
+        offers: {
+          where: { status: { in: ['accepted', 'ACCEPTED'] } },
+          select: WARRANTY_HOLD_OFFER_SELECT,
+        },
+      },
+    });
+    if (
+      warrantyCheck?.offers.some((o) => isOfferWarrantyHoldActive(o, warrantyCheck.warranty_end_at))
+    ) {
+      this.logger.log(`[LoyaltyEngine] Order ${orderId} has parts under warranty — rewards deferred.`);
+      return;
     }
 
     // 1. Fetch Order with Security Audit Data

@@ -75,6 +75,9 @@ interface MerchantWalletState {
     withdrawalRestrictionMessageEn?: string | null;
     pendingLiabilities?: number;
     obligationsTotalDue?: number;
+    disputeHoldEnabled?: boolean;
+    disputeHoldPercent?: number;
+    disputeHoldAmount?: number;
   };
   withdrawalRequests: any[];
   withdrawalLimits: { min: number; max: number; tier?: string; stripeConnectEnabled?: boolean; payoutMethods?: string[] };

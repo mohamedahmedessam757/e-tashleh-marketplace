@@ -19,6 +19,10 @@ export const CHAT_CLOSE_ORDER_STATUSES: readonly OrderStatus[] = [
   OrderStatus.COMPLETED,
   OrderStatus.WARRANTY_ACTIVE,
   OrderStatus.WARRANTY_EXPIRED,
+  OrderStatus.REFUNDED,
+  OrderStatus.RETURNED,
+  OrderStatus.RESOLVED,
+  OrderStatus.CLOSED,
 ] as const;
 
 /** @deprecated Empty — chats no longer stay open for cancel/complete/warranty. */

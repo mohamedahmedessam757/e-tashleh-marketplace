@@ -1165,6 +1165,8 @@ export class AdminFinancialService {
         customerTierThresholds: config.customerTierThresholds,
         storeLoyaltyTiers: config.storeLoyaltyTiers,
         stripeConnectEnabled: config.stripeConnectEnabled,
+        disputeWithdrawalHoldEnabled: config.disputeWithdrawalHoldEnabled,
+        disputeWithdrawalHoldPercent: config.disputeWithdrawalHoldPercent,
       },
       withdrawalLimits: withdrawalLimits?.settingValue ?? null,
     };
@@ -1202,6 +1204,17 @@ export class AdminFinancialService {
         throw new BadRequestException('gatewayFeeFixedAed must be between 0 and 50');
       }
       financialFields.gatewayFeeFixedAed = fixed;
+    }
+    if (financialFields.disputeWithdrawalHoldEnabled !== undefined) {
+      financialFields.disputeWithdrawalHoldEnabled =
+        financialFields.disputeWithdrawalHoldEnabled === true;
+    }
+    if (financialFields.disputeWithdrawalHoldPercent !== undefined) {
+      const holdPct = Number(financialFields.disputeWithdrawalHoldPercent);
+      if (!Number.isFinite(holdPct) || holdPct < 0 || holdPct > 90) {
+        throw new BadRequestException('disputeWithdrawalHoldPercent must be between 0 and 90');
+      }
+      financialFields.disputeWithdrawalHoldPercent = Math.round(holdPct);
     }
 
     const existing = await this.prisma.platformSettings.findUnique({

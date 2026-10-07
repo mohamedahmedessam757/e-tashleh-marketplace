@@ -135,6 +135,10 @@ export type LiabilitySettleDb = {
   store?: {
     findUnique: (args: any) => Promise<{ id: string; ownerId: string | null } | null>;
   };
+  platformWallet?: {
+    findFirst: (args?: any) => Promise<{ id: string } | null>;
+    update: (args: any) => Promise<unknown>;
+  };
 };
 
 function metaOf(tx: any): Record<string, unknown> {
@@ -389,6 +393,7 @@ export async function markSettledLiabilityLinesPaid(
         const row = existing?.[0];
         if (row) {
           const meta = metaOf(row);
+          if (String(meta.settlementStatus || '').toUpperCase() === 'SETTLED') continue;
           await db.walletTransaction.update({
             where: { id: line.sourceId },
             data: {
@@ -399,6 +404,24 @@ export async function markSettledLiabilityLinesPaid(
               },
             },
           });
+          // Unposted gateway fees become platform revenue only when actually collected.
+          if (
+            line.kind === 'GATEWAY_CANCEL_FEE' &&
+            meta.postedToBalance === false &&
+            db.platformWallet?.findFirst &&
+            db.platformWallet?.update
+          ) {
+            const pw = await db.platformWallet.findFirst();
+            if (pw) {
+              await db.platformWallet.update({
+                where: { id: pw.id },
+                data: {
+                  feesBalance: { increment: line.amount },
+                  totalRevenue: { increment: line.amount },
+                },
+              });
+            }
+          }
         }
       }
       continue;

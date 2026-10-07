@@ -1665,6 +1665,10 @@ export const admin = {
       minCommission: 'الحد الأدنى للعمولة (AED)',
       gatewayFeePercent: 'نسبة رسوم Stripe %',
       gatewayFeeFixedAed: 'رسوم Stripe الثابتة (AED)',
+      disputeHoldTitle: 'حجز السحب أثناء النزاعات',
+      disputeHoldHint:
+        'عند التفعيل، يُحجز جزء من رصيد التاجر القابل للسحب طالما لديه مرتجع أو نزاع مفتوح. الافتراضي: متوقف.',
+      disputeHoldPercentLabel: 'نسبة الحجز من الرصيد القابل للسحب (0–90%)',
       gatewayFeeFormulaHint:
         'رسوم بوابة الدفع (Stripe) = (مبلغ الطلب × النسبة%) + الرسوم الثابتة — تُطبَّق على المدفوعات الجديدة فقط',
       baseShipping: 'تكلفة الشحن الأساسية',
@@ -3281,6 +3285,10 @@ export const admin = {
       gatewayFeeFixedAed: 'Stripe fixed fee (AED)',
       gatewayFeeFormulaHint:
         'Stripe gateway fee = (order total × percent%) + fixed fee — applies to new payments only',
+      disputeHoldTitle: 'Withdrawal hold during disputes',
+      disputeHoldHint:
+        'When enabled, part of the merchant withdrawable balance is held while they have an open return or dispute. Default: off.',
+      disputeHoldPercentLabel: 'Held share of the withdrawable balance (0–90%)',
       baseShipping: 'Base Shipping Cost',
       shippingRules: 'Shipping Rules',
       minWeight: 'Min Weight',

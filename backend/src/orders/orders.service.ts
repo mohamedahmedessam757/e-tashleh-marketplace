@@ -65,6 +65,19 @@ import {
     isCustomerVisibleShippingReview,
 } from '../offers/shipping-review.util';
 import { runDetached } from '../common/utils/run-detached';
+
+const PART_CANCEL_REFUND_PENDING = 'PART_CANCEL_REFUND_PENDING';
+const PART_CANCEL_REFUND_RESOLVED = 'PART_CANCEL_REFUND_RESOLVED';
+/** Refund outcomes that will never succeed on retry. */
+const PART_REFUND_TERMINAL_OUTCOMES = new Set([
+    'ALREADY_REFUNDED',
+    'NO_PAYMENT',
+    'ORDER_NOT_FOUND',
+    'SKIP_POST_SHIP_CANCEL_REFUND',
+]);
+const partRefundKey = (orderId: string, offerIds: string[]) =>
+    `${orderId}:${[...offerIds].sort().join(',')}`;
+
 @Injectable()
 export class OrdersService {
     private readonly logger = new Logger(OrdersService.name);
@@ -1968,8 +1981,8 @@ export class OrdersService {
                 await this.notifications.notifyMerchantByStoreId(offer.storeId!, {
                     titleAr: 'تم إلغاء الطلب لتأخر التجهيز',
                     titleEn: 'Order cancelled — late preparation',
-                    messageAr: `تم إلغاء الطلب #${order.orderNumber} لانتهاء مهلة التجهيز الإضافية. جاري استرجاع المبلغ للعميل وتطبيق الرسوم المستحقة على المتجر.`,
-                    messageEn: `Order #${order.orderNumber} was cancelled after the extra preparation grace ended. Customer refund is processing and merchant fees apply.`,
+                    messageAr: `تم إلغاء الطلب #${order.orderNumber} لانتهاء مهلة التجهيز الإضافية. سيُسترد المبلغ للعميل وتُطبق الرسوم المستحقة على المتجر، وسيصلك إشعار عند تأكيد الاسترداد.`,
+                    messageEn: `Order #${order.orderNumber} was cancelled after the extra preparation grace ended. The customer will be refunded and merchant fees apply; you will be notified once the refund is confirmed.`,
                     type: 'ORDER',
                     link: `/merchant/orders/${order.id}`,
                     metadata: {
@@ -2095,7 +2108,14 @@ export class OrdersService {
                 }
 
                 const pendingRefundOfferIds = opts?.skipRefund ? [...cancelledOfferIds] : [];
-                if (!opts?.skipRefund) {
+                if (opts?.skipRefund) {
+                    await this.markPartRefundPending(
+                        orderId,
+                        cancelledOfferIds,
+                        correctionCancelReason,
+                        OrderStatus.CORRECTION_PERIOD,
+                    );
+                } else {
                     await this.refundCancelledCorrectionOffers(orderId, cancelledOfferIds, {
                         previousStatus: OrderStatus.CORRECTION_PERIOD,
                         reason: correctionCancelReason,
@@ -2131,8 +2151,8 @@ export class OrdersService {
                     await this.notifications.notifyMerchantByStoreId(offer.storeId, {
                         titleAr: 'تم إلغاء قطعة لانتهاء مهلة التصحيح',
                         titleEn: 'Part cancelled — correction deadline expired',
-                        messageAr: `تم إلغاء قطعة من الطلب #${order.orderNumber} لانتهاء مهلة التصحيح (48 ساعة) دون تقديم قطعة مطابقة. جاري استرجاع مبلغ هذه القطعة وتطبيق الرسوم على المتجر.`,
-                        messageEn: `A part on order #${order.orderNumber} was cancelled after the 48h correction window ended without a matching part. That part is being refunded; merchant fees apply.`,
+                        messageAr: `تم إلغاء قطعة من الطلب #${order.orderNumber} لانتهاء مهلة التصحيح (48 ساعة) دون تقديم قطعة مطابقة. سيُسترد مبلغ هذه القطعة للعميل وتُطبق الرسوم على المتجر، وسيصلك إشعار عند تأكيد الاسترداد.`,
+                        messageEn: `A part on order #${order.orderNumber} was cancelled after the 48h correction window ended without a matching part. That part will be refunded and merchant fees apply; you will be notified once the refund is confirmed.`,
                         type: 'ORDER',
                         link: `/merchant/orders/${order.id}`,
                         metadata: {
@@ -2156,8 +2176,8 @@ export class OrdersService {
                             recipientRole: 'CUSTOMER',
                             titleAr: 'إلغاء قطعة من الطلب',
                             titleEn: 'Part cancelled from order',
-                            messageAr: `تم إلغاء قطعة/قطع من الطلب #${order.orderNumber} لعدم تقديم قطعة مطابقة خلال مهلة التصحيح. باقي القطع إن وُجدت تتابع، وجاري استرجاع مبلغ القطعة الملغاة.`,
-                            messageEn: `One or more parts on order #${order.orderNumber} were cancelled as the seller failed to provide a matching part in time. Remaining parts continue; refund for cancelled parts is processing.`,
+                            messageAr: `تم إلغاء قطعة/قطع من الطلب #${order.orderNumber} لعدم تقديم قطعة مطابقة خلال مهلة التصحيح. باقي القطع إن وُجدت تتابع، وسيصلك إشعار فور تأكيد استرداد مبلغ القطعة الملغاة.`,
+                            messageEn: `One or more parts on order #${order.orderNumber} were cancelled as the seller failed to provide a matching part in time. Remaining parts continue; you will be notified as soon as the refund for cancelled parts is confirmed.`,
                             type: 'ORDER',
                             link: `/dashboard/orders/${order.id}`,
                             metadata: {
@@ -2238,8 +2258,8 @@ export class OrdersService {
                 await this.notifications.notifyMerchantByStoreId(order.storeId, {
                     titleAr: 'تم إلغاء الطلب لانتهاء مهلة التصحيح',
                     titleEn: 'Order cancelled — correction deadline expired',
-                    messageAr: `تم إلغاء الطلب #${order.orderNumber} لانتهاء مهلة التصحيح (48 ساعة) دون تقديم قطعة مطابقة. جاري استرجاع المبلغ للعميل وتطبيق الرسوم على المتجر.`,
-                    messageEn: `Order #${order.orderNumber} was cancelled after the 48h correction window ended without a matching part. Customer refund is processing; merchant fees apply.`,
+                    messageAr: `تم إلغاء الطلب #${order.orderNumber} لانتهاء مهلة التصحيح (48 ساعة) دون تقديم قطعة مطابقة. سيُسترد المبلغ للعميل وتُطبق الرسوم على المتجر، وسيصلك إشعار عند تأكيد الاسترداد.`,
+                    messageEn: `Order #${order.orderNumber} was cancelled after the 48h correction window ended without a matching part. The customer will be refunded and merchant fees apply; you will be notified once the refund is confirmed.`,
                     type: 'ORDER',
                     link: `/merchant/orders/${order.id}`,
                     metadata: {
@@ -2260,8 +2280,8 @@ export class OrdersService {
                         recipientRole: 'CUSTOMER',
                         titleAr: 'إشعار إلغاء الطلب',
                         titleEn: 'Order cancellation notice',
-                        messageAr: `تم إلغاء طلبك #${order.orderNumber} لعدم تمكن البائع من تقديم القطعة المطابقة. جاري استرجاع المبلغ كاملاً.`,
-                        messageEn: `Order #${order.orderNumber} cancelled as the seller failed to provide a matching part. A full refund is processing.`,
+                        messageAr: `تم إلغاء طلبك #${order.orderNumber} لعدم تمكن البائع من تقديم القطعة المطابقة. سيُسترد المبلغ كاملاً وسيصلك إشعار فور تأكيد الاسترداد.`,
+                        messageEn: `Order #${order.orderNumber} cancelled as the seller failed to provide a matching part. You will get a full refund and be notified as soon as it is confirmed.`,
                         type: 'ORDER',
                         link: `/dashboard/orders/${order.id}`,
                         metadata: {
@@ -4536,15 +4556,10 @@ export class OrdersService {
                             secondRejectReason,
                         );
                     if (cancelledOfferIds.length) {
-                        await this.escrowService.refundPaidOrderOnCancel(
-                            orderId,
-                            secondRejectReason,
-                            {
-                                previousStatus: order.status,
-                                merchantFault: true,
-                                offerIds: cancelledOfferIds,
-                            },
-                        );
+                        await this.refundCancelledCorrectionOffers(orderId, cancelledOfferIds, {
+                            previousStatus: order.status,
+                            reason: secondRejectReason,
+                        });
                     }
                     if (nextStatus === OrderStatus.CANCELLED) {
                         newOrderStatus = OrderStatus.CANCELLED;
@@ -4740,11 +4755,11 @@ export class OrdersService {
                         titleAr: isPartial ? 'إلغاء قطعة من الطلب' : 'إشعار إلغاء الطلب',
                         titleEn: isPartial ? 'Part cancelled from order' : 'Order cancellation notice',
                         messageAr: isPartial
-                            ? `تم إلغاء القطعة «${partName}» من الطلب #${order.orderNumber} لعدم المطابقة. جاري استرجاع مبلغ هذه القطعة؛ باقي القطع تتابع إن وُجدت.`
-                            : `تم إلغاء طلبك #${order.orderNumber} لعدم مطابقة القطعة من المتجر. جاري استرجاع المبلغ كاملاً وتحميل الرسوم على المتجر.`,
+                            ? `تم إلغاء القطعة «${partName}» من الطلب #${order.orderNumber} لعدم المطابقة. باقي القطع تتابع إن وُجدت، وسيصلك إشعار فور تأكيد استرداد مبلغ هذه القطعة.`
+                            : `تم إلغاء طلبك #${order.orderNumber} لعدم مطابقة القطعة من المتجر. سيُسترد المبلغ كاملاً والرسوم على المتجر، وسيصلك إشعار فور تأكيد الاسترداد.`,
                         messageEn: isPartial
-                            ? `Part "${partName}" on order #${order.orderNumber} was cancelled due to a non-matching part. Refund for this part is processing; remaining parts continue.`
-                            : `Your order #${order.orderNumber} was cancelled due to a non-matching part. A full refund is processing; merchant fees apply.`,
+                            ? `Part "${partName}" on order #${order.orderNumber} was cancelled due to a non-matching part. Remaining parts continue; you will be notified as soon as the refund for this part is confirmed.`
+                            : `Your order #${order.orderNumber} was cancelled due to a non-matching part. You will get a full refund (merchant pays the fees) and be notified as soon as it is confirmed.`,
                         link: `/customer/orders/${order.id}`,
                         metadata: {
                             orderId: order.id,
@@ -5075,7 +5090,9 @@ export class OrdersService {
                 data: { correctionDeadlineAt: null, updatedAt: new Date() },
             }).catch(() => undefined);
 
-            if (!opts?.skipRefund) {
+            if (opts?.skipRefund) {
+                await this.markPartRefundPending(orderId, cancelledOfferIds, reason, order.status);
+            } else {
                 await this.refundCancelledCorrectionOffers(orderId, cancelledOfferIds, {
                     previousStatus: order.status,
                     reason,
@@ -5108,8 +5125,8 @@ export class OrdersService {
             await this.notifications.notifyMerchantByStoreId(offer.storeId, {
                 titleAr: 'تم إلغاء قطعة لانتهاء مهلة التصحيح',
                 titleEn: 'Part cancelled — correction deadline expired',
-                messageAr: `تم إلغاء قطعة من الطلب #${order.orderNumber} لانتهاء مهلة التصحيح. جاري استرجاع مبلغ هذه القطعة.`,
-                messageEn: `A part on order #${order.orderNumber} was cancelled after the correction window ended. Refund for that part is processing.`,
+                messageAr: `تم إلغاء قطعة من الطلب #${order.orderNumber} لانتهاء مهلة التصحيح. سيُسترد مبلغ هذه القطعة للعميل وسيصلك إشعار عند تأكيد الاسترداد.`,
+                messageEn: `A part on order #${order.orderNumber} was cancelled after the correction window ended. That part will be refunded; you will be notified once the refund is confirmed.`,
                 type: 'ORDER',
                 link: `/merchant/orders/${order.id}`,
                 metadata: {
@@ -5141,8 +5158,8 @@ export class OrdersService {
                         recipientRole: 'CUSTOMER',
                         titleAr: 'إلغاء قطعة من الطلب',
                         titleEn: 'Part cancelled from order',
-                        messageAr: `تم إلغاء قطعة/قطع من الطلب #${order.orderNumber} لعدم تقديم قطعة مطابقة خلال مهلة التصحيح. باقي القطع إن وُجدت تتابع، وجاري استرجاع مبلغ القطعة الملغاة.`,
-                        messageEn: `One or more parts on order #${order.orderNumber} were cancelled as the seller failed to provide a matching part in time. Remaining parts continue; refund for cancelled parts is processing.`,
+                        messageAr: `تم إلغاء قطعة/قطع من الطلب #${order.orderNumber} لعدم تقديم قطعة مطابقة خلال مهلة التصحيح. باقي القطع إن وُجدت تتابع، وسيصلك إشعار فور تأكيد استرداد مبلغ القطعة الملغاة.`,
+                        messageEn: `One or more parts on order #${order.orderNumber} were cancelled as the seller failed to provide a matching part in time. Remaining parts continue; you will be notified as soon as the refund for cancelled parts is confirmed.`,
                         type: 'ORDER',
                         link: `/dashboard/orders/${order.id}`,
                         metadata: {
@@ -5224,7 +5241,14 @@ export class OrdersService {
         }
 
         const pendingRefundOfferIds = opts?.skipRefund ? [...cancelledOfferIds] : [];
-        if (!opts?.skipRefund) {
+        if (opts?.skipRefund) {
+            await this.markPartRefundPending(
+                orderId,
+                cancelledOfferIds,
+                cancelReason,
+                OrderStatus.DELAYED_PREPARATION,
+            );
+        } else {
             // Near-realtime / non-cron path: refund immediately (outside any advisory lock).
             await this.refundCancelledCorrectionOffers(orderId, cancelledOfferIds, {
                 previousStatus: OrderStatus.DELAYED_PREPARATION,
@@ -5264,8 +5288,8 @@ export class OrdersService {
             await this.notifications.notifyMerchantByStoreId(offer.storeId, {
                 titleAr: 'تم إلغاء قطعة لتأخر التجهيز',
                 titleEn: 'Part cancelled — late preparation',
-                messageAr: `تم إلغاء قطعة من الطلب #${order.orderNumber} لانتهاء مهلة التجهيز الإضافية. جاري استرجاع مبلغ هذه القطعة للعميل وتطبيق الرسوم على المتجر.`,
-                messageEn: `A part on order #${order.orderNumber} was cancelled after the extra preparation grace ended. That part is being refunded; merchant fees apply.`,
+                messageAr: `تم إلغاء قطعة من الطلب #${order.orderNumber} لانتهاء مهلة التجهيز الإضافية. سيُسترد مبلغ هذه القطعة للعميل وتُطبق الرسوم على المتجر، وسيصلك إشعار عند تأكيد الاسترداد.`,
+                messageEn: `A part on order #${order.orderNumber} was cancelled after the extra preparation grace ended. That part will be refunded and merchant fees apply; you will be notified once the refund is confirmed.`,
                 type: 'ORDER',
                 link: `/merchant/orders/${order.id}`,
                 metadata: {
@@ -5293,8 +5317,8 @@ export class OrdersService {
                     recipientRole: 'CUSTOMER',
                     titleAr: 'إلغاء قطعة من الطلب',
                     titleEn: 'Part cancelled from order',
-                    messageAr: `تم إلغاء قطعة/قطع من الطلب #${order.orderNumber} لعدم التزام التاجر بوقت التجهيز. باقي القطع إن وُجدت تتابع مسارها، وجاري استرجاع مبلغ القطعة الملغاة.`,
-                    messageEn: `One or more parts on order #${order.orderNumber} were cancelled because the merchant missed the preparation deadline. Remaining parts continue; refund for cancelled parts is processing.`,
+                    messageAr: `تم إلغاء قطعة/قطع من الطلب #${order.orderNumber} لعدم التزام التاجر بوقت التجهيز. باقي القطع إن وُجدت تتابع مسارها، وسيصلك إشعار فور تأكيد استرداد مبلغ القطعة الملغاة.`,
+                    messageEn: `One or more parts on order #${order.orderNumber} were cancelled because the merchant missed the preparation deadline. Remaining parts continue; you will be notified as soon as the refund for cancelled parts is confirmed.`,
                     type: 'ORDER',
                     link: `/dashboard/orders/${order.id}`,
                     metadata: {
@@ -5324,41 +5348,161 @@ export class OrdersService {
     async refundCancelledCorrectionOffers(
         orderId: string,
         offerIds: string[],
-        opts?: { previousStatus?: string | null; reason?: string },
-    ): Promise<void> {
-        const unique = [...new Set(offerIds.filter(Boolean))];
-        if (!unique.length) return;
+        opts?: { previousStatus?: string | null; reason?: string; isRetry?: boolean },
+    ): Promise<{ resolved: boolean; reason?: string }> {
+        const unique = [...new Set(offerIds.filter(Boolean))].sort();
+        if (!unique.length) return { resolved: true };
         const reason =
             opts?.reason ||
             'System: Merchant failed to provide corrected verification within correction limit (per-offer).';
-        const result = await this.escrowService.refundPaidOrderOnCancel(orderId, reason, {
-            previousStatus: opts?.previousStatus,
-            merchantFault: true,
-            offerIds: unique,
-        });
-        if (result?.skipped || (result?.amountRefunded ?? 0) <= 0) {
+        let result: Awaited<ReturnType<typeof this.escrowService.refundPaidOrderOnCancel>> | null = null;
+        try {
+            result = await this.escrowService.refundPaidOrderOnCancel(orderId, reason, {
+                previousStatus: opts?.previousStatus,
+                merchantFault: true,
+                offerIds: unique,
+            });
+        } catch (err: any) {
+            this.logger.error(`Part-cancel refund threw order=${orderId}: ${err?.message || err}`);
+            result = { skipped: false, reason: 'REFUND_PENDING' };
+        }
+
+        const outcome = String(result?.reason || '');
+        const refundedNow =
+            !result?.skipped && (result?.amountRefunded ?? 0) > 0 && outcome !== 'REFUND_PENDING';
+        const terminal = refundedNow || PART_REFUND_TERMINAL_OUTCOMES.has(outcome);
+
+        if (terminal) {
+            await this.auditLogs
+                .logAction({
+                    orderId,
+                    action: PART_CANCEL_REFUND_RESOLVED,
+                    entity: 'Offer',
+                    actorType: ActorType.SYSTEM,
+                    actorId: 'PART_CANCEL_REFUND',
+                    reason,
+                    metadata: {
+                        offerIds: unique,
+                        refundKey: partRefundKey(orderId, unique),
+                        outcome: outcome || 'REFUNDED',
+                        amountRefunded: result?.amountRefunded ?? 0,
+                    },
+                })
+                .catch(() => undefined);
+        } else if (!opts?.isRetry) {
+            await this.markPartRefundPending(orderId, unique, reason, opts?.previousStatus);
+        }
+
+        // Admins are alerted once: on the first failure, or when a retry hits a dead end.
+        const needsAdmin =
+            outcome === 'SKIP_POST_SHIP_CANCEL_REFUND' || (!terminal && !opts?.isRetry);
+        if (needsAdmin) {
             this.logger.error(
                 `Part-cancel refund incomplete order=${orderId} offers=${unique.join(',')} ` +
-                    `skipped=${result?.skipped} reason=${result?.reason} amount=${result?.amountRefunded ?? 0}`,
+                    `skipped=${result?.skipped} reason=${outcome} amount=${result?.amountRefunded ?? 0}`,
             );
             await this.notifications
                 .notifyAdmins({
                     titleAr: 'استرداد معلّق بعد إلغاء قطعة',
                     titleEn: 'Refund pending after part cancel',
-                    messageAr: `تم إلغاء عروض من الطلب لكن الاسترداد لم يكتمل (سبب: ${result?.reason || 'unknown'}). راجع المدفوعات يدويًا.`,
-                    messageEn: `Offers were cancelled on the order but refund did not complete (reason: ${result?.reason || 'unknown'}). Review payments manually.`,
+                    messageAr: `تم إلغاء عروض من الطلب لكن الاسترداد لم يكتمل (سبب: ${outcome || 'unknown'}). ${
+                        terminal ? 'راجع المدفوعات يدويًا.' : 'سيعيد النظام المحاولة تلقائيًا.'
+                    }`,
+                    messageEn: `Offers were cancelled on the order but refund did not complete (reason: ${outcome || 'unknown'}). ${
+                        terminal ? 'Review payments manually.' : 'The system will retry automatically.'
+                    }`,
                     type: 'ORDER',
                     link: `/admin/orders/${orderId}`,
                     metadata: {
                         orderId,
                         offerIds: unique,
-                        refundReason: result?.reason || null,
+                        refundReason: outcome || null,
                         previousStatus: opts?.previousStatus || null,
                         source: 'part_cancel_refund_pending',
                     },
                 })
                 .catch(() => undefined);
         }
+        return { resolved: terminal, reason: outcome || undefined };
+    }
+
+    /** Records that a part-cancel refund is owed so the retry cron can pick it up. */
+    async markPartRefundPending(
+        orderId: string,
+        offerIds: string[],
+        reason: string,
+        previousStatus?: string | null,
+    ): Promise<void> {
+        const unique = [...new Set(offerIds.filter(Boolean))].sort();
+        if (!unique.length) return;
+        await this.auditLogs
+            .logAction({
+                orderId,
+                action: PART_CANCEL_REFUND_PENDING,
+                entity: 'Offer',
+                actorType: ActorType.SYSTEM,
+                actorId: 'PART_CANCEL_REFUND',
+                reason,
+                metadata: {
+                    offerIds: unique,
+                    refundKey: partRefundKey(orderId, unique),
+                    previousStatus: previousStatus || null,
+                },
+            })
+            .catch(() => undefined);
+    }
+
+    /**
+     * Retries part-cancel refunds that are still pending (Stripe error, open case, crash
+     * between cancel and refund). Stripe refunds are idempotent per payment+amount.
+     */
+    async retryPendingPartRefunds(limit = 20): Promise<number> {
+        const now = Date.now();
+        const pending = await this.prisma.auditLog.findMany({
+            where: {
+                action: PART_CANCEL_REFUND_PENDING,
+                timestamp: {
+                    gte: new Date(now - 14 * 24 * 60 * 60 * 1000),
+                    lte: new Date(now - 2 * 60 * 1000),
+                },
+            },
+            select: { orderId: true, reason: true, metadata: true },
+            orderBy: { timestamp: 'asc' },
+            take: 500,
+        });
+        if (!pending.length) return 0;
+
+        const orderIds = [...new Set(pending.map((p) => p.orderId).filter(Boolean))] as string[];
+        const resolvedRows = await this.prisma.auditLog.findMany({
+            where: { action: PART_CANCEL_REFUND_RESOLVED, orderId: { in: orderIds } },
+            select: { metadata: true },
+        });
+        const resolvedKeys = new Set(
+            resolvedRows
+                .map((r) => String((r.metadata as any)?.refundKey || ''))
+                .filter(Boolean),
+        );
+
+        const seen = new Set<string>();
+        let attempted = 0;
+        for (const row of pending) {
+            if (attempted >= limit) break;
+            const meta = (row.metadata || {}) as any;
+            const offerIds: string[] = Array.isArray(meta.offerIds) ? meta.offerIds : [];
+            if (!row.orderId || !offerIds.length) continue;
+            const key = String(meta.refundKey || partRefundKey(row.orderId, offerIds));
+            if (resolvedKeys.has(key) || seen.has(key)) continue;
+            seen.add(key);
+            attempted++;
+            await this.refundCancelledCorrectionOffers(row.orderId, offerIds, {
+                previousStatus: meta.previousStatus || null,
+                reason: row.reason || undefined,
+                isRetry: true,
+            }).catch((err) =>
+                this.logger.warn(`retryPendingPartRefunds order=${row.orderId}: ${err?.message || err}`),
+            );
+        }
+        return attempted;
     }
 
     /**

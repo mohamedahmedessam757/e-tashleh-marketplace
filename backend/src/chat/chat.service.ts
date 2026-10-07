@@ -16,7 +16,12 @@ import {
     isUuid,
     mergeWhereWithSearch,
 } from '../common/search/admin-entity-search.util';
-import { shouldLockChatOnCompletion } from './chat-completion-lock.util';
+import {
+    CLOSED_DISPUTE_STATUSES,
+    CLOSED_RETURN_STATUSES,
+    shouldCloseScopedOrderChat,
+    shouldLockChatOnCompletion,
+} from './chat-completion-lock.util';
 import {
     isOfferPhaseOrderStatus,
     shouldCloseOrderChat,
@@ -121,8 +126,13 @@ export class ChatService {
             }
         }
 
-        // Rule: Cancelled / completed / warranty — order chat must stay CLOSED (no reopen)
-        if (shouldCloseOrderChat(order.status)) {
+        // Rule: Cancelled / completed / warranty (whole order, or this vendor's parts) — stay CLOSED
+        const scopeClosed = (
+            await this.findClosableOrderChatIds([
+                { id: 'scope', type: 'order', orderId, vendorId, orderPartId: partId || null, order: { status: order.status } },
+            ])
+        ).has('scope');
+        if (scopeClosed) {
             let kept = await this.findOrderChat(orderId, vendorId, partId);
             if (kept) {
                 if (kept.status === 'OPEN') {
@@ -207,11 +217,11 @@ export class ChatService {
         });
         if (!chat) throw new NotFoundException('Chat not found');
 
-        // Close order chat when order is in terminal lock statuses (no reopen)
+        // Close order chat when the order (or this vendor's parts) is finished (no reopen)
         if (
             chat.type === 'order' &&
-            shouldCloseOrderChat(chat.order?.status) &&
-            chat.status === 'OPEN'
+            chat.status === 'OPEN' &&
+            (await this.findClosableOrderChatIds([chat])).has(chat.id)
         ) {
             chat = await this.prisma.orderChat.update({
                 where: { id: chat.id },
@@ -344,15 +354,12 @@ export class ChatService {
             });
         }
 
-        // Close OPEN chats whose orders are in terminal lock statuses (list accuracy)
-        const closeIds = (chats as any[])
-            .filter(
-                (c) =>
-                    c.type === 'order' &&
-                    shouldCloseOrderChat(c.order?.status) &&
-                    c.status === 'OPEN',
-            )
-            .map((c) => c.id as string);
+        // Close OPEN chats whose order (or vendor's parts) is finished (list accuracy)
+        const closeIds = [
+            ...(await this.findClosableOrderChatIds(
+                (chats as any[]).filter((c) => c.type === 'order' && c.status === 'OPEN'),
+            )),
+        ];
 
         if (closeIds.length > 0) {
             await this.prisma.orderChat.updateMany({
@@ -453,8 +460,8 @@ export class ChatService {
         });
         if (!chat) throw new NotFoundException('Chat not found');
 
-        // Terminal order statuses: force CLOSED and reject send (order chats only)
-        if (chat.type === 'order' && shouldCloseOrderChat(chat.order?.status)) {
+        // Finished order / vendor parts: force CLOSED and reject send (order chats only)
+        if (chat.type === 'order' && (await this.findClosableOrderChatIds([chat])).has(chat.id)) {
             if (chat.status !== 'CLOSED') {
                 chat = await this.prisma.orderChat.update({
                     where: { id: chat.id },
@@ -951,8 +958,81 @@ export class ChatService {
     }
 
     /**
-     * Lock winning vendor–customer order chat when the order reaches a terminal
-     * close status (cancel / complete / warranty). Does not touch support chats.
+     * Order chats (vendor + optional part scope) that must be CLOSED: terminal order
+     * status, or every accepted offer in scope cancelled/completed with no open case.
+     */
+    private async findClosableOrderChatIds(
+        chats: Array<{
+            id: string;
+            type?: string | null;
+            orderId?: string | null;
+            vendorId?: string | null;
+            orderPartId?: string | null;
+            order?: { status?: string | null } | null;
+        }>,
+    ): Promise<Set<string>> {
+        const closable = new Set<string>();
+        const scoped: typeof chats = [];
+        for (const c of chats) {
+            if (c.type !== 'order' || !c.orderId) continue;
+            if (shouldCloseOrderChat(c.order?.status)) closable.add(c.id);
+            else if (c.vendorId) scoped.push(c);
+        }
+        if (!scoped.length) return closable;
+
+        const offers = await this.prisma.offer.findMany({
+            where: {
+                orderId: { in: [...new Set(scoped.map((c) => c.orderId as string))] },
+                storeId: { in: [...new Set(scoped.map((c) => c.vendorId as string))] },
+                status: { in: ['accepted', 'ACCEPTED'] },
+            },
+            select: { id: true, orderId: true, storeId: true, orderPartId: true, fulfillmentStatus: true },
+        });
+        const offersFor = (c: (typeof scoped)[number]) =>
+            offers.filter(
+                (o) =>
+                    o.orderId === c.orderId &&
+                    o.storeId === c.vendorId &&
+                    (!c.orderPartId || o.orderPartId === c.orderPartId),
+            );
+
+        const doneIds = offers
+            .filter((o) => ['CANCELLED', 'COMPLETED'].includes(String(o.fulfillmentStatus)))
+            .map((o) => o.id);
+        const openCaseOfferIds = new Set<string>();
+        if (doneIds.length) {
+            const [disputes, returns] = await Promise.all([
+                this.prisma.dispute.findMany({
+                    where: { offerId: { in: doneIds }, status: { notIn: [...CLOSED_DISPUTE_STATUSES, 'CANCELLED', 'REJECTED', 'REFUNDED'] } },
+                    select: { offerId: true },
+                }),
+                this.prisma.returnRequest.findMany({
+                    where: { offerId: { in: doneIds }, status: { notIn: [...CLOSED_RETURN_STATUSES, 'REFUNDED'] } },
+                    select: { offerId: true },
+                }),
+            ]);
+            for (const r of [...disputes, ...returns]) if (r.offerId) openCaseOfferIds.add(r.offerId);
+        }
+
+        for (const c of scoped) {
+            const inScope = offersFor(c);
+            if (
+                shouldCloseScopedOrderChat({
+                    orderStatus: c.order?.status,
+                    offers: inScope,
+                    hasOpenCase: inScope.some((o) => openCaseOfferIds.has(o.id)),
+                })
+            ) {
+                closable.add(c.id);
+            }
+        }
+        return closable;
+    }
+
+    /**
+     * Lock vendor–customer order chats that no longer need to be open: the whole order
+     * reached a terminal status, or (multi-part) that vendor's parts are all finished.
+     * Does not touch support chats.
      */
     async lockOrderVendorChatOnCompletion(orderId: string): Promise<{ locked: number }> {
         const order = await this.prisma.order.findUnique({
@@ -964,11 +1044,6 @@ export class ChatService {
         });
         if (!order) return { locked: 0 };
 
-        const { shouldLock, reason } = shouldLockChatOnCompletion({
-            orderStatus: order.status,
-        });
-        if (!shouldLock || !reason) return { locked: 0 };
-
         const openVendorChats = await this.prisma.orderChat.findMany({
             where: {
                 orderId,
@@ -976,24 +1051,30 @@ export class ChatService {
                 status: 'OPEN',
                 vendorId: { not: null },
             },
-            select: { id: true },
+            select: { id: true, type: true, orderId: true, vendorId: true, orderPartId: true },
         });
         if (openVendorChats.length === 0) return { locked: 0 };
 
+        const { reason } = shouldLockChatOnCompletion({ orderStatus: order.status });
+        const closable = await this.findClosableOrderChatIds(
+            openVendorChats.map((c) => ({ ...c, order: { status: order.status } })),
+        );
+        if (closable.size === 0) return { locked: 0 };
+
         await this.prisma.orderChat.updateMany({
-            where: { id: { in: openVendorChats.map((c) => c.id) } },
+            where: { id: { in: [...closable] } },
             data: { status: 'CLOSED' },
         });
 
-        for (const chat of openVendorChats) {
-            this.chatGateway.server.to(chat.id).emit('chatStatusChanged', {
-                chatId: chat.id,
+        for (const chatId of closable) {
+            this.chatGateway.server.to(chatId).emit('chatStatusChanged', {
+                chatId,
                 status: 'CLOSED',
-                reason,
+                reason: reason || 'ORDER_COMPLETED',
             });
         }
 
-        return { locked: openVendorChats.length };
+        return { locked: closable.size };
     }
 
 

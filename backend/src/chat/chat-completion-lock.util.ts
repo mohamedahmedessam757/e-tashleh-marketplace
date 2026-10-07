@@ -30,6 +30,28 @@ export function isOpenReturnStatus(status: string | null | undefined): boolean {
   return !(CLOSED_RETURN_STATUSES as readonly string[]).includes(status);
 }
 
+/** Per-part statuses after which that part needs no further vendor–customer chat. */
+export const CHAT_CLOSED_OFFER_STATUSES = ['CANCELLED', 'COMPLETED'] as const;
+
+/**
+ * Chat scoped to one vendor (and optionally one part) on an order. Closes when the
+ * order is terminal, or — for multi-part orders — when every accepted offer in scope
+ * is cancelled/completed and no return/dispute is still open on them.
+ */
+export function shouldCloseScopedOrderChat(input: {
+  orderStatus: string | null | undefined;
+  offers: Array<{ fulfillmentStatus: string | null | undefined }>;
+  hasOpenCase: boolean;
+}): boolean {
+  if (shouldCloseOrderChat(input.orderStatus)) return true;
+  if (!input.offers.length || input.hasOpenCase) return false;
+  return input.offers.every((o) =>
+    (CHAT_CLOSED_OFFER_STATUSES as readonly string[]).includes(
+      String(o.fulfillmentStatus || '').toUpperCase(),
+    ),
+  );
+}
+
 /**
  * Lock order chat whenever status is in the terminal close set.
  * Dispute/return helpers remain for other governance callers.

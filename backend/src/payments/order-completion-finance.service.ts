@@ -8,6 +8,10 @@ import {
     escrowReleaseWindowEnd,
     isEscrowPaymentEligibleForAutoRelease,
 } from './escrow-release-eligibility.util';
+import {
+    isOfferWarrantyHoldActive,
+    WARRANTY_HOLD_OFFER_SELECT,
+} from '../orders/warranty-activation.util';
 
 /** Values safe to send in Prisma `status: { in: ... }` against live Postgres. */
 const ORDER_COMPLETION_FINANCE_DB_STATUSES: OrderStatus[] = [
@@ -162,12 +166,18 @@ export class OrderCompletionFinanceService {
         const config = await this.financialConfig.getConfig();
         const windowEnd = escrowReleaseWindowEnd(new Date(), config.escrowHoldHoursMerchant);
 
+        // Warranty-held escrows are released by the warranty-expiry cron; excluding them
+        // keeps them from filling the batch and starving eligible releases.
         const heldEscrows = await this.prisma.escrowTransaction.findMany({
             where: {
                 status: { in: ['HELD', 'RELEASING'] },
-                ...(opts?.storeId
-                    ? { payment: { offer: { storeId: opts.storeId } } }
-                    : {}),
+                payment: {
+                    offer: {
+                        ...(opts?.storeId ? { storeId: opts.storeId } : {}),
+                        fulfillmentStatus: { not: 'CANCELLED' },
+                        OR: [{ warrantyEndAt: null }, { warrantyEndAt: { lte: new Date() } }],
+                    },
+                },
             },
             select: {
                 orderId: true,
@@ -230,6 +240,90 @@ export class OrderCompletionFinanceService {
         if (opts?.storeId) {
             await this.repairPaymentsWithoutEscrow(opts.storeId, windowEnd);
         }
+    }
+
+    /**
+     * Settle warrantied parts whose warranty just ended: release the merchant escrow
+     * that was held through the warranty and grant the deferred customer rewards.
+     */
+    async releaseExpiredWarrantyHolds(limit = 50): Promise<number> {
+        const now = new Date();
+        const heldEscrows = await this.prisma.escrowTransaction.findMany({
+            where: {
+                status: { in: ['HELD', 'RELEASING'] },
+                payment: {
+                    status: 'SUCCESS',
+                    offer: {
+                        hasWarranty: true,
+                        OR: [
+                            { warrantyEndAt: { lte: now } },
+                            { warrantyEndAt: null, order: { warranty_end_at: { lte: now } } },
+                        ],
+                    },
+                },
+            },
+            select: {
+                orderId: true,
+                payment: {
+                    select: {
+                        offer: {
+                            select: {
+                                ...WARRANTY_HOLD_OFFER_SELECT,
+                                fulfillmentStatus: true,
+                                order: { select: { status: true, warranty_end_at: true } },
+                            },
+                        },
+                    },
+                },
+            },
+            orderBy: { createdAt: 'asc' },
+            take: limit,
+        });
+
+        // Parts whose escrow was already released (e.g. by admin) still need rewards.
+        const recentWindow = new Date(now.getTime() - 15 * 60 * 1000);
+        const recentlyEnded = await this.prisma.offer.findMany({
+            where: {
+                fulfillmentStatus: 'COMPLETED',
+                hasWarranty: true,
+                warrantyEndAt: { gt: recentWindow, lte: now },
+            },
+            select: { id: true },
+            take: limit,
+        });
+        const recentOrders = await this.prisma.order.findMany({
+            where: {
+                status: { in: ORDER_COMPLETION_FINANCE_DB_STATUSES },
+                warranty_end_at: { gt: new Date(now.getTime() - 2 * 60 * 60 * 1000), lte: now },
+            },
+            select: { id: true },
+            take: limit,
+        });
+
+        const offerIds = new Set<string>(recentlyEnded.map((o) => o.id));
+        const orderIds = new Set<string>(recentOrders.map((o) => o.id));
+        for (const escrow of heldEscrows) {
+            const offer = escrow.payment?.offer;
+            if (!offer) continue;
+            if (isOfferWarrantyHoldActive(offer, offer.order?.warranty_end_at, now)) continue;
+            if (String(offer.fulfillmentStatus) === 'COMPLETED') {
+                offerIds.add(offer.id);
+            } else if (offer.order && this.isTerminalFinanceStatus(offer.order.status)) {
+                orderIds.add(escrow.orderId);
+            }
+        }
+
+        for (const offerId of offerIds) {
+            await this.settleCompletedOffer(offerId).catch((err) =>
+                this.logger.warn(`Warranty-end settle failed for offer ${offerId}: ${err?.message || err}`),
+            );
+        }
+        for (const orderId of orderIds) {
+            await this.settleCompletedOrder(orderId).catch((err) =>
+                this.logger.warn(`Warranty-end settle failed for order ${orderId}: ${err?.message || err}`),
+            );
+        }
+        return offerIds.size + orderIds.size;
     }
 
     async healCustomerCompletionRewards(customerId: string, limit = 20): Promise<void> {

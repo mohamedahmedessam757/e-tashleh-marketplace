@@ -15,6 +15,7 @@ import { CronLockService } from '../common/cron-lock.service';
 import { ShippingReviewService } from '../offers/shipping-review.service';
 import { CUSTOMER_VISIBLE_SHIPPING_REVIEW } from '../offers/shipping-review.util';
 import { ASSEMBLY_CART_ORDER_STATUSES } from '../orders/assembly-cart.util';
+import { OrderCompletionFinanceService } from '../payments/order-completion-finance.service';
 
 @Injectable()
 export class OrderCleanupService {
@@ -32,6 +33,7 @@ export class OrderCleanupService {
         private readonly orderSla: OrderSlaService,
         private readonly cronLock: CronLockService,
         private readonly shippingReview: ShippingReviewService,
+        private readonly completionFinance: OrderCompletionFinanceService,
     ) { }
 
     // Run every 1 minute to check for expired orders for near real-time expirations
@@ -89,6 +91,9 @@ export class OrderCleanupService {
                 await this.handleSingleItemOrderAutoCompletion();
                 await this.handleAssemblyCartExpiry();
                 await this.expireActiveWarranties();
+                await this.completionFinance.releaseExpiredWarrantyHolds().catch((err) =>
+                    this.logger.error('releaseExpiredWarrantyHolds failed (continuing cleanup):', err),
+                );
                 return pending;
             },
         );
@@ -109,6 +114,9 @@ export class OrderCleanupService {
                 );
             }
         }
+        await this.cronLock
+            .runWithLock('part-refund-retry', () => this.ordersService.retryPendingPartRefunds())
+            .catch((err) => this.logger.error('retryPendingPartRefunds failed:', err));
     }
 
     // Safety-net duplicate (idempotent handlers). Primary path is the minute cron above.

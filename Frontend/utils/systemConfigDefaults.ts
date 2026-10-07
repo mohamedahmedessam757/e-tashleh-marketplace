@@ -164,6 +164,8 @@ export function getSystemConfigDefaults(): SystemConfig {
       minCommission: 100,
       gatewayFeePercent: 2.99,
       gatewayFeeFixedAed: 0.3,
+      disputeWithdrawalHoldEnabled: false,
+      disputeWithdrawalHoldPercent: 25,
     },
     logistics: {
       globalMinWeightKg: 0,

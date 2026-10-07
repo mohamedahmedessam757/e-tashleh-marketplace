@@ -6,6 +6,10 @@ export const ORDER_CHAT_CLOSED_STATUSES = [
   'COMPLETED',
   'WARRANTY_ACTIVE',
   'WARRANTY_EXPIRED',
+  'REFUNDED',
+  'RETURNED',
+  'RESOLVED',
+  'CLOSED',
 ] as const;
 
 export type OrderChatClosedStatus = (typeof ORDER_CHAT_CLOSED_STATUSES)[number];

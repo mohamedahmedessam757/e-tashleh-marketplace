@@ -129,6 +129,43 @@ export function calculateWarrantyEndDate(startDate: Date, duration: string): Dat
   return date;
 }
 
+/**
+ * End of the money hold for a warrantied offer. Merchant funds, customer cashback and
+ * loyalty points for that offer stay held until this moment.
+ */
+export function resolveOfferWarrantyHoldEnd(
+  offer: WarrantyOfferLike,
+  orderWarrantyEndAt?: Date | string | null,
+  now: Date = new Date(),
+): Date | null {
+  if (!offerHasUsableWarranty(offer)) return null;
+  // Single orders only carry the order-level end; the warranty-expiry cron keys off it.
+  const explicit = asDate(offer.warrantyEndAt) || asDate(orderWarrantyEndAt);
+  if (explicit) return explicit;
+  const start =
+    asDate(offer.warrantyActiveAt) || asDate(offer.completedAt) || asDate(offer.deliveredAt);
+  return calculateWarrantyEndDate(start || now, String(offer.warrantyDuration));
+}
+
+export function isOfferWarrantyHoldActive(
+  offer: WarrantyOfferLike,
+  orderWarrantyEndAt?: Date | string | null,
+  now: Date = new Date(),
+): boolean {
+  const end = resolveOfferWarrantyHoldEnd(offer, orderWarrantyEndAt, now);
+  return Boolean(end && end.getTime() > now.getTime());
+}
+
+export const WARRANTY_HOLD_OFFER_SELECT = {
+  id: true,
+  hasWarranty: true,
+  warrantyDuration: true,
+  warrantyEndAt: true,
+  warrantyActiveAt: true,
+  completedAt: true,
+  deliveredAt: true,
+} as const;
+
 export function offerHasUsableWarranty(offer: WarrantyOfferLike): boolean {
   return Boolean(
     offer.hasWarranty &&

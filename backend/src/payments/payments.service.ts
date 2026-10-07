@@ -3259,7 +3259,11 @@ export class PaymentsService {
             );
         }
         const netAvailable = Math.max(0, Number(stats.available) - pendingLiabilitiesTotal);
-        const withdrawalGovernance = buildWithdrawalGovernance(netAvailable, openCases);
+        const financialCfg = await this.financialConfig.getConfig();
+        const withdrawalGovernance = buildWithdrawalGovernance(netAvailable, openCases, {
+            enabled: financialCfg.disputeWithdrawalHoldEnabled,
+            holdPercent: financialCfg.disputeWithdrawalHoldPercent,
+        });
         const withdrawalLimits = await this.financialConfig.getWithdrawalLimitsForStore(store.id);
 
         return {
@@ -3659,11 +3663,27 @@ export class PaymentsService {
                         }
 
                         const feeAmount = Number(line.amount);
-                        balance = Math.round((balance + feeAmount + Number.EPSILON) * 100) / 100;
-                        await tx.store.update({
-                            where: { id: storeId },
-                            data: { balance: { increment: feeAmount } },
-                        });
+                        // Legacy rows already debited store.balance; Stripe payment restores it.
+                        // Unposted rows never touched the balance, so the cash is platform revenue.
+                        const wasPostedToBalance = prevMeta.postedToBalance !== false;
+                        if (wasPostedToBalance) {
+                            balance = Math.round((balance + feeAmount + Number.EPSILON) * 100) / 100;
+                            await tx.store.update({
+                                where: { id: storeId },
+                                data: { balance: { increment: feeAmount } },
+                            });
+                        } else {
+                            const platformWallet = await tx.platformWallet.findFirst();
+                            if (platformWallet) {
+                                await tx.platformWallet.update({
+                                    where: { id: platformWallet.id },
+                                    data: {
+                                        feesBalance: { increment: feeAmount },
+                                        totalRevenue: { increment: feeAmount },
+                                    },
+                                });
+                            }
+                        }
 
                         await tx.walletTransaction.update({
                             where: { id: walletTxId },
@@ -3682,7 +3702,7 @@ export class PaymentsService {
                             data: {
                                 userId: merchantUserId,
                                 role: 'VENDOR',
-                                type: 'CREDIT',
+                                type: wasPostedToBalance ? 'CREDIT' : 'DEBIT',
                                 transactionType: 'OBLIGATION_SETTLEMENT',
                                 amount: feeAmount,
                                 currency: 'AED',
@@ -3692,6 +3712,7 @@ export class PaymentsService {
                                 metadata: {
                                     kind: 'OBLIGATION_SETTLEMENT',
                                     settlesWalletTxId: walletTxId,
+                                    postedToBalance: wasPostedToBalance,
                                     paymentMethod: 'STRIPE',
                                     stripeIntentId: intent.id,
                                     orderId: line.orderId || null,
@@ -4311,8 +4332,12 @@ export class PaymentsService {
             }
         }
 
+        const holdPolicy = {
+            enabled: finConfig.disputeWithdrawalHoldEnabled,
+            holdPercent: finConfig.disputeWithdrawalHoldPercent,
+        };
         const openCases = await countOpenMerchantCases(this.prisma, store.id);
-        const governance = buildWithdrawalGovernance(netAvailable, openCases);
+        const governance = buildWithdrawalGovernance(netAvailable, openCases, holdPolicy);
         if (amount > governance.maxWithdrawableAmount) {
             throw new BadRequestException(
                 governance.withdrawalRestrictionMessageEn ||
@@ -4338,6 +4363,16 @@ export class PaymentsService {
                 throw new BadRequestException(
                     formatLiabilitiesBlockMessage(lockedLiabilities.total, 'en'),
                 );
+            }
+            if (holdPolicy.enabled) {
+                const lockedCases = await countOpenMerchantCases(tx as any, store.id);
+                const lockedGovernance = buildWithdrawalGovernance(lockedNet, lockedCases, holdPolicy);
+                if (amount > lockedGovernance.maxWithdrawableAmount) {
+                    throw new BadRequestException(
+                        lockedGovernance.withdrawalRestrictionMessageEn ||
+                            'Withdrawal amount exceeds the maximum allowed for your account',
+                    );
+                }
             }
             const activeWithdrawal = await tx.withdrawalRequest.findFirst({
                 where: { storeId: store.id, status: { in: ['PENDING', 'PROCESSING'] } },

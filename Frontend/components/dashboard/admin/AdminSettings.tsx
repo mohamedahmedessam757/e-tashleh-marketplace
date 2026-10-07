@@ -881,6 +881,77 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ onNavigate }) => {
                   </div>
                   </div>
 
+                  <div className="bg-white/[0.02] border border-white/5 p-6 sm:p-8 rounded-[2rem] space-y-5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+                          <Lock className="text-amber-400" size={22} />
+                        </div>
+                        <div>
+                          <h3 className="text-base font-black text-white tracking-tight">
+                            {t.admin.systemSettings?.disputeHoldTitle || (isAr ? 'حجز السحب أثناء النزاعات' : 'Withdrawal hold during disputes')}
+                          </h3>
+                          <p className="text-[11px] text-white/30 font-bold leading-relaxed mt-1 max-w-xl">
+                            {t.admin.systemSettings?.disputeHoldHint ||
+                              (isAr
+                                ? 'عند التفعيل، يُحجز جزء من رصيد التاجر القابل للسحب طالما لديه مرتجع أو نزاع مفتوح. الافتراضي: متوقف.'
+                                : 'When enabled, part of the merchant withdrawable balance is held while they have an open return or dispute. Default: off.')}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={Boolean(formData.financial?.disputeWithdrawalHoldEnabled)}
+                        disabled={!isSuperAdmin}
+                        onClick={() =>
+                          updateField('financial', 'disputeWithdrawalHoldEnabled', !formData.financial?.disputeWithdrawalHoldEnabled)
+                        }
+                        className={`relative w-14 h-8 rounded-full border transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed ${
+                          formData.financial?.disputeWithdrawalHoldEnabled
+                            ? 'bg-amber-500/80 border-amber-400/60'
+                            : 'bg-white/10 border-white/10'
+                        }`}
+                      >
+                        <span
+                          className={`absolute top-1 w-6 h-6 rounded-full bg-white shadow transition-all ${
+                            formData.financial?.disputeWithdrawalHoldEnabled ? 'start-7' : 'start-1'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                    <div className={`grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4 items-center ${formData.financial?.disputeWithdrawalHoldEnabled ? '' : 'opacity-40'}`}>
+                      <input
+                        type="range"
+                        min={0}
+                        max={90}
+                        step={1}
+                        disabled={!isSuperAdmin || !formData.financial?.disputeWithdrawalHoldEnabled}
+                        value={formData.financial?.disputeWithdrawalHoldPercent ?? 25}
+                        onChange={(e) => updateField('financial', 'disputeWithdrawalHoldPercent', parseInt(e.target.value, 10) || 0)}
+                        className="w-full accent-amber-400 h-2.5 bg-white/5 rounded-full cursor-pointer appearance-none disabled:cursor-not-allowed"
+                      />
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min={0}
+                          max={90}
+                          disabled={!isSuperAdmin || !formData.financial?.disputeWithdrawalHoldEnabled}
+                          value={formData.financial?.disputeWithdrawalHoldPercent ?? 25}
+                          onChange={(e) => {
+                            const n = parseInt(e.target.value, 10);
+                            updateField('financial', 'disputeWithdrawalHoldPercent', Number.isFinite(n) ? Math.min(90, Math.max(0, n)) : 0);
+                          }}
+                          className="w-20 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-center text-lg font-black text-white outline-none focus:border-gold-500/50 disabled:cursor-not-allowed"
+                        />
+                        <span className="text-xs font-black text-white/30">%</span>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-white/25 font-bold">
+                      {t.admin.systemSettings?.disputeHoldPercentLabel || (isAr ? 'نسبة الحجز من الرصيد القابل للسحب (0–90%)' : 'Held share of the withdrawable balance (0–90%)')}
+                    </p>
+                  </div>
+
                   <div className="relative overflow-hidden rounded-[2.5rem] border border-[#635BFF]/25 bg-gradient-to-br from-[#635BFF]/10 via-[#0F1014] to-black p-8 shadow-[0_0_60px_rgba(99,91,255,0.12)]">
                     <div className="absolute top-0 left-0 w-48 h-48 bg-[#635BFF]/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
                     <div className="absolute bottom-0 right-0 w-32 h-32 bg-gold-500/5 rounded-full blur-2xl translate-x-1/4 translate-y-1/4 pointer-events-none" />

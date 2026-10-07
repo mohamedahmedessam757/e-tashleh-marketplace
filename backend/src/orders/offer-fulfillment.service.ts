@@ -237,6 +237,11 @@ export class OfferFulfillmentService {
         }
 
         const nextStatus = await this.recomputeOrderStatus(orderId);
+        if (cancelledOfferIds.length) {
+            this.chatService.lockOrderVendorChatOnCompletion(orderId).catch((err) => {
+                console.error(`Failed to lock part chat for order ${orderId}:`, err);
+            });
+        }
         return { cancelledOfferIds, nextStatus };
     }
 
@@ -1398,6 +1403,9 @@ export class OfferFulfillmentService {
         });
 
         const nextStatus = await this.recomputeOrderStatus(txnResult.orderId);
+        this.chatService.lockOrderVendorChatOnCompletion(txnResult.orderId).catch((err) => {
+            console.error(`Failed to lock part chat for order ${txnResult.orderId}:`, err);
+        });
         return { offer: txnResult.offer, orderStatus: nextStatus };
     }
 

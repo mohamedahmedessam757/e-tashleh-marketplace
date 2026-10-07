@@ -1,7 +1,5 @@
 import type { PrismaService } from '../prisma/prisma.service';
 
-export const WITHDRAWAL_CAP_WHEN_OPEN_CASES = 0.75;
-
 const OPEN_RETURN_STATUSES = ['CANCELLED', 'REJECTED', 'REFUNDED', 'RESOLVED'] as const;
 const OPEN_DISPUTE_STATUSES = ['CLOSED', 'RESOLVED'] as const;
 
@@ -53,37 +51,63 @@ export async function countOpenMerchantCases(
     };
 }
 
+export interface DisputeHoldPolicy {
+    enabled: boolean;
+    /** Percent of the net available balance held while cases are open (0–90). */
+    holdPercent: number;
+}
+
+export function normalizeDisputeHoldPercent(raw: unknown): number {
+    const n = Number(raw);
+    if (!Number.isFinite(n)) return 25;
+    return Math.min(90, Math.max(0, Math.round(n)));
+}
+
 export function computeMaxWithdrawable(
     availableBalance: number,
     hasOpenCases: boolean,
+    policy: DisputeHoldPolicy = { enabled: false, holdPercent: 0 },
 ): number {
     const available = Math.max(0, Number(availableBalance) || 0);
-    if (!hasOpenCases) {
+    if (!hasOpenCases || !policy.enabled) {
         return Number(available.toFixed(2));
     }
-    return Number((available * WITHDRAWAL_CAP_WHEN_OPEN_CASES).toFixed(2));
+    const holdPercent = normalizeDisputeHoldPercent(policy.holdPercent);
+    return Number((available * (1 - holdPercent / 100)).toFixed(2));
 }
 
 export function buildWithdrawalGovernance(
     availableBalance: number,
     cases: MerchantOpenCasesSummary,
-): MerchantWithdrawalGovernance {
+    policy: DisputeHoldPolicy = { enabled: false, holdPercent: 0 },
+): MerchantWithdrawalGovernance & {
+    disputeHoldEnabled: boolean;
+    disputeHoldPercent: number;
+    disputeHoldAmount: number;
+} {
     const hasOpen = cases.hasOpenReturnOrDispute;
-    const maxWithdrawableAmount = computeMaxWithdrawable(availableBalance, hasOpen);
-    const capPercent = hasOpen ? Math.round(WITHDRAWAL_CAP_WHEN_OPEN_CASES * 100) : 100;
+    const holdActive = hasOpen && policy.enabled;
+    const holdPercent = holdActive ? normalizeDisputeHoldPercent(policy.holdPercent) : 0;
+    const maxWithdrawableAmount = computeMaxWithdrawable(availableBalance, hasOpen, policy);
+    const capPercent = 100 - holdPercent;
 
     const available = Math.max(0, Number(availableBalance) || 0);
+    const disputeHoldAmount = Number(Math.max(0, available - maxWithdrawableAmount).toFixed(2));
+    const restricted = holdActive && holdPercent > 0;
 
     return {
         withdrawalCapPercent: capPercent,
         maxWithdrawableAmount,
         hasOpenReturnOrDispute: hasOpen,
         openCasesCount: cases.openCasesCount,
-        withdrawalRestrictionMessageAr: hasOpen
-            ? `بسبب وجود ${cases.openCasesCount} مرتجع/نزاع مفتوح، يمكنك سحب ${capPercent}% فقط من الرصيد المستحق (${maxWithdrawableAmount.toLocaleString('en-US')} AED من ${available.toLocaleString('en-US')} AED).`
+        disputeHoldEnabled: Boolean(policy.enabled),
+        disputeHoldPercent: holdPercent,
+        disputeHoldAmount,
+        withdrawalRestrictionMessageAr: restricted
+            ? `بسبب وجود ${cases.openCasesCount} مرتجع/نزاع مفتوح، يتم حجز ${holdPercent}% من الرصيد القابل للسحب مؤقتًا (${disputeHoldAmount.toLocaleString('en-US')} AED) حتى إغلاق الحالات.`
             : null,
-        withdrawalRestrictionMessageEn: hasOpen
-            ? `Due to ${cases.openCasesCount} open return(s)/dispute(s), you may withdraw only ${capPercent}% of your due balance (${maxWithdrawableAmount.toLocaleString('en-US')} AED of ${available.toLocaleString('en-US')} AED).`
+        withdrawalRestrictionMessageEn: restricted
+            ? `Due to ${cases.openCasesCount} open return(s)/dispute(s), ${holdPercent}% of your withdrawable balance (${disputeHoldAmount.toLocaleString('en-US')} AED) is temporarily held until the cases close.`
             : null,
     };
 }

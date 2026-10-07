@@ -6,6 +6,7 @@ import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { InvoiceSnapshotService } from '../invoices/invoice-snapshot.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { FinancialConfigService } from '../common/financial-config.service';
+import { isOfferWarrantyHoldActive } from '../orders/warranty-activation.util';
 import {
     computeCancelBeforeShippingRefund,
     isPostShipCancelRefundBlocked,
@@ -151,6 +152,25 @@ export class EscrowService {
              where: { id: orderId },
         });
         if (!order) throw new BadRequestException(`Order missing for ID: ${orderId}`);
+
+        // A cancelled part is owed back to the customer — never auto-release it to the merchant.
+        if (releaseCondition !== 'ADMIN_RELEASE' && String(payment.offer.fulfillmentStatus) === 'CANCELLED') {
+            this.logger.warn(
+                `Escrow release skipped for cancelled offer payment=${payment.id} offer=${payment.offer.id}`,
+            );
+            return;
+        }
+
+        // Warrantied parts: merchant funds stay held until that part's warranty ends.
+        if (
+            releaseCondition !== 'ADMIN_RELEASE' &&
+            isOfferWarrantyHoldActive(payment.offer, order.warranty_end_at)
+        ) {
+            this.logger.log(
+                `Escrow release deferred (warranty hold) payment=${payment.id} offer=${payment.offer.id}`,
+            );
+            return;
+        }
 
         const store = payment.offer.store;
         if (!store) {
@@ -1343,17 +1363,56 @@ export class EscrowService {
             return { skipped: true, reason: 'ORDER_NOT_FOUND' };
         }
 
-        const statusForGuard = opts?.previousStatus || order.status;
-        if (isPostShipCancelRefundBlocked(statusForGuard)) {
-            this.logger.warn(
-                `SKIP_POST_SHIP_CANCEL_REFUND order=${orderId} status=${statusForGuard}`,
-            );
-            return { skipped: true, reason: 'SKIP_POST_SHIP_CANCEL_REFUND' };
-        }
-
-        const scopedOfferIds = Array.isArray(opts?.offerIds)
+        let scopedOfferIds = Array.isArray(opts?.offerIds)
             ? [...new Set(opts.offerIds.filter((id) => typeof id === 'string' && id.length > 0))]
             : [];
+
+        // Multi-item part cancel: the order status reflects shipped siblings, so the
+        // post-ship guard must look at the cancelled offers themselves.
+        let scopedIsPartial = false;
+        if (scopedOfferIds.length > 0) {
+            const otherPaidOffers = await this.prisma.paymentTransaction.count({
+                where: {
+                    orderId,
+                    status: { in: ['SUCCESS', 'REFUNDED'] },
+                    offerId: { notIn: scopedOfferIds },
+                },
+            });
+            scopedIsPartial = otherPaidOffers > 0;
+        }
+
+        if (scopedIsPartial) {
+            const scopedOffers = await this.prisma.offer.findMany({
+                where: { id: { in: scopedOfferIds }, orderId },
+                select: {
+                    id: true,
+                    shippedFromCart: true,
+                    cartShipmentId: true,
+                    deliveredAt: true,
+                    completedAt: true,
+                },
+            });
+            const shippedIds = scopedOffers
+                .filter((o) => o.shippedFromCart || o.cartShipmentId || o.deliveredAt || o.completedAt)
+                .map((o) => o.id);
+            if (shippedIds.length) {
+                this.logger.warn(
+                    `SKIP_POST_SHIP_CANCEL_REFUND order=${orderId} shippedOffers=${shippedIds.join(',')}`,
+                );
+                scopedOfferIds = scopedOfferIds.filter((id) => !shippedIds.includes(id));
+                if (!scopedOfferIds.length) {
+                    return { skipped: true, reason: 'SKIP_POST_SHIP_CANCEL_REFUND' };
+                }
+            }
+        } else {
+            const statusForGuard = opts?.previousStatus || order.status;
+            if (isPostShipCancelRefundBlocked(statusForGuard)) {
+                this.logger.warn(
+                    `SKIP_POST_SHIP_CANCEL_REFUND order=${orderId} status=${statusForGuard}`,
+                );
+                return { skipped: true, reason: 'SKIP_POST_SHIP_CANCEL_REFUND' };
+            }
+        }
 
         const openDispute = await this.prisma.dispute.findFirst({
             where: {
@@ -1630,8 +1689,8 @@ export class EscrowService {
     }
 
     /**
-     * Debit store wallet (or leave negative/pending debt) for unrecovered gateway fee
-     * when cancel refund is merchant-fault and customer receives a full refund.
+     * Records the unrecovered gateway fee as an open store obligation when a
+     * merchant-fault cancel gives the customer a full refund.
      */
     async recordMerchantGatewayFeeLiability(input: {
         storeId: string;
@@ -1673,49 +1732,31 @@ export class EscrowService {
         });
         if (existing) return;
 
-        const balanceBefore = Number(store.balance || 0);
-        const balanceAfter = roundMoney2(balanceBefore - feeAmount);
-
-        await this.prisma.$transaction(async (tx) => {
-            await tx.store.update({
-                where: { id: store.id },
-                data: { balance: { decrement: feeAmount } },
-            });
-            await tx.walletTransaction.create({
-                data: {
-                    userId: store.ownerId,
-                    role: 'VENDOR',
-                    type: 'DEBIT',
-                    transactionType: 'PENALTY',
-                    amount: feeAmount,
-                    balanceAfter,
+        // Recorded as an OPEN obligation only: the store balance and platform revenue
+        // change when it is collected (withdrawal settlement or Stripe obligation payment).
+        await this.prisma.walletTransaction.create({
+            data: {
+                userId: store.ownerId,
+                role: 'VENDOR',
+                type: 'DEBIT',
+                transactionType: 'PENALTY',
+                amount: feeAmount,
+                balanceAfter: roundMoney2(Number(store.balance || 0)),
+                paymentId: input.paymentId,
+                description: `رسوم بوابة دفع مستحقة — إلغاء بخطأ التاجر (طلب ${input.orderId})`,
+                metadata: {
+                    kind: 'CANCEL_MERCHANT_GATEWAY_FEE',
+                    orderId: input.orderId,
                     paymentId: input.paymentId,
-                    description: `رسوم بوابة دفع — إلغاء بخطأ التاجر (طلب ${input.orderId})`,
-                    metadata: {
-                        kind: 'CANCEL_MERCHANT_GATEWAY_FEE',
-                        orderId: input.orderId,
-                        paymentId: input.paymentId,
-                        offerId: input.offerId || null,
-                        feePct: input.feePct,
-                        feeFixed: input.feeFixed,
-                        reason: input.reason,
-                        settlementStatus: balanceAfter < 0 ? 'OPEN' : 'SETTLED',
-                        futureStoreDebt: balanceAfter < 0,
-                        postedToBalance: true,
-                    },
-                } as Prisma.WalletTransactionUncheckedCreateInput,
-            });
-
-            const platformWallet = await tx.platformWallet.findFirst();
-            if (platformWallet) {
-                await tx.platformWallet.update({
-                    where: { id: platformWallet.id },
-                    data: {
-                        feesBalance: { increment: feeAmount },
-                        totalRevenue: { increment: feeAmount },
-                    },
-                });
-            }
+                    offerId: input.offerId || null,
+                    feePct: input.feePct,
+                    feeFixed: input.feeFixed,
+                    reason: input.reason,
+                    settlementStatus: 'OPEN',
+                    futureStoreDebt: true,
+                    postedToBalance: false,
+                },
+            } as Prisma.WalletTransactionUncheckedCreateInput,
         });
     }
 

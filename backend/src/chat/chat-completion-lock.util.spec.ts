@@ -1,6 +1,7 @@
 import { describe, it, expect } from '@jest/globals';
 import {
   shouldLockChatOnCompletion,
+  shouldCloseScopedOrderChat,
   isOpenDisputeStatus,
   isOpenReturnStatus,
 } from './chat-completion-lock.util';
@@ -17,6 +18,10 @@ const FE_ORDER_CHAT_CLOSED_STATUSES = [
   'COMPLETED',
   'WARRANTY_ACTIVE',
   'WARRANTY_EXPIRED',
+  'REFUNDED',
+  'RETURNED',
+  'RESOLVED',
+  'CLOSED',
 ] as const;
 
 describe('shouldLockChatOnCompletion', () => {
@@ -55,6 +60,29 @@ describe('shouldLockChatOnCompletion', () => {
     });
   });
 
+  it('closes a multi-part scope only when every part is finished and no case is open', () => {
+    const done = [{ fulfillmentStatus: 'CANCELLED' }, { fulfillmentStatus: 'COMPLETED' }];
+    expect(
+      shouldCloseScopedOrderChat({ orderStatus: 'PARTIALLY_SHIPPED', offers: done, hasOpenCase: false }),
+    ).toBe(true);
+    expect(
+      shouldCloseScopedOrderChat({ orderStatus: 'PARTIALLY_SHIPPED', offers: done, hasOpenCase: true }),
+    ).toBe(false);
+    expect(
+      shouldCloseScopedOrderChat({
+        orderStatus: 'PARTIALLY_SHIPPED',
+        offers: [{ fulfillmentStatus: 'CANCELLED' }, { fulfillmentStatus: 'SHIPPED' }],
+        hasOpenCase: false,
+      }),
+    ).toBe(false);
+    expect(
+      shouldCloseScopedOrderChat({ orderStatus: 'PREPARATION', offers: [], hasOpenCase: false }),
+    ).toBe(false);
+    expect(
+      shouldCloseScopedOrderChat({ orderStatus: 'CANCELLED', offers: [], hasOpenCase: true }),
+    ).toBe(true);
+  });
+
   it('treats RESOLVED/CLOSED disputes as closed', () => {
     expect(isOpenDisputeStatus('RESOLVED')).toBe(false);
     expect(isOpenDisputeStatus('CLOSED')).toBe(false);
@@ -91,6 +119,14 @@ describe('chat offer-phase expiry helpers', () => {
     expect(shouldCloseOrderChat('WARRANTY_EXPIRED')).toBe(true);
     expect(shouldCloseOrderChat('DELIVERED')).toBe(false);
     expect(shouldCloseOrderChat('AWAITING_SELECTION')).toBe(false);
+  });
+
+  it('closes chat for refunded/returned/resolved/closed orders', () => {
+    expect(shouldCloseOrderChat('REFUNDED')).toBe(true);
+    expect(shouldCloseOrderChat('RETURNED')).toBe(true);
+    expect(shouldCloseOrderChat('RESOLVED')).toBe(true);
+    expect(shouldCloseOrderChat('CLOSED')).toBe(true);
+    expect(shouldCloseOrderChat('PARTIALLY_SHIPPED')).toBe(false);
   });
 
   it('stays in parity with Frontend orderChatLock mirror list', () => {

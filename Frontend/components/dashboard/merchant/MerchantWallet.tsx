@@ -1212,6 +1212,24 @@ export const MerchantWallet: React.FC<MerchantWalletProps> = ({ onNavigate }) =>
                                 </div>
                             </div>
 
+                            {!isLoading && (
+                                <div className="mb-6 grid grid-cols-2 lg:grid-cols-4 gap-3">
+                                    {[
+                                        { label: w.breakdownDueBalance, value: Number(stats.available || 0), tone: 'text-white' },
+                                        { label: w.breakdownOpenObligations, value: -Number(stats.pendingLiabilities || 0), tone: 'text-red-400' },
+                                        { label: w.breakdownDisputeHold, value: -Number(stats.disputeHoldAmount || 0), tone: 'text-amber-400' },
+                                        { label: w.breakdownWithdrawable, value: Number(maxWithdrawable ?? 0), tone: 'text-gold-500' },
+                                    ].map((row) => (
+                                        <div key={row.label} className="bg-black/30 border border-white/5 rounded-2xl p-4">
+                                            <p className="text-[10px] font-black text-white/30 uppercase tracking-wider mb-1">{row.label}</p>
+                                            <p className={`text-base sm:text-lg font-black font-mono ${row.tone}`}>
+                                                {row.value < 0 ? '−' : ''}{Math.abs(row.value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} AED
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
                             <div className="mb-6">
                                 <PayoutLinkRequiredAlert
                                     isAr={isAr}

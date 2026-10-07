@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { computeStripeGatewayFee } from '../payments/gateway-fee.util';
+import { normalizeDisputeHoldPercent } from '../payments/merchant-withdrawal-governance.util';
 
 export interface LoyaltyTierConfig {
   percent: number;
@@ -46,6 +47,9 @@ export interface FinancialConfig {
   loyaltyTiers: Record<string, LoyaltyTierConfig>;
   customerTierThresholds: CustomerTierThresholds;
   storeLoyaltyTiers: Record<string, StoreLoyaltyTierConfig>;
+  /** Hold part of the merchant withdrawable balance while returns/disputes are open. */
+  disputeWithdrawalHoldEnabled: boolean;
+  disputeWithdrawalHoldPercent: number;
 }
 
 export interface WithdrawalLimitProfile {
@@ -115,6 +119,8 @@ const DEFAULTS: FinancialConfig = {
   loyaltyTiers: DEFAULT_LOYALTY_TIERS,
   customerTierThresholds: DEFAULT_CUSTOMER_TIER_THRESHOLDS,
   storeLoyaltyTiers: DEFAULT_STORE_LOYALTY_TIERS,
+  disputeWithdrawalHoldEnabled: false,
+  disputeWithdrawalHoldPercent: 25,
 };
 
 function mergeTierConfig<T extends object>(
@@ -200,6 +206,10 @@ export class FinancialConfigService {
           typeof financial.storeLoyaltyTiers === 'object' && financial.storeLoyaltyTiers !== null
             ? (financial.storeLoyaltyTiers as Record<string, StoreLoyaltyTierConfig>)
             : null,
+        ),
+        disputeWithdrawalHoldEnabled: financial.disputeWithdrawalHoldEnabled === true,
+        disputeWithdrawalHoldPercent: normalizeDisputeHoldPercent(
+          financial.disputeWithdrawalHoldPercent ?? DEFAULTS.disputeWithdrawalHoldPercent,
         ),
       };
       this.cache = { config, expiresAt: Date.now() + this.TTL_MS };
