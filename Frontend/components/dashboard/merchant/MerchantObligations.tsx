@@ -156,8 +156,11 @@ export const MerchantObligations: React.FC<MerchantObligationsProps> = ({
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-bold text-white truncate">
-                        {kindLabel(line.kind)}
+                        {line.partName || kindLabel(line.kind)}
                       </p>
+                      {line.partName ? (
+                        <p className="text-[10px] text-white/35 font-semibold">{kindLabel(line.kind)}</p>
+                      ) : null}
                       <p className="text-[11px] text-white/45 mt-0.5 line-clamp-2">
                         {isAr ? line.descriptionAr : line.descriptionEn}
                       </p>

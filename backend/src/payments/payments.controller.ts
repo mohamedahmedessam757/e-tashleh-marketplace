@@ -217,11 +217,12 @@ export class PaymentsController {
     @Throttle({ default: { limit: 8, ttl: 60000 } })
     createMerchantObligationCheckout(
         @Request() req,
-        @Body() body: { frontendUrl?: string },
+        @Body() body: { frontendUrl?: string; lineIds?: string[] },
     ) {
         return this.paymentsService.createMerchantObligationCheckoutSession(
             req.user.id,
             body?.frontendUrl,
+            body?.lineIds,
         );
     }
 
@@ -229,10 +230,11 @@ export class PaymentsController {
     @Throttle({ default: { limit: 5, ttl: 60000 } })
     payMerchantObligationsFromWallet(
         @Request() req,
-        @Body() body: { expectedAmount?: number },
+        @Body() body: { lineIds?: string[]; expectedAmount?: number },
     ) {
         return this.paymentsService.payMerchantObligationsFromWallet(
             req.user.id,
+            body?.lineIds,
             Number(body?.expectedAmount),
         );
     }

@@ -269,6 +269,7 @@ export interface MerchantObligationLine {
   descriptionAr: string;
   descriptionEn: string;
   postedToBalance?: boolean;
+  partName?: string | null;
 }
 
 /**
@@ -312,6 +313,19 @@ export async function loadMerchantObligationsLedger(
     (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
   );
 
+  const partNames = new Map<string, string>();
+  const offerIds = [...new Set(merged.map((l) => l.offerId).filter((id): id is string => !!id))];
+  if (offerIds.length && db.offer?.findMany) {
+    const offers = await db.offer.findMany({
+      where: { id: { in: offerIds } },
+      select: { id: true, orderPart: { select: { name: true } } },
+    });
+    for (const offer of offers) {
+      const name = offer?.orderPart?.name;
+      if (offer?.id && name) partNames.set(String(offer.id), String(name));
+    }
+  }
+
   const lines: MerchantObligationLine[] = merged.map((l) => {
     const status = l.settlementStatus === 'SETTLED' ? 'SETTLED' : 'OPEN';
     const signedAmount = status === 'SETTLED' ? money2(l.amount) : -money2(l.amount);
@@ -329,6 +343,7 @@ export async function loadMerchantObligationsLedger(
       descriptionAr: l.descriptionAr || l.kind,
       descriptionEn: l.descriptionEn || l.kind,
       postedToBalance: l.postedToBalance,
+      partName: (l.offerId && partNames.get(l.offerId)) || null,
     };
   });
 

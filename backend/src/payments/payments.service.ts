@@ -37,6 +37,13 @@ import {
     assertWithdrawalSettlesLiabilitiesOrThrow,
 } from './store-settlement-liabilities.util';
 import {
+    ObligationSelectionError,
+    packLineIds,
+    parseObligationLineIds,
+    selectOpenLines,
+    unpackLineIds,
+} from './obligation-selection.util';
+import {
     buildActiveReferralWindowFilter,
     computeCustomerCompletedOrdersCount,
     computeCustomerTotalPurchases,
@@ -3427,11 +3434,37 @@ export class PaymentsService {
         return loadMerchantObligationsLedger(this.prisma, store.id);
     }
 
+    private parseSelectedObligationIds(raw: unknown): string[] {
+        try {
+            return parseObligationLineIds(raw);
+        } catch (err) {
+            if (err instanceof ObligationSelectionError) throw new BadRequestException(err.message);
+            throw err;
+        }
+    }
+
+    private pickOpenObligations<T extends { id: string; status: string; amount: number }>(
+        lines: T[],
+        ids: string[],
+    ): { lines: T[]; amount: number } {
+        try {
+            return selectOpenLines(lines, ids);
+        } catch (err) {
+            if (err instanceof ObligationSelectionError) throw new BadRequestException(err.message);
+            throw err;
+        }
+    }
+
     /**
-     * Stripe Checkout for OPEN store obligations (cancel gateway fees + pending case fees).
-     * Existing auto wallet-debit path remains when merchant does not use Stripe.
+     * Stripe Checkout for the OPEN obligations the merchant selected.
+     * The amount is recomputed on the server from those line ids.
      */
-    async createMerchantObligationCheckoutSession(userId: string, frontendUrl?: string) {
+    async createMerchantObligationCheckoutSession(
+        userId: string,
+        frontendUrl?: string,
+        lineIdsRaw?: unknown,
+    ) {
+        const lineIds = this.parseSelectedObligationIds(lineIdsRaw);
         const store = await this.prisma.store.findUnique({
             where: { ownerId: userId },
             include: { owner: { select: { id: true, email: true } } },
@@ -3441,12 +3474,9 @@ export class PaymentsService {
         }
 
         const ledger = await loadMerchantObligationsLedger(this.prisma, store.id);
-        const openLines = ledger.lines.filter((l) => l.status === 'OPEN' && l.amount > 0);
-        if (!openLines.length || !(ledger.totalDue > 0)) {
-            throw new BadRequestException('No open obligations to pay');
-        }
-
-        const amount = Number(ledger.totalDue.toFixed(2));
+        const selected = this.pickOpenObligations(ledger.lines, lineIds);
+        const openLines = selected.lines;
+        const amount = selected.amount;
         const expectedMinor = Math.round(amount * 100);
         if (expectedMinor < 50) {
             throw new BadRequestException('Obligation amount is below Stripe minimum');
@@ -3487,6 +3517,7 @@ export class PaymentsService {
                 merchantUserId: userId,
                 obligationAmount: amount.toFixed(2),
                 obligationLineCount: String(openLines.length),
+                ...packLineIds(lineIds),
             },
             lineItems: [
                 {
@@ -3613,7 +3644,22 @@ export class PaymentsService {
         }
 
         const ledger = await loadMerchantObligationsLedger(this.prisma, storeId);
-        const openLines = ledger.lines.filter((l) => l.status === 'OPEN' && l.amount > 0);
+        const pool = ledger.lines.filter((l) => l.status === 'OPEN' && l.amount > 0);
+        // null = legacy checkout that paid every open line. [] = unreadable ids, settle nothing.
+        let requestedIds: string[] | null;
+        try {
+            const unpacked = unpackLineIds(meta);
+            requestedIds = unpacked.length ? unpacked : null;
+        } catch (err) {
+            this.logger.error(
+                `Obligation PI ${intent.id} line ids unreadable: ${(err as Error)?.message || err}`,
+            );
+            requestedIds = [];
+        }
+        const wanted = requestedIds;
+        const openLines = wanted
+            ? pool.filter((l) => wanted.some((id) => id.toLowerCase() === l.id.toLowerCase()))
+            : pool;
         if (!openLines.length) {
             // Lines were settled another way (e.g. from wallet) after checkout opened —
             // the captured cash must not vanish, so it is credited back to the store.
@@ -3634,7 +3680,7 @@ export class PaymentsService {
         const openTotal = Number(
             openLines.reduce((s, l) => s + l.amount, 0).toFixed(2),
         );
-        // Allow settling if live open total matches checkout (or is less due to race).
+        // Never settle more than was captured. A smaller live total is a race: the rest is credited back.
         if (openTotal - expectedAmount > 0.02) {
             this.logger.error(
                 `Obligation open total ${openTotal} exceeds checkout ${expectedAmount} for PI ${intent.id}`,
@@ -3737,6 +3783,7 @@ export class PaymentsService {
                                     postedToBalance: wasPostedToBalance,
                                     paymentMethod: 'STRIPE',
                                     stripeIntentId: intent.id,
+                                    lineId: line.id,
                                     orderId: line.orderId || null,
                                     offerId: line.offerId || null,
                                     storeId,
@@ -3815,10 +3862,12 @@ export class PaymentsService {
                                     kind: 'OBLIGATION_CASE_FEE_STRIPE',
                                     paymentMethod: 'STRIPE',
                                     stripeIntentId: intent.id,
+                                    lineId: line.id,
                                     caseId: line.sourceId,
                                     caseType: line.source,
                                     storeId,
                                     orderId: line.orderId || null,
+                                    offerId: line.offerId || null,
                                 },
                             } as any,
                         });
@@ -4000,7 +4049,11 @@ export class PaymentsService {
      * transaction. Rejects when the live total differs from what the merchant saw or
      * the balance cannot cover it, so nothing is ever partially charged.
      */
-    async payMerchantObligationsFromWallet(userId: string, expectedAmount: number) {
+    async payMerchantObligationsFromWallet(
+        userId: string,
+        lineIdsRaw: unknown,
+        expectedAmount: number,
+    ) {
         const store = await this.prisma.store.findUnique({
             where: { ownerId: userId },
             select: { id: true, ownerId: true },
@@ -4008,6 +4061,7 @@ export class PaymentsService {
         if (!store || store.ownerId !== userId) {
             throw new ForbiddenException('Store not found for this merchant');
         }
+        const lineIds = this.parseSelectedObligationIds(lineIdsRaw);
         const expected = Math.round((Number(expectedAmount) + Number.EPSILON) * 100) / 100;
         if (!Number.isFinite(expected) || expected <= 0) {
             throw new BadRequestException('Invalid amount');
@@ -4024,16 +4078,14 @@ export class PaymentsService {
                 let balance = Number(locked?.balance || 0);
 
                 const ledger = await loadMerchantObligationsLedger(tx, store.id);
-                const openLines = ledger.lines.filter((l) => l.status === 'OPEN' && l.amount > 0);
-                if (!openLines.length) {
-                    throw new BadRequestException('لا توجد التزامات مستحقة / No open obligations');
-                }
-                if (Math.abs(ledger.totalDue - expected) > 0.01) {
+                const selected = this.pickOpenObligations(ledger.lines, lineIds);
+                const openLines = selected.lines;
+                if (Math.abs(selected.amount - expected) > 0.01) {
                     throw new BadRequestException(
                         'تغيّر المبلغ المستحق، حدّث الصفحة وحاول مرة أخرى / Amount due changed, refresh and retry',
                     );
                 }
-                if (balance < ledger.totalDue - 0.001) {
+                if (balance < selected.amount - 0.001) {
                     throw new BadRequestException(
                         'الرصيد المتاح لا يكفي لسداد الالتزامات / Available balance does not cover the obligations',
                     );
@@ -4076,7 +4128,11 @@ export class PaymentsService {
                             row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
                                 ? (row.metadata as Record<string, unknown>)
                                 : {};
-                        if (String(prevMeta.settlementStatus || '').toUpperCase() === 'SETTLED') continue;
+                        if (String(prevMeta.settlementStatus || '').toUpperCase() === 'SETTLED') {
+                            throw new BadRequestException(
+                                'أحد البنود تم سداده، حدّث الصفحة / An obligation was just settled',
+                            );
+                        }
                         const posted = prevMeta.postedToBalance !== false;
                         const fee = Number(line.amount);
                         if (!posted) {
@@ -4112,6 +4168,7 @@ export class PaymentsService {
                                         settlesWalletTxId: row.id,
                                         postedToBalance: false,
                                         paymentMethod: 'WALLET',
+                                        lineId: line.id,
                                         orderId: line.orderId || null,
                                         offerId: line.offerId || null,
                                         storeId: store.id,
@@ -4151,7 +4208,11 @@ export class PaymentsService {
                                           updatedAt: new Date(),
                                       },
                                   });
-                        if (!res.count) continue;
+                        if (!res.count) {
+                            throw new BadRequestException(
+                                'أحد البنود تم سداده، حدّث الصفحة / An obligation was just settled',
+                            );
+                        }
                         const fee = Number(line.amount);
                         await debitStore(fee);
                         await creditPlatform(fee);
@@ -4169,10 +4230,12 @@ export class PaymentsService {
                                 metadata: {
                                     kind: 'OBLIGATION_CASE_FEE_WALLET',
                                     paymentMethod: 'WALLET',
+                                    lineId: line.id,
                                     caseId: line.sourceId,
                                     caseType: line.source,
                                     storeId: store.id,
                                     orderId: line.orderId || null,
+                                    offerId: line.offerId || null,
                                 },
                             } as any,
                         });

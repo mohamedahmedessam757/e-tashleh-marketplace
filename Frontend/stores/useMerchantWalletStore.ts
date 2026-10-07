@@ -99,6 +99,7 @@ interface MerchantWalletState {
       source: string;
       descriptionAr: string;
       descriptionEn: string;
+      partName?: string | null;
     }>;
   };
   isLoading: boolean;
@@ -107,8 +108,11 @@ interface MerchantWalletState {
   // Actions
   fetchWallet: (filters?: { startDate?: string; endDate?: string }) => Promise<void>;
   fetchObligations: () => Promise<void>;
-  createObligationCheckout: () => Promise<{ url: string; sessionId?: string; amount: number }>;
-  payObligationsFromWallet: (expectedAmount: number) => Promise<{ charged: number; obligationsTotalDue: number }>;
+  createObligationCheckout: (lineIds: string[]) => Promise<{ url: string; sessionId?: string; amount: number }>;
+  payObligationsFromWallet: (
+    lineIds: string[],
+    expectedAmount: number,
+  ) => Promise<{ charged: number; obligationsTotalDue: number }>;
   confirmObligationPayment: (params: {
     sessionId?: string;
     paymentIntentId?: string;
@@ -211,10 +215,11 @@ export const useMerchantWalletStore = create<MerchantWalletState>((set, get) => 
     }
   },
 
-  createObligationCheckout: async () => {
+  createObligationCheckout: async (lineIds) => {
     const { client } = await import('../services/api/client');
     const response = await client.post('/payments/merchant/obligations/checkout', {
       frontendUrl: window.location.origin,
+      lineIds,
     });
     return {
       url: String(response.data?.url || ''),
@@ -223,9 +228,10 @@ export const useMerchantWalletStore = create<MerchantWalletState>((set, get) => 
     };
   },
 
-  payObligationsFromWallet: async (expectedAmount) => {
+  payObligationsFromWallet: async (lineIds, expectedAmount) => {
     const { client } = await import('../services/api/client');
     const response = await client.post('/payments/merchant/obligations/pay-from-wallet', {
+      lineIds,
       expectedAmount,
     });
     await Promise.all([get().fetchObligations(), get().fetchWallet()]);
