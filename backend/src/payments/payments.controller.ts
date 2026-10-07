@@ -225,6 +225,18 @@ export class PaymentsController {
         );
     }
 
+    @Post('merchant/obligations/pay-from-wallet')
+    @Throttle({ default: { limit: 5, ttl: 60000 } })
+    payMerchantObligationsFromWallet(
+        @Request() req,
+        @Body() body: { expectedAmount?: number },
+    ) {
+        return this.paymentsService.payMerchantObligationsFromWallet(
+            req.user.id,
+            Number(body?.expectedAmount),
+        );
+    }
+
     @Post('merchant/obligations/confirm')
     @Throttle({ default: { limit: 15, ttl: 60000 } })
     confirmMerchantObligation(

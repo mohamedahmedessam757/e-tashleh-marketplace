@@ -3587,15 +3587,17 @@ export class PaymentsService {
         }
 
         // Idempotency: already settled this intent
-        const existingSettle = await this.prisma.walletTransaction.findFirst({
-            where: {
-                userId: merchantUserId,
-                role: 'VENDOR',
-                transactionType: 'OBLIGATION_SETTLEMENT',
-                metadata: { path: ['stripeIntentId'], equals: intent.id },
-            },
-            select: { id: true },
-        });
+        const findExistingSettle = (db: Prisma.TransactionClient | PrismaService) =>
+            db.walletTransaction.findFirst({
+                where: {
+                    userId: merchantUserId,
+                    role: 'VENDOR',
+                    transactionType: { in: ['OBLIGATION_SETTLEMENT', 'ADJUDICATION_FEE', 'SHIPPING_FEE'] },
+                    metadata: { path: ['stripeIntentId'], equals: intent.id },
+                },
+                select: { id: true },
+            });
+        const existingSettle = await findExistingSettle(this.prisma);
         if (existingSettle) {
             this.logger.log(`Obligation PI ${intent.id} already settled; skip`);
             return { skipped: true, reason: 'ALREADY_SETTLED' };
@@ -3613,8 +3615,20 @@ export class PaymentsService {
         const ledger = await loadMerchantObligationsLedger(this.prisma, storeId);
         const openLines = ledger.lines.filter((l) => l.status === 'OPEN' && l.amount > 0);
         if (!openLines.length) {
-            this.logger.log(`No OPEN obligations left for store ${storeId}; PI ${intent.id}`);
-            return { skipped: true, reason: 'NO_OPEN' };
+            // Lines were settled another way (e.g. from wallet) after checkout opened —
+            // the captured cash must not vanish, so it is credited back to the store.
+            this.logger.warn(`No OPEN obligations left for store ${storeId}; crediting PI ${intent.id}`);
+            await this.prisma.$transaction(async (tx) => {
+                await tx.$executeRaw`SELECT id FROM stores WHERE id = ${storeId}::uuid FOR UPDATE`;
+                if (await findExistingSettle(tx)) return;
+                await this.creditObligationOverpayment(tx, {
+                    storeId,
+                    merchantUserId,
+                    amount: expectedAmount,
+                    stripeIntentId: intent.id,
+                });
+            });
+            return { skipped: true, reason: 'NO_OPEN_CREDITED' };
         }
 
         const openTotal = Number(
@@ -3637,7 +3651,13 @@ export class PaymentsService {
         const shippingPaidCases: Array<{ caseType: 'return' | 'dispute'; caseId: string }> = [];
         const result = await this.prisma.$transaction(
             async (tx) => {
-                let balance = Number(store.balance || 0);
+                await tx.$executeRaw`SELECT id FROM stores WHERE id = ${storeId}::uuid FOR UPDATE`;
+                if (await findExistingSettle(tx)) {
+                    return { settledIds: [] as string[], invoiceHints: [], balance: Number(store.balance || 0), duplicate: true };
+                }
+                const locked = await tx.store.findUnique({ where: { id: storeId }, select: { balance: true } });
+                let balance = Number(locked?.balance ?? store.balance ?? 0);
+                let settledSum = 0;
                 const settledIds: string[] = [];
                 const invoiceHints: Array<{
                     orderId: string;
@@ -3649,6 +3669,7 @@ export class PaymentsService {
                 for (const line of openLines) {
                     if (line.kind === 'GATEWAY_CANCEL_FEE' && line.source === 'wallet') {
                         const walletTxId = line.sourceId;
+                        await tx.$executeRaw`SELECT id FROM wallet_transactions WHERE id = ${walletTxId}::uuid FOR UPDATE`;
                         const row = await tx.walletTransaction.findUnique({
                             where: { id: walletTxId },
                             select: { id: true, metadata: true, paymentId: true, amount: true },
@@ -3663,6 +3684,7 @@ export class PaymentsService {
                         }
 
                         const feeAmount = Number(line.amount);
+                        settledSum += feeAmount;
                         // Legacy rows already debited store.balance; Stripe payment restores it.
                         // Unposted rows never touched the balance, so the cash is platform revenue.
                         const wasPostedToBalance = prevMeta.postedToBalance !== false;
@@ -3777,6 +3799,7 @@ export class PaymentsService {
                             claimed = res.count;
                         }
                         if (!claimed) continue;
+                        settledSum += Number(line.amount);
 
                         await tx.walletTransaction.create({
                             data: {
@@ -3860,10 +3883,23 @@ export class PaymentsService {
                     });
                 }
 
-                return { settledIds, invoiceHints, balance };
+                const remainder = Math.round((expectedAmount - settledSum + Number.EPSILON) * 100) / 100;
+                if (remainder > 0.01) {
+                    balance = await this.creditObligationOverpayment(tx, {
+                        storeId,
+                        merchantUserId,
+                        amount: remainder,
+                        stripeIntentId: intent.id,
+                    });
+                }
+
+                return { settledIds, invoiceHints, balance, duplicate: false };
             },
             { timeout: 25000, maxWait: 10000 },
         );
+        if (result.duplicate) {
+            return { skipped: true, reason: 'ALREADY_SETTLED' };
+        }
 
         for (const c of shippingPaidCases) {
             await this.runReturnShippingLogistics(
@@ -3925,6 +3961,286 @@ export class PaymentsService {
             .catch(() => {});
 
         return result;
+    }
+
+    /** Caller must hold the store row lock. Returns the new store balance. */
+    private async creditObligationOverpayment(
+        tx: Prisma.TransactionClient,
+        input: { storeId: string; merchantUserId: string; amount: number; stripeIntentId: string },
+    ): Promise<number> {
+        const updated = await tx.store.update({
+            where: { id: input.storeId },
+            data: { balance: { increment: input.amount } },
+            select: { balance: true },
+        });
+        const balanceAfter = Number(updated.balance);
+        await tx.walletTransaction.create({
+            data: {
+                userId: input.merchantUserId,
+                role: 'VENDOR',
+                type: 'CREDIT',
+                transactionType: 'OBLIGATION_SETTLEMENT',
+                amount: input.amount,
+                currency: 'AED',
+                balanceAfter,
+                description: 'إرجاع مبلغ دفع التزامات عبر Stripe لم يعد مستحقاً إلى رصيد المحفظة',
+                metadata: {
+                    kind: 'OBLIGATION_OVERPAY_CREDIT',
+                    paymentMethod: 'STRIPE',
+                    stripeIntentId: input.stripeIntentId,
+                    storeId: input.storeId,
+                },
+            } as any,
+        });
+        return balanceAfter;
+    }
+
+    /**
+     * Settle every OPEN obligation from the store's available balance in one locked
+     * transaction. Rejects when the live total differs from what the merchant saw or
+     * the balance cannot cover it, so nothing is ever partially charged.
+     */
+    async payMerchantObligationsFromWallet(userId: string, expectedAmount: number) {
+        const store = await this.prisma.store.findUnique({
+            where: { ownerId: userId },
+            select: { id: true, ownerId: true },
+        });
+        if (!store || store.ownerId !== userId) {
+            throw new ForbiddenException('Store not found for this merchant');
+        }
+        const expected = Math.round((Number(expectedAmount) + Number.EPSILON) * 100) / 100;
+        if (!Number.isFinite(expected) || expected <= 0) {
+            throw new BadRequestException('Invalid amount');
+        }
+
+        const shippingPaidCases: Array<{ caseType: 'return' | 'dispute'; caseId: string }> = [];
+        const result = await this.prisma.$transaction(
+            async (tx) => {
+                await tx.$executeRaw`SELECT id FROM stores WHERE id = ${store.id}::uuid FOR UPDATE`;
+                const locked = await tx.store.findUnique({
+                    where: { id: store.id },
+                    select: { balance: true },
+                });
+                let balance = Number(locked?.balance || 0);
+
+                const ledger = await loadMerchantObligationsLedger(tx, store.id);
+                const openLines = ledger.lines.filter((l) => l.status === 'OPEN' && l.amount > 0);
+                if (!openLines.length) {
+                    throw new BadRequestException('لا توجد التزامات مستحقة / No open obligations');
+                }
+                if (Math.abs(ledger.totalDue - expected) > 0.01) {
+                    throw new BadRequestException(
+                        'تغيّر المبلغ المستحق، حدّث الصفحة وحاول مرة أخرى / Amount due changed, refresh and retry',
+                    );
+                }
+                if (balance < ledger.totalDue - 0.001) {
+                    throw new BadRequestException(
+                        'الرصيد المتاح لا يكفي لسداد الالتزامات / Available balance does not cover the obligations',
+                    );
+                }
+
+                const platformWallet = await tx.platformWallet.findFirst();
+                const creditPlatform = async (amount: number) => {
+                    if (!platformWallet || !(amount > 0)) return;
+                    await tx.platformWallet.update({
+                        where: { id: platformWallet.id },
+                        data: {
+                            feesBalance: { increment: amount },
+                            totalRevenue: { increment: amount },
+                        },
+                    });
+                };
+                const debitStore = async (amount: number) => {
+                    const u = await tx.store.update({
+                        where: { id: store.id },
+                        data: { balance: { decrement: amount } },
+                        select: { balance: true },
+                    });
+                    balance = Number(u.balance);
+                };
+
+                const settledAt = new Date().toISOString();
+                let charged = 0;
+                const settledIds: string[] = [];
+
+                for (const line of openLines) {
+                    if (line.kind === 'GATEWAY_CANCEL_FEE' && line.source === 'wallet') {
+                        // Legacy posted fees already reduced store.balance, so they settle without a new debit.
+                        await tx.$executeRaw`SELECT id FROM wallet_transactions WHERE id = ${line.sourceId}::uuid FOR UPDATE`;
+                        const row = await tx.walletTransaction.findUnique({
+                            where: { id: line.sourceId },
+                            select: { id: true, metadata: true, paymentId: true },
+                        });
+                        if (!row) continue;
+                        const prevMeta =
+                            row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
+                                ? (row.metadata as Record<string, unknown>)
+                                : {};
+                        if (String(prevMeta.settlementStatus || '').toUpperCase() === 'SETTLED') continue;
+                        const posted = prevMeta.postedToBalance !== false;
+                        const fee = Number(line.amount);
+                        if (!posted) {
+                            await debitStore(fee);
+                            await creditPlatform(fee);
+                            charged += fee;
+                        }
+                        await tx.walletTransaction.update({
+                            where: { id: row.id },
+                            data: {
+                                metadata: {
+                                    ...prevMeta,
+                                    settlementStatus: 'SETTLED',
+                                    settledVia: 'WALLET',
+                                    settledAt,
+                                },
+                            },
+                        });
+                        if (!posted) {
+                            await tx.walletTransaction.create({
+                                data: {
+                                    userId,
+                                    role: 'VENDOR',
+                                    type: 'DEBIT',
+                                    transactionType: 'OBLIGATION_SETTLEMENT',
+                                    amount: fee,
+                                    currency: 'AED',
+                                    balanceAfter: balance,
+                                    paymentId: row.paymentId || null,
+                                    description: 'تسوية التزام رسوم إلغاء من رصيد المحفظة',
+                                    metadata: {
+                                        kind: 'OBLIGATION_SETTLEMENT',
+                                        settlesWalletTxId: row.id,
+                                        postedToBalance: false,
+                                        paymentMethod: 'WALLET',
+                                        orderId: line.orderId || null,
+                                        offerId: line.offerId || null,
+                                        storeId: store.id,
+                                    },
+                                } as any,
+                            });
+                        }
+                        settledIds.push(line.id);
+                        continue;
+                    }
+
+                    if (
+                        (line.kind === 'ADJUDICATION_FEE' || line.kind === 'SHIPPING_FEE') &&
+                        (line.source === 'return' || line.source === 'dispute')
+                    ) {
+                        const model = (tx as any)[line.source === 'return' ? 'returnRequest' : 'dispute'];
+                        const res =
+                            line.kind === 'ADJUDICATION_FEE'
+                                ? await model.updateMany({
+                                      where: { id: line.sourceId, adjudicationFeePaymentStatus: 'PENDING' },
+                                      data: {
+                                          adjudicationFeePaymentStatus: 'PAID',
+                                          adjudicationFeePaymentMethod: 'WALLET',
+                                          updatedAt: new Date(),
+                                      },
+                                  })
+                                : await model.updateMany({
+                                      where: {
+                                          id: line.sourceId,
+                                          shippingPaymentStatus: {
+                                              in: ['PENDING', 'INSUFFICIENT_FUNDS', 'WITHHELD_PENDING'],
+                                          },
+                                      },
+                                      data: {
+                                          shippingPaymentStatus: 'PAID',
+                                          shippingPaymentMethod: 'WALLET',
+                                          updatedAt: new Date(),
+                                      },
+                                  });
+                        if (!res.count) continue;
+                        const fee = Number(line.amount);
+                        await debitStore(fee);
+                        await creditPlatform(fee);
+                        charged += fee;
+                        await tx.walletTransaction.create({
+                            data: {
+                                userId,
+                                role: 'VENDOR',
+                                type: 'DEBIT',
+                                transactionType: line.kind,
+                                amount: fee,
+                                currency: 'AED',
+                                balanceAfter: balance,
+                                description: `Paid ${line.kind} from wallet balance (obligation settlement)`,
+                                metadata: {
+                                    kind: 'OBLIGATION_CASE_FEE_WALLET',
+                                    paymentMethod: 'WALLET',
+                                    caseId: line.sourceId,
+                                    caseType: line.source,
+                                    storeId: store.id,
+                                    orderId: line.orderId || null,
+                                },
+                            } as any,
+                        });
+                        settledIds.push(line.id);
+                        if (line.kind === 'SHIPPING_FEE') {
+                            shippingPaidCases.push({ caseType: line.source, caseId: line.sourceId });
+                        }
+                    }
+                }
+
+                if (balance < -0.001) {
+                    throw new BadRequestException(
+                        'الرصيد المتاح لا يكفي لسداد الالتزامات / Available balance does not cover the obligations',
+                    );
+                }
+
+                return {
+                    settledIds,
+                    charged: Math.round((charged + Number.EPSILON) * 100) / 100,
+                    balance,
+                };
+            },
+            { timeout: 25000, maxWait: 10000 },
+        );
+
+        for (const c of shippingPaidCases) {
+            await this.runReturnShippingLogistics(
+                c.caseType,
+                c.caseId,
+                'بدء الارجاع - تم سداد تكلفة الشحن من رصيد المحفظة (تسوية مستحقات)',
+            ).catch((err) =>
+                this.logger.warn(`Return logistics after wallet obligation pay failed: ${err?.message || err}`),
+            );
+        }
+
+        await this.notifications
+            .create({
+                recipientId: userId,
+                recipientRole: 'VENDOR',
+                type: 'payment',
+                titleAr: 'تم سداد الالتزامات من رصيد المحفظة',
+                titleEn: 'Obligations paid from wallet balance',
+                messageAr: `تم خصم ${result.charged.toFixed(2)} درهم من رصيد محفظتك وتسوية الالتزامات المستحقة.`,
+                messageEn: `AED ${result.charged.toFixed(2)} was deducted from your wallet balance to settle open obligations.`,
+                link: 'wallet',
+                metadata: { amount: result.charged, obligationPayment: true, method: 'WALLET' },
+            })
+            .catch(() => {});
+        await this.notifications
+            .notifyAdmins({
+                type: 'PAYMENT',
+                titleAr: 'سداد التزامات تاجر من رصيد المحفظة',
+                titleEn: 'Merchant obligations paid from wallet',
+                messageAr: `المتجر سدد التزامات بقيمة ${result.charged.toFixed(2)} درهم من رصيد محفظته.`,
+                messageEn: `Store paid obligations of AED ${result.charged.toFixed(2)} from its wallet balance.`,
+                link: '/admin/billing',
+                metadata: { storeId: store.id, merchantUserId: userId, amount: result.charged, method: 'WALLET' },
+            })
+            .catch(() => {});
+
+        const after = await loadMerchantObligationsLedger(this.prisma, store.id);
+        return {
+            paid: true,
+            charged: result.charged,
+            settledCount: result.settledIds.length,
+            balanceAfter: Number(result.balance.toFixed(2)),
+            obligationsTotalDue: after.totalDue,
+        };
     }
 
     private async issueObligationSettlementInvoice(input: {
