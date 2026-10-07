@@ -3718,9 +3718,9 @@ export class PaymentsService {
                         await tx.$executeRaw`SELECT id FROM wallet_transactions WHERE id = ${walletTxId}::uuid FOR UPDATE`;
                         const row = await tx.walletTransaction.findUnique({
                             where: { id: walletTxId },
-                            select: { id: true, metadata: true, paymentId: true, amount: true },
+                            select: { id: true, userId: true, metadata: true, paymentId: true, amount: true },
                         });
-                        if (!row) continue;
+                        if (!row || row.userId !== merchantUserId) continue;
                         const prevMeta =
                             row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
                                 ? (row.metadata as Record<string, unknown>)
@@ -3814,6 +3814,7 @@ export class PaymentsService {
                             const res = await (tx as any)[modelName].updateMany({
                                 where: {
                                     id: line.sourceId,
+                                    storeId,
                                     adjudicationFeePaymentStatus: 'PENDING',
                                 },
                                 data: {
@@ -3828,6 +3829,7 @@ export class PaymentsService {
                             const res = await (tx as any)[modelName].updateMany({
                                 where: {
                                     id: line.sourceId,
+                                    storeId,
                                     shippingPaymentStatus: {
                                         in: [
                                             'PENDING',
@@ -4121,9 +4123,13 @@ export class PaymentsService {
                         await tx.$executeRaw`SELECT id FROM wallet_transactions WHERE id = ${line.sourceId}::uuid FOR UPDATE`;
                         const row = await tx.walletTransaction.findUnique({
                             where: { id: line.sourceId },
-                            select: { id: true, metadata: true, paymentId: true },
+                            select: { id: true, userId: true, metadata: true, paymentId: true },
                         });
-                        if (!row) continue;
+                        if (!row || row.userId !== userId) {
+                            throw new BadRequestException(
+                                'أحد البنود لم يعد متاحًا، حدّث الصفحة / An obligation is no longer available',
+                            );
+                        }
                         const prevMeta =
                             row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
                                 ? (row.metadata as Record<string, unknown>)
@@ -4188,7 +4194,11 @@ export class PaymentsService {
                         const res =
                             line.kind === 'ADJUDICATION_FEE'
                                 ? await model.updateMany({
-                                      where: { id: line.sourceId, adjudicationFeePaymentStatus: 'PENDING' },
+                                      where: {
+                                          id: line.sourceId,
+                                          storeId: store.id,
+                                          adjudicationFeePaymentStatus: 'PENDING',
+                                      },
                                       data: {
                                           adjudicationFeePaymentStatus: 'PAID',
                                           adjudicationFeePaymentMethod: 'WALLET',
@@ -4198,6 +4208,7 @@ export class PaymentsService {
                                 : await model.updateMany({
                                       where: {
                                           id: line.sourceId,
+                                          storeId: store.id,
                                           shippingPaymentStatus: {
                                               in: ['PENDING', 'INSUFFICIENT_FUNDS', 'WITHHELD_PENDING'],
                                           },

@@ -317,7 +317,7 @@ export async function loadMerchantObligationsLedger(
   const offerIds = [...new Set(merged.map((l) => l.offerId).filter((id): id is string => !!id))];
   if (offerIds.length && db.offer?.findMany) {
     const offers = await db.offer.findMany({
-      where: { id: { in: offerIds } },
+      where: { id: { in: offerIds }, storeId },
       select: { id: true, orderPart: { select: { name: true } } },
     });
     for (const offer of offers) {

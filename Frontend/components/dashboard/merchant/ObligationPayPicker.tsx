@@ -153,6 +153,9 @@ export const ObligationPayPicker: React.FC<ObligationPayPickerProps> = ({
                     {isAr ? line.descriptionAr : line.descriptionEn}
                     {line.orderId ? ` · ${String(line.orderId).slice(0, 8)}` : ''}
                   </span>
+                  <span className="block text-[10px] text-white/30 mt-1">
+                    {new Date(line.createdAt).toLocaleString(isAr ? 'ar-AE' : 'en-AE')}
+                  </span>
                 </span>
                 <span className="text-sm font-black text-rose-300 tabular-nums shrink-0">
                   −{fmt(line.amount)}
