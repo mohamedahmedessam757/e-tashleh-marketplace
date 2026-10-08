@@ -39,10 +39,15 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
     if (!isOpen || !order) return null;
 
     /* ── data extraction ── */
-    const acceptedOffer = (order.paymentOfferId
+    const paymentOffer = order.payment?.offer || null;
+    const linkedOffer = order.paymentOfferId
         ? order.offers?.find((o: any) => o.id === order.paymentOfferId)
-        : null) || order.offers?.find((o: any) => o.status === 'accepted');
-    const shippingAddr = order.shippingAddresses?.[0] || null;
+        : null;
+    const acceptedOffer = paymentOffer || linkedOffer || (
+        !order.paymentOfferId && !order.invoicePartName
+            ? order.offers?.find((o: any) => o.status === 'accepted')
+            : null
+    );
     const customer = order.customer || null;
     const offerStore = acceptedOffer?.store || order.store || null;
 
@@ -106,14 +111,23 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
     const offerNotes = acceptedOffer?.notes || '';
     const offerWeight = acceptedOffer?.weightKg || acceptedOffer?.weight_kg || '--';
 
-    // Customer/Order data
+    // Customer/Order data — the invoice's own part, not the order's first accepted part
+    const paymentPart = paymentOffer?.orderPart || linkedOffer?.orderPart || null;
+    const partRecord = (order.parts || []).find((p: any) => paymentPart?.id && p.id === paymentPart.id) || paymentPart;
+    const shippingAddr = (paymentPart?.id
+        ? order.shippingAddresses?.find((a: any) => (a.orderPartId || a.order_part_id) === paymentPart.id)
+        : null) || order.shippingAddresses?.[0] || null;
     const customerName = customer?.name || shippingAddr?.fullName || shippingAddr?.full_name || (language === 'ar' ? 'عميل' : 'Customer');
-    const partName = acceptedOffer?.orderPart?.name || order.invoicePartName || order.partName || order.part_name || (language === 'ar' ? 'قطعة غيار' : 'Spare Part');
-    const partDesc = order.partDescription || order.part_description || '';
+    const partName = partRecord?.name || order.invoicePartName || (language === 'ar' ? 'قطعة غيار' : 'Spare Part');
+    const partDesc = partRecord?.description || '';
     const partImages: string[] = (() => {
-        const imgs = order.partImages || order.part_images;
-        if (Array.isArray(imgs)) return imgs;
-        if (typeof imgs === 'string') { try { return JSON.parse(imgs); } catch { return []; } }
+        const specific = partRecord?.images;
+        if (Array.isArray(specific)) return specific;
+        if (!partRecord) {
+            const imgs = order.partImages || order.part_images;
+            if (Array.isArray(imgs)) return imgs;
+            if (typeof imgs === 'string') { try { return JSON.parse(imgs); } catch { return []; } }
+        }
         return [];
     })();
     const vehicleMake = order.vehicleMake || order.vehicle_make || '';
@@ -417,7 +431,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
                     </div>
                     <div className="text-center sm:text-right bg-black/40 px-6 py-4 rounded-xl border border-gold-500/30">
                         <p className="text-4xl sm:text-5xl md:text-6xl font-black text-gold-500 font-mono tracking-tight shadow-gold-500 drop-shadow-md inv-total-amount">
-                            {finalTotal > 0 ? finalTotal.toFixed(2) : '0.00'}
+                            {Number.isFinite(finalTotal) ? finalTotal.toFixed(2) : '0.00'}
                             <span className="text-xl sm:text-2xl font-bold ms-2 text-gold-400">{currency}</span>
                         </p>
                     </div>

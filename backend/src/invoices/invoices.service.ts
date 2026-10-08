@@ -16,6 +16,23 @@ import {
 } from './invoice-visibility.util';
 import { ReturnsFeeInvoiceService } from './returns-fee-invoice.service';
 
+const invoiceLinkedOfferSelect = {
+  id: true,
+  offerNumber: true,
+  unitPrice: true,
+  weightKg: true,
+  hasWarranty: true,
+  warrantyDuration: true,
+  deliveryDays: true,
+  condition: true,
+  partType: true,
+  notes: true,
+  offerImage: true,
+  status: true,
+  orderPart: { select: { id: true, name: true, description: true, images: true } },
+  store: { select: { id: true, name: true, storeCode: true, logo: true } },
+} satisfies Prisma.OfferSelect;
+
 const invoiceInclude = {
   payment: {
     select: {
@@ -109,13 +126,7 @@ export class InvoicesService {
                 payment: {
                     select: {
                         offerId: true,
-                        offer: {
-                            select: {
-                                id: true,
-                                orderPart: { select: { name: true } },
-                                store: { select: { id: true, name: true, storeCode: true } },
-                            },
-                        },
+                        offer: { select: invoiceLinkedOfferSelect },
                     },
                 },
                 order: {
@@ -179,13 +190,7 @@ export class InvoicesService {
                 payment: {
                     select: {
                         offerId: true,
-                        offer: {
-                            select: {
-                                id: true,
-                                orderPart: { select: { name: true } },
-                                store: { select: { id: true, name: true, storeCode: true } },
-                            },
-                        },
+                        offer: { select: invoiceLinkedOfferSelect },
                     },
                 },
                 order: {
@@ -227,7 +232,12 @@ export class InvoicesService {
             where: { id },
             include: {
                 payment: {
-                    select: { offerId: true, status: true, gatewayFee: true },
+                    select: {
+                        offerId: true,
+                        status: true,
+                        gatewayFee: true,
+                        offer: { select: invoiceLinkedOfferSelect },
+                    },
                 },
                 order: {
                     include: {
@@ -513,13 +523,7 @@ export class InvoicesService {
                 payment: {
                     select: {
                         offerId: true,
-                        offer: {
-                            select: {
-                                id: true,
-                                orderPart: { select: { name: true } },
-                                store: { select: { id: true, name: true, storeCode: true } },
-                            },
-                        },
+                        offer: { select: invoiceLinkedOfferSelect },
                     },
                 },
                 order: {

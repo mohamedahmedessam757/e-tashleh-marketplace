@@ -5468,24 +5468,30 @@ export class PaymentsService {
         });
         if (!store) return;
 
-        const [releasedSum, withdrawalDebits] = await Promise.all([
+        const [releasedSum, payoutDebits] = await Promise.all([
             this.prisma.escrowTransaction.aggregate({
                 where: { status: 'RELEASED', payment: { offer: { storeId } } },
                 _sum: { merchantAmount: true },
             }),
-            this.prisma.walletTransaction.aggregate({
+            this.prisma.walletTransaction.findMany({
                 where: {
                     userId: store.ownerId,
                     role: 'VENDOR',
                     type: 'DEBIT',
-                    transactionType: 'WITHDRAWAL',
+                    transactionType: { in: ['withdrawal', 'WITHDRAWAL', 'MANUAL_PAYOUT'] },
                 },
-                _sum: { amount: true },
+                select: { amount: true, metadata: true },
             }),
         ]);
 
         const released = Number(releasedSum._sum.merchantAmount || 0);
-        const withdrawn = Number(withdrawalDebits._sum.amount || 0);
+        const withdrawn = payoutDebits.reduce((sum, row) => {
+            const meta = row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
+                ? row.metadata as Record<string, unknown>
+                : {};
+            if (meta.reversed === true || meta.duplicateReversed === true) return sum;
+            return sum + Number(row.amount || 0);
+        }, 0);
         const expectedBalance = Math.max(0, Number((released - withdrawn).toFixed(2)));
         const currentStore = await this.prisma.store.findUnique({
             where: { id: storeId },
