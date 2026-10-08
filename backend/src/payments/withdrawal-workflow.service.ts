@@ -32,6 +32,17 @@ export interface WithdrawalActionContext {
   idempotencyKey?: string;
 }
 
+function roundMoney(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+function maskAccount(value: string | null | undefined): string | null {
+  const raw = (value || '').trim();
+  if (!raw) return null;
+  if (raw.length <= 4) return raw;
+  return `${raw.slice(0, 4)}…${raw.slice(-4)}`;
+}
+
 type WithdrawalWithRelations = Prisma.WithdrawalRequestGetPayload<{
   include: { store: { include: { owner: true } }; user: true };
 }>;
@@ -131,12 +142,68 @@ export class WithdrawalWorkflowService {
     }
   }
 
+  /** Moves any missing hold from available into frozen before a payout. Does not burn it. */
+  private async ensureHeldForCompletion(
+    tx: Prisma.TransactionClient,
+    request: WithdrawalWithRelations,
+    amount: number,
+  ): Promise<void> {
+    const needHold = (frozen: number, available: number) => {
+      if (frozen + 0.001 >= amount) return 0;
+      const need = roundMoney(amount - frozen);
+      if (available + 0.001 < need) return -1;
+      return need;
+    };
+
+    if (request.role === 'CUSTOMER') {
+      await tx.$executeRaw`SELECT id FROM users WHERE id = ${request.userId!}::uuid FOR UPDATE`;
+      const user = await tx.user.findUnique({
+        where: { id: request.userId! },
+        select: { customerBalance: true, customerFrozenBalance: true },
+      });
+      const available = Number(user?.customerBalance || 0);
+      const frozen = Number(user?.customerFrozenBalance || 0);
+      const need = needHold(frozen, available);
+      if (need < 0) throw new BadRequestException('Held customer balance is insufficient');
+      if (need > 0) {
+        await tx.user.update({
+          where: { id: request.userId! },
+          data: {
+            customerBalance: { decrement: need },
+            customerFrozenBalance: { increment: need },
+          },
+        });
+      }
+      return;
+    }
+
+    await tx.$executeRaw`SELECT id FROM stores WHERE id = ${request.storeId!}::uuid FOR UPDATE`;
+    const store = await tx.store.findUnique({
+      where: { id: request.storeId! },
+      select: { balance: true, frozenBalance: true },
+    });
+    const available = Number(store?.balance || 0);
+    const frozen = Number(store?.frozenBalance || 0);
+    const need = needHold(frozen, available);
+    if (need < 0) throw new BadRequestException('Held store balance is insufficient');
+    if (need > 0) {
+      await tx.store.update({
+        where: { id: request.storeId! },
+        data: {
+          balance: { decrement: need },
+          frozenBalance: { increment: need },
+        },
+      });
+    }
+  }
+
   private async burnFrozenBalance(
     tx: Prisma.TransactionClient,
     request: WithdrawalWithRelations,
     amount: number,
   ): Promise<number> {
     if (request.role === 'CUSTOMER') {
+      await tx.$executeRaw`SELECT id FROM users WHERE id = ${request.userId!}::uuid FOR UPDATE`;
       const user = await tx.user.findUnique({ where: { id: request.userId! } });
       if (Number(user?.customerFrozenBalance || 0) < amount) {
         throw new BadRequestException('Held customer balance is insufficient');
@@ -148,6 +215,7 @@ export class WithdrawalWorkflowService {
       return Number(user?.customerBalance || 0);
     }
 
+    await tx.$executeRaw`SELECT id FROM stores WHERE id = ${request.storeId!}::uuid FOR UPDATE`;
     const store = await tx.store.findUnique({ where: { id: request.storeId! } });
     if (Number(store?.frozenBalance || 0) < amount) {
       throw new BadRequestException('Held store balance is insufficient');
@@ -262,6 +330,86 @@ export class WithdrawalWorkflowService {
     return updated;
   }
 
+  async previewWithdrawal(requestId: string) {
+    const request = await this.loadRequest(requestId);
+    if (request.status !== WITHDRAWAL_STATUS.PROCESSING) {
+      throw new BadRequestException('Only processing requests can be previewed');
+    }
+
+    const amount = Number(request.amount);
+    let settlementAmount = 0;
+    let transferAmount = amount;
+    let blockedReason: string | null = null;
+
+    if (request.role === 'VENDOR' && request.storeId) {
+      const liabilities = await loadStorePendingLiabilities(this.prisma, request.storeId);
+      const allocation = allocateLiabilitySettlement(liabilities.lines, amount);
+      settlementAmount = allocation.settlementAmount;
+      transferAmount = allocation.transferAmount;
+      try {
+        assertWithdrawalSettlesLiabilitiesOrThrow(
+          liabilities.total,
+          allocation,
+          liabilities.lines[0]?.amount,
+        );
+        if (liabilities.total > 0 && allocation.remainingLiability > 0 && transferAmount <= 0) {
+          blockedReason = formatLiabilitiesBlockMessage(liabilities.total, 'en');
+        }
+      } catch (err) {
+        blockedReason = err instanceof Error ? err.message : 'Liabilities block this withdrawal';
+      }
+    }
+
+    const isCustomer = request.role === 'CUSTOMER';
+    const available = isCustomer
+      ? Number(request.user?.customerBalance || 0)
+      : Number(request.store?.balance || 0);
+    const frozen = isCustomer
+      ? Number(request.user?.customerFrozenBalance || 0)
+      : Number(request.store?.frozenBalance || 0);
+    const shortfall = Math.max(0, roundMoney(amount - frozen));
+    const canFund = frozen + available + 0.001 >= amount;
+    if (!canFund && !blockedReason) {
+      blockedReason = isCustomer
+        ? 'Held customer balance is insufficient'
+        : 'Held store balance is insufficient';
+    }
+
+    const bankSource = isCustomer ? request.user : request.store;
+    const payoutMethod = request.payoutMethod === 'STRIPE' ? 'STRIPE' : 'BANK_TRANSFER';
+
+    return {
+      requestId: request.id,
+      payoutMethod,
+      amount,
+      transferAmount,
+      settlementAmount,
+      currency: request.currency || 'AED',
+      beneficiaryName: isCustomer
+        ? request.user?.name || request.user?.email || ''
+        : request.store?.name || '',
+      availableBefore: roundMoney(available),
+      frozenBefore: roundMoney(frozen),
+      availableAfter: canFund ? roundMoney(available - shortfall) : roundMoney(available),
+      frozenAfter: canFund ? roundMoney(frozen + shortfall - amount) : roundMoney(frozen),
+      canComplete: canFund && !blockedReason,
+      blockedReason,
+      bank:
+        payoutMethod === 'BANK_TRANSFER'
+          ? {
+              bankName: bankSource?.bankName || null,
+              accountHolder: bankSource?.bankAccountHolder || null,
+              iban: request.ibanSnapshot || bankSource?.bankIban || null,
+              swift: bankSource?.bankSwift || null,
+            }
+          : null,
+      stripeAccountHint:
+        payoutMethod === 'STRIPE'
+          ? maskAccount(request.stripeAccountSnapshot || bankSource?.stripeAccountId || null)
+          : null,
+    };
+  }
+
   async completeWithdrawal(requestId: string, ctx: WithdrawalActionContext) {
     const reason = this.validateAdminReason(ctx.notes, true, ctx.adminSignature);
     const idempotencyKey = ctx.idempotencyKey || `complete_${requestId}_${ctx.adminId}`;
@@ -337,7 +485,8 @@ export class WithdrawalWorkflowService {
     let transferId: string | null = request.stripeTransferId?.startsWith('tr_')
       ? request.stripeTransferId
       : null;
-    if (methodToUse === 'STRIPE' && transferAmount > 0 && !transferId) {
+    const needsStripeCall = methodToUse === 'STRIPE' && transferAmount > 0 && !transferId;
+    if (needsStripeCall) {
       const stripeId =
         request.role === 'CUSTOMER'
           ? request.user?.stripeAccountId
@@ -375,6 +524,10 @@ export class WithdrawalWorkflowService {
 
       if (!transferId) {
         try {
+          // Refuse before Stripe when the hold cannot be funded.
+          await this.prisma.$transaction((tx) =>
+            this.ensureHeldForCompletion(tx, request, amount),
+          );
           const transfer = await this.stripeService.createTransfer(
             transferAmount.toFixed(2),
             request.currency,
@@ -392,6 +545,10 @@ export class WithdrawalWorkflowService {
             stripeKey,
           );
           transferId = transfer.id;
+          await this.prisma.withdrawalRequest.update({
+            where: { id: requestId },
+            data: { stripeTransferId: transferId, stripeIdempotencyKey: stripeKey },
+          });
         } catch (err) {
           await this.prisma.withdrawalRequest
             .updateMany({
@@ -404,15 +561,65 @@ export class WithdrawalWorkflowService {
       }
     }
 
+    let completedNow = false;
     try {
       const updated = await this.prisma.$transaction(async (tx) => {
-        const balanceAfter = await this.burnFrozenBalance(tx, request, amount);
+        await tx.$executeRaw`SELECT id FROM withdrawal_requests WHERE id = ${requestId}::uuid FOR UPDATE`;
+        const locked = await tx.withdrawalRequest.findUnique({
+          where: { id: requestId },
+          select: { status: true },
+        });
+        if (locked?.status === WITHDRAWAL_STATUS.COMPLETED) {
+          return tx.withdrawalRequest.findUniqueOrThrow({ where: { id: requestId } });
+        }
+        if (locked?.status !== WITHDRAWAL_STATUS.PROCESSING) {
+          throw new BadRequestException('Only processing requests can be completed');
+        }
+
+        if (methodToUse !== 'STRIPE') {
+          const hasBank =
+            request.role === 'CUSTOMER'
+              ? Boolean(request.user?.bankIban && request.user?.bankName)
+              : Boolean(request.store?.bankIban && request.store?.bankName);
+          if (!hasBank) {
+            throw new BadRequestException('Bank details are missing. Cannot complete bank transfer.');
+          }
+        }
 
         const walletUserId =
           request.role === 'CUSTOMER' ? request.userId! : request.store!.ownerId;
-        const walletRole = request.role === 'CUSTOMER' ? 'CUSTOMER' : 'VENDOR';
+        const alreadyDebited = await tx.walletTransaction.findFirst({
+          where: {
+            userId: walletUserId,
+            transactionType: 'withdrawal',
+            metadata: { path: ['requestId'], equals: requestId },
+          },
+          select: { id: true },
+        });
 
-        if (settlementAmount > 0 && request.role === 'VENDOR') {
+        const walletRole = request.role === 'CUSTOMER' ? 'CUSTOMER' : 'VENDOR';
+        let balanceAfter = 0;
+        if (!alreadyDebited) {
+          // Stripe call already committed the hold. Bank and ledger-only retries hold here.
+          if (!needsStripeCall || transferId) {
+            await this.ensureHeldForCompletion(tx, request, amount);
+          }
+          balanceAfter = await this.burnFrozenBalance(tx, request, amount);
+        } else if (request.role === 'CUSTOMER') {
+          const user = await tx.user.findUnique({
+            where: { id: request.userId! },
+            select: { customerBalance: true },
+          });
+          balanceAfter = Number(user?.customerBalance || 0);
+        } else {
+          const store = await tx.store.findUnique({
+            where: { id: request.storeId! },
+            select: { balance: true },
+          });
+          balanceAfter = Number(store?.balance || 0);
+        }
+
+        if (!alreadyDebited && settlementAmount > 0 && request.role === 'VENDOR') {
           await markSettledLiabilityLinesPaid(tx, settledLines);
           for (const line of settledLines) {
             await tx.walletTransaction.create({
@@ -435,8 +642,8 @@ export class WithdrawalWorkflowService {
           }
         }
 
-        const payoutLedgerAmount = methodToUse === 'STRIPE' ? transferAmount : transferAmount;
-        if (payoutLedgerAmount > 0) {
+        const payoutLedgerAmount = transferAmount;
+        if (!alreadyDebited && payoutLedgerAmount > 0) {
           await tx.walletTransaction.create({
             data: {
               userId: walletUserId,
@@ -458,16 +665,6 @@ export class WithdrawalWorkflowService {
               },
             },
           });
-        }
-
-        if (methodToUse !== 'STRIPE') {
-          const hasBank =
-            request.role === 'CUSTOMER'
-              ? Boolean(request.user?.bankIban && request.user?.bankName)
-              : Boolean(request.store?.bankIban && request.store?.bankName);
-          if (!hasBank) {
-            throw new BadRequestException('Bank details are missing. Cannot complete bank transfer.');
-          }
         }
 
         await this.auditLogs.logAction(
@@ -493,6 +690,7 @@ export class WithdrawalWorkflowService {
           tx,
         );
 
+        completedNow = true;
         return tx.withdrawalRequest.update({
           where: { id: requestId },
           data: {
@@ -508,7 +706,7 @@ export class WithdrawalWorkflowService {
         });
       });
 
-      await this.notifyRecipient(request, {
+      if (completedNow) await this.notifyRecipient(request, {
         titleAr: 'تم إتمام السحب',
         titleEn: 'Withdrawal Completed',
         messageAr:
@@ -534,8 +732,8 @@ export class WithdrawalWorkflowService {
           .notifyAdmins({
             titleAr: 'فشل قيد سحب بعد تحويل Stripe',
             titleEn: 'Withdrawal ledger failed after Stripe Transfer',
-            messageAr: `تم إنشاء التحويل ${transferId} لطلب السحب ${requestId} لكن فشل تحديث الدفتر. يلزم مطابقة يدوية.`,
-            messageEn: `Transfer ${transferId} created for withdrawal ${requestId} but ledger commit failed. Manual reconcile required.`,
+            messageAr: `تم إنشاء التحويل ${transferId} وحُفظ لطلب السحب ${requestId}. فشل تحديث الدفتر. أعد تأكيد التحويل لإكمال القيد فقط بدون تحويل جديد. السبب: ${(err as Error)?.message || 'unknown'}`,
+            messageEn: `Transfer ${transferId} was saved for withdrawal ${requestId}. Ledger update failed. Confirm again to finish the ledger only — no second transfer. Reason: ${(err as Error)?.message || 'unknown'}`,
             type: 'PAYMENT',
             link: `/admin/billing/withdrawals`,
             metadata: { requestId, stripeTransferId: transferId },
@@ -662,6 +860,25 @@ export class WithdrawalWorkflowService {
     if (!existing || existing.status !== WITHDRAWAL_STATUS.PROCESSING) return;
 
     if (eventType === 'transfer.created' || eventType === 'transfer.paid') {
+      const ledger = await this.prisma.walletTransaction.findFirst({
+        where: {
+          transactionType: 'withdrawal',
+          metadata: { path: ['requestId'], equals: requestId },
+        },
+        select: { id: true },
+      });
+      if (!ledger) {
+        if (!existing.stripeTransferId?.startsWith('tr_')) {
+          await this.prisma.withdrawalRequest.update({
+            where: { id: requestId },
+            data: { stripeTransferId: transfer.id },
+          });
+        }
+        this.logger.warn(
+          `Stripe ${eventType} ${transfer.id} for withdrawal ${requestId} has no ledger debit; leaving status ${existing.status}`,
+        );
+        return;
+      }
       await this.prisma.withdrawalRequest.update({
         where: { id: requestId },
         data: {

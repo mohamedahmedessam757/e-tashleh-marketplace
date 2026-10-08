@@ -36,6 +36,7 @@ export interface StripeRefundContext {
     paymentTotalAmount: number;
     priorRefunded: number;
     orderNumber?: string;
+    partName?: string | null;
     transferReversalId?: string | null;
     transferReversalFailed?: boolean;
     adjudicationLedger?: {
@@ -774,6 +775,14 @@ export class EscrowService {
         const resolved = await this.resolvePaymentForRefund(orderId, paymentId);
         const payment = resolved.payment;
         const escrow = resolved.escrow;
+        const partName = payment
+            ? (
+                  await this.prisma.paymentTransaction.findUnique({
+                      where: { id: payment.id },
+                      select: { offer: { select: { orderPart: { select: { name: true } } } } },
+                  })
+              )?.offer?.orderPart?.name || null
+            : null;
 
         if (!payment) {
             throw new BadRequestException(
@@ -825,6 +834,7 @@ export class EscrowService {
                     paymentTotalAmount: payment.totalAmount,
                     priorRefunded: payment.refundedAmount,
                     orderNumber: order?.orderNumber,
+                    partName,
                 };
             }
             throw new BadRequestException('Stripe payment ID missing. Cannot refund.');
@@ -968,6 +978,7 @@ export class EscrowService {
                     paymentTotalAmount: payment.totalAmount,
                     priorRefunded: payment.refundedAmount,
                     orderNumber: order?.orderNumber,
+                    partName,
                     transferReversalId,
                     transferReversalFailed,
                 };
@@ -998,6 +1009,7 @@ export class EscrowService {
             paymentTotalAmount: payment.totalAmount,
             priorRefunded: payment.refundedAmount,
             orderNumber: order?.orderNumber,
+            partName,
         };
     }
 
@@ -1246,6 +1258,13 @@ export class EscrowService {
     dispatchRefundNotifications(ctx: StripeRefundContext): void {
         const orderNumber = ctx.orderNumber || ctx.orderId;
         const refundAmount = ctx.refundAmount;
+        const partLabel = (ctx.partName || '').trim();
+        const subjectAr = partLabel
+            ? `القطعة «${partLabel}» من الطلب #${orderNumber}`
+            : `الطلب #${orderNumber}`;
+        const subjectEn = partLabel
+            ? `part "${partLabel}" on order #${orderNumber}`
+            : `order #${orderNumber}`;
 
         void (async () => {
             try {
@@ -1275,8 +1294,8 @@ export class EscrowService {
                             type: 'payment',
                             titleAr: 'تم استرجاع عملية دفع ⚠️',
                             titleEn: 'Payment Refunded ⚠️',
-                            messageAr: `تم استرجاع مبلغ ${refundAmount} درهم من الطلب #${orderNumber}. السبب: ${ctx.reason}`,
-                            messageEn: `AED ${refundAmount} has been refunded for Order #${orderNumber}. Reason: ${ctx.reason}`,
+                            messageAr: `تم استرجاع مبلغ ${refundAmount} درهم عن ${subjectAr}. السبب: ${ctx.reason}`,
+                            messageEn: `AED ${refundAmount} has been refunded for ${subjectEn}. Reason: ${ctx.reason}`,
                             link: `marketplace/orders/${ctx.orderId}`,
                             metadata: { orderId: ctx.orderId, amount: refundAmount },
                         });
@@ -1287,10 +1306,10 @@ export class EscrowService {
                     recipientId: ctx.customerId,
                     recipientRole: 'CUSTOMER',
                     type: 'payment',
-                    titleAr: 'تم استرداد المبلغ 💰',
-                    titleEn: 'Refund Processed 💰',
-                    messageAr: `تم استرداد مبلغ ${refundAmount} درهم للطلب #${orderNumber}. قد يستغرق ظهور المبلغ في حسابك البنكي عدة أيام عمل.`,
-                    messageEn: `A refund of AED ${refundAmount} for Order #${orderNumber} has been processed. It may take a few business days to appear in your account.`,
+                    titleAr: partLabel ? `تم استرداد «${partLabel}» 💰` : 'تم استرداد المبلغ 💰',
+                    titleEn: partLabel ? `Refund for "${partLabel}" 💰` : 'Refund Processed 💰',
+                    messageAr: `تم استرداد مبلغ ${refundAmount} درهم عن ${subjectAr}. قد يستغرق ظهور المبلغ في حسابك البنكي عدة أيام عمل.`,
+                    messageEn: `A refund of AED ${refundAmount} for ${subjectEn} has been processed. It may take a few business days to appear in your account.`,
                     link: 'orders',
                     metadata: { orderId: ctx.orderId, amount: refundAmount },
                 });
@@ -1298,8 +1317,8 @@ export class EscrowService {
                 await this.notifications.notifyAdmins({
                     titleAr: 'استرداد مبلغ مالي 💰',
                     titleEn: 'Refund Processed 💰',
-                    messageAr: `تم استرداد مبلغ ${refundAmount} درهم للطلب #${orderNumber}. السبب: ${ctx.reason}`,
-                    messageEn: `AED ${refundAmount} refunded for Order #${orderNumber}. Reason: ${ctx.reason}`,
+                    messageAr: `تم استرداد مبلغ ${refundAmount} درهم عن ${subjectAr}. السبب: ${ctx.reason}`,
+                    messageEn: `AED ${refundAmount} refunded for ${subjectEn}. Reason: ${ctx.reason}`,
                     type: 'PAYMENT',
                     link: `/admin/orders/${ctx.orderId}`,
                     metadata: { orderId: ctx.orderId, amount: refundAmount, reason: ctx.reason },
@@ -1448,7 +1467,7 @@ export class EscrowService {
                 ...(scopedOfferIds.length ? { offerId: { in: scopedOfferIds } } : {}),
             },
             include: {
-                offer: { select: { id: true, storeId: true } },
+                offer: { select: { id: true, storeId: true, orderPart: { select: { name: true } } } },
             },
             orderBy: { paidAt: 'asc' },
         });
@@ -1537,6 +1556,9 @@ export class EscrowService {
 
                 // Cancel-specific fee disclosure (AR/EN) for customer, merchant, admin
                 const orderLabel = order.orderNumber || orderId;
+                const partLabel = payment.offer?.orderPart?.name?.trim() || '';
+                const partPrefixAr = partLabel ? `القطعة «${partLabel}» من الطلب #${orderLabel}. ` : '';
+                const partPrefixEn = partLabel ? `Part "${partLabel}" on order #${orderLabel}. ` : '';
                 const paidLabel = calc.paidTotal.toFixed(2);
                 const feeLabel = (merchantFault ? gatewayFeeLiability : calc.feeAmount).toFixed(2);
                 const refundLabel = ctx.refundAmount.toFixed(2);
@@ -1547,14 +1569,14 @@ export class EscrowService {
                         recipientId: payment.customerId,
                         recipientRole: 'CUSTOMER',
                         type: 'payment',
-                        titleAr: 'تم استرداد المبلغ بعد الإلغاء 💰',
-                        titleEn: 'Refund after cancellation 💰',
+                        titleAr: partLabel ? `استرداد «${partLabel}» بعد الإلغاء 💰` : 'تم استرداد المبلغ بعد الإلغاء 💰',
+                        titleEn: partLabel ? `Refund for "${partLabel}" after cancellation 💰` : 'Refund after cancellation 💰',
                         messageAr: merchantFault
-                            ? `تم إلغاء الطلب #${orderLabel} بسبب التاجر. المدفوع: ${paidLabel} درهم، المبلغ المسترد كاملاً: ${refundLabel} درهم. قد يستغرق ظهور المبلغ في حسابك عدة أيام عمل.`
-                            : `تم إلغاء الطلب #${orderLabel}. المدفوع: ${paidLabel} درهم، رسوم بوابة الدفع (${feeFormulaLabel}) = ${feeLabel} درهم، المبلغ المسترد: ${refundLabel} درهم. قد يستغرق ظهور المبلغ في حسابك عدة أيام عمل.`,
+                            ? `${partPrefixAr}تم إلغاء الطلب #${orderLabel} بسبب التاجر. المدفوع: ${paidLabel} درهم، المبلغ المسترد كاملاً: ${refundLabel} درهم. قد يستغرق ظهور المبلغ في حسابك عدة أيام عمل.`
+                            : `${partPrefixAr}تم إلغاء الطلب #${orderLabel}. المدفوع: ${paidLabel} درهم، رسوم بوابة الدفع (${feeFormulaLabel}) = ${feeLabel} درهم، المبلغ المسترد: ${refundLabel} درهم. قد يستغرق ظهور المبلغ في حسابك عدة أيام عمل.`,
                         messageEn: merchantFault
-                            ? `Order #${orderLabel} was cancelled due to merchant fault. Paid: AED ${paidLabel}, full refund: AED ${refundLabel}. It may take a few business days to appear in your account.`
-                            : `Order #${orderLabel} was cancelled. Paid: AED ${paidLabel}, gateway fee (${feeFormulaLabel}) = AED ${feeLabel}, refunded: AED ${refundLabel}. It may take a few business days to appear in your account.`,
+                            ? `${partPrefixEn}Order #${orderLabel} was cancelled due to merchant fault. Paid: AED ${paidLabel}, full refund: AED ${refundLabel}. It may take a few business days to appear in your account.`
+                            : `${partPrefixEn}Order #${orderLabel} was cancelled. Paid: AED ${paidLabel}, gateway fee (${feeFormulaLabel}) = AED ${feeLabel}, refunded: AED ${refundLabel}. It may take a few business days to appear in your account.`,
                         link: 'orders',
                         metadata: {
                             orderId,
@@ -1591,14 +1613,14 @@ export class EscrowService {
                             recipientId: store.ownerId,
                             recipientRole: 'VENDOR',
                             type: 'payment',
-                            titleAr: 'استرداد بسبب إلغاء الطلب ⚠️',
-                            titleEn: 'Refund due to order cancellation ⚠️',
+                            titleAr: partLabel ? `استرداد «${partLabel}» بسبب الإلغاء ⚠️` : 'استرداد بسبب إلغاء الطلب ⚠️',
+                            titleEn: partLabel ? `Refund for "${partLabel}" after cancellation ⚠️` : 'Refund due to order cancellation ⚠️',
                             messageAr: merchantFault
-                                ? `تم استرداد ${refundLabel} درهم كاملاً للعميل من الطلب #${orderLabel}. رسوم بوابة الدفع (${feeFormulaLabel} = ${feeLabel} درهم) محملة على المتجر. السبب: ${reason}`
-                                : `تم استرداد ${refundLabel} درهم للعميل من الطلب #${orderLabel} (بعد خصم رسوم بوابة ${feeFormulaLabel}). السبب: ${reason}`,
+                                ? `${partPrefixAr}تم استرداد ${refundLabel} درهم كاملاً للعميل من الطلب #${orderLabel}. رسوم بوابة الدفع (${feeFormulaLabel} = ${feeLabel} درهم) محملة على المتجر. السبب: ${reason}`
+                                : `${partPrefixAr}تم استرداد ${refundLabel} درهم للعميل من الطلب #${orderLabel} (بعد خصم رسوم بوابة ${feeFormulaLabel}). السبب: ${reason}`,
                             messageEn: merchantFault
-                                ? `Full AED ${refundLabel} refunded to the customer for Order #${orderLabel}. Gateway fee (${feeFormulaLabel} = AED ${feeLabel}) is charged to the store. Reason: ${reason}`
-                                : `AED ${refundLabel} refunded to the customer for Order #${orderLabel} (after gateway fee ${feeFormulaLabel}). Reason: ${reason}`,
+                                ? `${partPrefixEn}Full AED ${refundLabel} refunded to the customer for Order #${orderLabel}. Gateway fee (${feeFormulaLabel} = AED ${feeLabel}) is charged to the store. Reason: ${reason}`
+                                : `${partPrefixEn}AED ${refundLabel} refunded to the customer for Order #${orderLabel} (after gateway fee ${feeFormulaLabel}). Reason: ${reason}`,
                             link: `marketplace/orders/${orderId}`,
                             metadata: {
                                 orderId,
@@ -1615,14 +1637,14 @@ export class EscrowService {
                 }
 
                 await this.notifications.notifyAdmins({
-                    titleAr: 'استرداد إلغاء قبل الشحن 💰',
-                    titleEn: 'Pre-ship cancel refund 💰',
+                    titleAr: partLabel ? `استرداد «${partLabel}» قبل الشحن 💰` : 'استرداد إلغاء قبل الشحن 💰',
+                    titleEn: partLabel ? `Pre-ship refund for "${partLabel}" 💰` : 'Pre-ship cancel refund 💰',
                     messageAr: merchantFault
-                        ? `طلب #${orderLabel}: استرداد كامل ${refundLabel} درهم للعميل؛ رسوم (${feeFormulaLabel}) = ${feeLabel} على المتجر. السبب: ${reason}`
-                        : `طلب #${orderLabel}: استرداد ${refundLabel} درهم للعميل بعد خصم رسوم (${feeFormulaLabel}) = ${feeLabel}. السبب: ${reason}`,
+                        ? `${partPrefixAr}طلب #${orderLabel}: استرداد كامل ${refundLabel} درهم للعميل؛ رسوم (${feeFormulaLabel}) = ${feeLabel} على المتجر. السبب: ${reason}`
+                        : `${partPrefixAr}طلب #${orderLabel}: استرداد ${refundLabel} درهم للعميل بعد خصم رسوم (${feeFormulaLabel}) = ${feeLabel}. السبب: ${reason}`,
                     messageEn: merchantFault
-                        ? `Order #${orderLabel}: full refund AED ${refundLabel}; gateway fee (${feeFormulaLabel}) = AED ${feeLabel} on merchant. Reason: ${reason}`
-                        : `Order #${orderLabel}: refunded AED ${refundLabel} after gateway fee (${feeFormulaLabel}) = AED ${feeLabel}. Reason: ${reason}`,
+                        ? `${partPrefixEn}Order #${orderLabel}: full refund AED ${refundLabel}; gateway fee (${feeFormulaLabel}) = AED ${feeLabel} on merchant. Reason: ${reason}`
+                        : `${partPrefixEn}Order #${orderLabel}: refunded AED ${refundLabel} after gateway fee (${feeFormulaLabel}) = AED ${feeLabel}. Reason: ${reason}`,
                     type: 'PAYMENT',
                     link: `/admin/orders/${orderId}`,
                     metadata: {

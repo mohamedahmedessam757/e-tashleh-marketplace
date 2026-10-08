@@ -107,7 +107,16 @@ export class InvoicesService {
             },
             include: {
                 payment: {
-                    select: { offerId: true },
+                    select: {
+                        offerId: true,
+                        offer: {
+                            select: {
+                                id: true,
+                                orderPart: { select: { name: true } },
+                                store: { select: { id: true, name: true, storeCode: true } },
+                            },
+                        },
+                    },
                 },
                 order: {
                     include: {
@@ -168,7 +177,16 @@ export class InvoicesService {
             },
             include: {
                 payment: {
-                    select: { offerId: true },
+                    select: {
+                        offerId: true,
+                        offer: {
+                            select: {
+                                id: true,
+                                orderPart: { select: { name: true } },
+                                store: { select: { id: true, name: true, storeCode: true } },
+                            },
+                        },
+                    },
                 },
                 order: {
                     include: {
@@ -493,7 +511,16 @@ export class InvoicesService {
             },
             include: {
                 payment: {
-                    select: { offerId: true },
+                    select: {
+                        offerId: true,
+                        offer: {
+                            select: {
+                                id: true,
+                                orderPart: { select: { name: true } },
+                                store: { select: { id: true, name: true, storeCode: true } },
+                            },
+                        },
+                    },
                 },
                 order: {
                     include: {
@@ -677,7 +704,7 @@ export class InvoicesService {
                 liveCarrierName: master.liveCarrierName,
                 livePlatformLegalNameEn: master.livePlatformLegalNameEn,
                 livePlatformLegalNameAr: master.livePlatformLegalNameAr,
-                partNameSnapshot: master.partNameSnapshot || master.livePartName,
+                partNameSnapshot: master.livePartName || master.partNameSnapshot,
                 carrierNameSnapshot: master.carrierNameSnapshot || master.liveCarrierName,
                 platformLegalNameEn: master.livePlatformLegalNameEn,
                 platformLegalNameAr: master.livePlatformLegalNameAr,

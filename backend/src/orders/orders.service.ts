@@ -5401,14 +5401,30 @@ export class OrdersService {
                 `Part-cancel refund incomplete order=${orderId} offers=${unique.join(',')} ` +
                     `skipped=${result?.skipped} reason=${outcome} amount=${result?.amountRefunded ?? 0}`,
             );
+            const [pendingOrder, pendingOffers] = await Promise.all([
+                this.prisma.order.findUnique({
+                    where: { id: orderId },
+                    select: { orderNumber: true },
+                }),
+                this.prisma.offer.findMany({
+                    where: { id: { in: unique } },
+                    select: { orderPart: { select: { name: true } } },
+                }),
+            ]);
+            const pendingPartNames = pendingOffers
+                .map((row) => row.orderPart?.name)
+                .filter((name): name is string => Boolean(name));
+            const pendingOrderNo = pendingOrder?.orderNumber || orderId;
+            const pendingPartsAr = pendingPartNames.length ? pendingPartNames.join('، ') : 'قطعة';
+            const pendingPartsEn = pendingPartNames.length ? pendingPartNames.join(', ') : 'a part';
             await this.notifications
                 .notifyAdmins({
-                    titleAr: 'استرداد معلّق بعد إلغاء قطعة',
-                    titleEn: 'Refund pending after part cancel',
-                    messageAr: `تم إلغاء عروض من الطلب لكن الاسترداد لم يكتمل (سبب: ${outcome || 'unknown'}). ${
+                    titleAr: `استرداد معلّق: ${pendingPartsAr}`,
+                    titleEn: `Refund pending: ${pendingPartsEn}`,
+                    messageAr: `الطلب #${pendingOrderNo} — القطعة: ${pendingPartsAr}. تم إلغاء العرض لكن الاسترداد لم يكتمل (سبب: ${outcome || 'unknown'}). ${
                         terminal ? 'راجع المدفوعات يدويًا.' : 'سيعيد النظام المحاولة تلقائيًا.'
                     }`,
-                    messageEn: `Offers were cancelled on the order but refund did not complete (reason: ${outcome || 'unknown'}). ${
+                    messageEn: `Order #${pendingOrderNo} — part: ${pendingPartsEn}. The offer was cancelled but the refund did not complete (reason: ${outcome || 'unknown'}). ${
                         terminal ? 'Review payments manually.' : 'The system will retry automatically.'
                     }`,
                     type: 'ORDER',

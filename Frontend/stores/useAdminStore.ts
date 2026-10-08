@@ -1320,7 +1320,7 @@ export const useAdminStore = create<AdminState>()(
               adminSignature: signature,
               adminName,
               adminEmail,
-              idempotencyKey: `complete_${id}_${Date.now()}`,
+              idempotencyKey: `complete_${id}`,
             }),
           });
           const result = await res.json();
@@ -1328,8 +1328,13 @@ export const useAdminStore = create<AdminState>()(
             get().fetchWithdrawals();
             return { success: true, message: result.message || 'Completed' };
           }
-          return { success: false, message: result.message || 'Completion failed' };
-        } catch {
+          const raw = result.message;
+          const message = Array.isArray(raw) ? raw.join(', ') : raw || 'Completion failed';
+          return { success: false, message };
+        } catch (err: any) {
+          if (err?.name === 'AbortError') {
+            return { success: false, message: 'ABORT_ERROR' };
+          }
           return { success: false, message: 'An unexpected error occurred' };
         }
       },

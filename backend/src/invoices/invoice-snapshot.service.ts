@@ -42,6 +42,8 @@ export interface RefundInvoiceContext {
   stripeRefundId: string;
   currency?: string;
   reason?: string | null;
+  partName?: string | null;
+  orderNumber?: string | null;
   platformLegalNameEn?: string | null;
   platformLegalNameAr?: string | null;
   actorId?: string | null;
@@ -375,28 +377,48 @@ export class InvoiceSnapshotService {
     }
 
     const batchKey = refundInvoiceBatchKey(stripeRefundId);
+    let partName = (ctx.partName || '').trim();
+    if (!partName) {
+      const paymentPart = await tx.paymentTransaction.findUnique({
+        where: { id: ctx.paymentId },
+        select: { offer: { select: { orderPart: { select: { name: true } } } } },
+      });
+      partName = (paymentPart?.offer?.orderPart?.name || '').trim();
+    }
+    let orderNumber = (ctx.orderNumber || '').trim();
+    if (!orderNumber) {
+      const orderRow = await tx.order.findUnique({
+        where: { id: ctx.orderId },
+        select: { orderNumber: true },
+      });
+      orderNumber = (orderRow?.orderNumber || '').trim();
+    }
+    const refundLine = {
+      kind: 'REFUND',
+      amount: -refundAmount,
+      stripeRefundId,
+      reason: ctx.reason || null,
+      label: partName || 'Customer refund',
+      partName: partName || null,
+      orderNumber: orderNumber || null,
+    };
     const existing = await tx.invoice.findFirst({
       where: { invoiceType: 'REFUND', shippingBatchKey: batchKey },
-      select: { id: true, invoiceNumber: true, total: true },
+      select: { id: true, invoiceNumber: true, total: true, partNameSnapshot: true },
     });
     if (existing) {
       const existingTotal = Number(existing.total);
       const expectedTotal = -refundAmount;
       // Correct stale/wrong total if a prior writer used a mismatched delta
-      if (roundMoney2(existingTotal) !== roundMoney2(expectedTotal)) {
+      if (roundMoney2(existingTotal) !== roundMoney2(expectedTotal) || (!existing.partNameSnapshot && partName)) {
         const updated = await tx.invoice.update({
           where: { id: existing.id },
           data: {
-            total: expectedTotal,
-            lineItems: [
-              {
-                kind: 'REFUND',
-                amount: expectedTotal,
-                stripeRefundId,
-                reason: ctx.reason || null,
-                label: 'Customer refund',
-              },
-            ] as unknown as Prisma.InputJsonValue,
+            ...(roundMoney2(existingTotal) !== roundMoney2(expectedTotal)
+              ? { total: expectedTotal }
+              : {}),
+            ...(partName && !existing.partNameSnapshot ? { partNameSnapshot: partName } : {}),
+            lineItems: [refundLine] as unknown as Prisma.InputJsonValue,
           },
           select: { id: true, invoiceNumber: true, total: true },
         });
@@ -448,19 +470,12 @@ export class InvoiceSnapshotService {
           invoiceGroupId,
           parentInvoiceId,
           shippingBatchKey: batchKey,
+          partNameSnapshot: partName || null,
           platformLegalNameEn:
             ctx.platformLegalNameEn || master?.platformLegalNameEn || null,
           platformLegalNameAr:
             ctx.platformLegalNameAr || master?.platformLegalNameAr || null,
-          lineItems: [
-            {
-              kind: 'REFUND',
-              amount: total,
-              stripeRefundId,
-              reason: ctx.reason || null,
-              label: 'Customer refund',
-            },
-          ] as unknown as Prisma.InputJsonValue,
+          lineItems: [refundLine] as unknown as Prisma.InputJsonValue,
         },
         select: { id: true, invoiceNumber: true, total: true },
       });

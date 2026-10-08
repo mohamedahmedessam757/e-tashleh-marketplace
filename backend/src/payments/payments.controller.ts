@@ -334,6 +334,13 @@ export class PaymentsController {
         return this.paymentsService.exportWithdrawals(req.user.id, req.user.role, filters, format, res);
     }
 
+    @Get('admin/withdrawals/:id/preview')
+    @UseGuards(PermissionsGuard)
+    @Permissions('billing', 'view')
+    previewWithdrawal(@Param('id') id: string) {
+        return this.paymentsService.previewWithdrawal(id);
+    }
+
     @Get('admin/withdrawals/:id/stripe-status')
     @UseGuards(PermissionsGuard)
     @Permissions('billing', 'view')

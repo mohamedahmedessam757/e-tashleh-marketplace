@@ -175,10 +175,16 @@ export const BillingPage: React.FC<BillingPageProps> = ({ onNavigate }) => {
                                     const isInvoice = activeTab === 'history';
                                     const acceptedOffer = itemRecord.offers?.find((o: any) => o.status === 'accepted');
 
-                                    // Get the real total amount
-                                    let displayPrice = 0;
+                                    const linkedOffer = itemRecord.paymentOfferId
+                                        ? itemRecord.offers?.find((o: any) => o.id === itemRecord.paymentOfferId)
+                                        : null;
+
+                                    // Get the real total amount. Refunds are negative and must stay visible.
+                                    let displayPrice: number | null = null;
                                     if (isInvoice) {
-                                        displayPrice = itemRecord.invoiceTotal || Number(acceptedOffer?.finalPrice || acceptedOffer?.price || 0);
+                                        displayPrice = typeof itemRecord.invoiceTotal === 'number' && Number.isFinite(itemRecord.invoiceTotal)
+                                            ? itemRecord.invoiceTotal
+                                            : null;
                                     } else {
                                         displayPrice = Number(acceptedOffer?.finalPrice || acceptedOffer?.price || 0);
                                     }
@@ -193,21 +199,25 @@ export const BillingPage: React.FC<BillingPageProps> = ({ onNavigate }) => {
                                         })
                                         : '--';
 
-                                    // Get part name — Order model stores partName directly
-                                    const partName = itemRecord.partName
-                                        || itemRecord.parts?.[0]?.name
-                                        || acceptedOffer?.partName
-                                        || (language === 'ar' ? 'قطعة غيار' : 'Spare Part');
+                                    // Invoice rows use the payment's own part, never the order's first part.
+                                    const partName = (isInvoice
+                                        ? (itemRecord.invoicePartName || linkedOffer?.orderPart?.name)
+                                        : (itemRecord.partName || itemRecord.parts?.[0]?.name || acceptedOffer?.partName)
+                                    ) || (language === 'ar' ? 'قطعة غيار' : 'Spare Part');
 
                                     // Get the store name — offer.store.name (via Prisma relation)
-                                    const storeName = acceptedOffer?.store?.name
+                                    const storeName = linkedOffer?.store?.name
+                                        || itemRecord.payment?.offer?.store?.name
+                                        || acceptedOffer?.store?.name
                                         || acceptedOffer?.store?.storeCode
                                         || itemRecord.store?.name
                                         || itemRecord.store?.storeCode
                                         || (language === 'ar' ? 'متجر' : 'Store');
 
                                     // Get the store code for display
-                                    const storeCode = acceptedOffer?.store?.storeCode
+                                    const storeCode = linkedOffer?.store?.storeCode
+                                        || itemRecord.payment?.offer?.store?.storeCode
+                                        || acceptedOffer?.store?.storeCode
                                         || itemRecord.store?.storeCode
                                         || '';
 
@@ -241,7 +251,9 @@ export const BillingPage: React.FC<BillingPageProps> = ({ onNavigate }) => {
                                                     <div className="text-center md:text-right w-full md:w-auto">
                                                         <p className="text-xs text-gray-400 mb-1">{language === 'ar' ? 'المبلغ الإجمالي' : 'Total Amount'}</p>
                                                         <p className="text-xl md:text-2xl font-bold text-gold-500 font-mono">
-                                                            {displayPrice > 0 ? `${displayPrice.toFixed(2)} ${itemRecord.invoiceCurrency || 'AED'}` : '--'}
+                                                            {typeof displayPrice === 'number' && Number.isFinite(displayPrice)
+                                                                ? `${displayPrice.toFixed(2)} ${itemRecord.invoiceCurrency || 'AED'}`
+                                                                : '--'}
                                                         </p>
                                                     </div>
 

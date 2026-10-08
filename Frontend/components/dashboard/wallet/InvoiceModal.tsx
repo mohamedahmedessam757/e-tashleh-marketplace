@@ -39,7 +39,9 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
     if (!isOpen || !order) return null;
 
     /* ── data extraction ── */
-    const acceptedOffer = order.offers?.find((o: any) => o.status === 'accepted');
+    const acceptedOffer = (order.paymentOfferId
+        ? order.offers?.find((o: any) => o.id === order.paymentOfferId)
+        : null) || order.offers?.find((o: any) => o.status === 'accepted');
     const shippingAddr = order.shippingAddresses?.[0] || null;
     const customer = order.customer || null;
     const offerStore = acceptedOffer?.store || order.store || null;
@@ -58,7 +60,9 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
 
     // For merchants, the "Total" is their earnings
     const merchantEarnings = Number(escrow?.merchantAmount || payment?.unitPrice || acceptedOffer?.unitPrice || acceptedOffer?.unit_price || 0);
-    const finalTotal = isMerchant 
+    const finalTotal = order.invoiceType === 'REFUND' && typeof order.invoiceTotal === 'number'
+        ? order.invoiceTotal
+        : isMerchant 
         ? merchantEarnings 
         : (order.invoiceTotal || Number(payment?.totalAmount || acceptedOffer?.unitPrice || acceptedOffer?.unit_price || 0));
     const currency = order.invoiceCurrency || payment?.currency || 'AED';
@@ -104,7 +108,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({ isOpen, onClose, ord
 
     // Customer/Order data
     const customerName = customer?.name || shippingAddr?.fullName || shippingAddr?.full_name || (language === 'ar' ? 'عميل' : 'Customer');
-    const partName = order.partName || order.part_name || (language === 'ar' ? 'قطعة غيار' : 'Spare Part');
+    const partName = acceptedOffer?.orderPart?.name || order.invoicePartName || order.partName || order.part_name || (language === 'ar' ? 'قطعة غيار' : 'Spare Part');
     const partDesc = order.partDescription || order.part_description || '';
     const partImages: string[] = (() => {
         const imgs = order.partImages || order.part_images;

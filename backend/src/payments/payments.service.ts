@@ -5201,6 +5201,10 @@ export class PaymentsService {
         return this.withdrawalWorkflow.completeWithdrawal(requestId, { adminId, ...ctx });
     }
 
+    async previewWithdrawal(requestId: string) {
+        return this.withdrawalWorkflow.previewWithdrawal(requestId);
+    }
+
     async releaseWithdrawalFunds(adminId: string, requestId: string, ctx: { notes?: string; adminSignature?: string; adminName?: string; adminEmail?: string; ip?: string | null; idempotencyKey?: string }) {
         return this.withdrawalWorkflow.releaseWithdrawalFunds(requestId, { adminId, ...ctx });
     }
@@ -5603,6 +5607,22 @@ export class PaymentsService {
 
         const user = await this.prisma.user.findUnique({ where: { id: userId }, include: { store: true } });
         if (!user) throw new NotFoundException('User not found');
+
+        const activeWithdrawal = await this.prisma.withdrawalRequest.findFirst({
+            where: {
+                status: { in: ['PENDING', 'PROCESSING'] },
+                OR: [
+                    { userId },
+                    ...(user.store?.id ? [{ storeId: user.store.id }] : []),
+                ],
+            },
+            select: { id: true },
+        });
+        if (activeWithdrawal) {
+            throw new ConflictException(
+                'An active withdrawal request exists for this account. Complete or release that request instead of a separate manual payout.',
+            );
+        }
 
         let balance = 0;
         let role = user.role;

@@ -81,12 +81,24 @@ export const useBillingStore = create<BillingState>((set, get) => ({
             const data = await response.json();
 
             // Preserve all invoice + order + relational data for the InvoiceModal
-            const mappedInvoices = data.map((inv: any) => ({
+            const mappedInvoices = data.map((inv: any) => {
+                const partFromPayment =
+                    inv.payment?.offer?.orderPart?.name || inv.partNameSnapshot || null;
+                const rawTotal = inv.total;
+                return ({
                 ...inv.order,
                 // Invoice-level financial data
                 invoiceId: inv.id,
                 invoice_number: inv.invoiceNumber ?? inv.invoice_number,
-                invoiceTotal: Number(inv.total || 0),
+                invoiceType: inv.invoiceType || null,
+                invoicePartName: partFromPayment,
+                partName: partFromPayment || inv.order?.partName || null,
+                paymentOfferId: inv.payment?.offerId || null,
+                payment: inv.payment || null,
+                invoiceTotal:
+                    rawTotal === null || rawTotal === undefined || rawTotal === ''
+                        ? null
+                        : Number(rawTotal),
                 invoiceSubtotal: Number(inv.subtotal || 0),
                 invoiceCommission: Number(inv.commission || 0),
                 invoiceCurrency: inv.currency || 'AED',
@@ -100,7 +112,8 @@ export const useBillingStore = create<BillingState>((set, get) => ({
                 parts: inv.order?.parts || [],
                 shippingAddresses: inv.order?.shippingAddresses || [],
                 status: inv.status
-            }));
+            });
+            });
 
             set({ invoices: mappedInvoices, invoicesFetched: true });
         } catch (err: any) {

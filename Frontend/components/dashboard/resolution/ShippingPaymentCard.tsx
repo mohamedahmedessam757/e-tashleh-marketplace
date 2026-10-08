@@ -133,6 +133,7 @@ export const ShippingPaymentCard: React.FC<ShippingPaymentCardProps> = ({ caseRe
                                 </p>
                             </div>
                         </div>
+                        {role !== 'CUSTOMER' && (
                         <div className="flex flex-col items-end">
                             <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em] block mb-1">
                                 {isAr ? 'التزام شركة الشحن' : 'CARRIER LIABILITY'}
@@ -147,6 +148,7 @@ export const ShippingPaymentCard: React.FC<ShippingPaymentCardProps> = ({ caseRe
                                 <span className="text-lg font-black text-white/30 uppercase">AED</span>
                             </div>
                         </div>
+                        )}
                     </div>
                     <div className="w-full p-6 bg-purple-500/5 rounded-[24px] border border-purple-500/20 flex items-center justify-center gap-4 text-purple-300/80">
                         <Clock size={20} />
