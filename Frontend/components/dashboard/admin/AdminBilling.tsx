@@ -168,6 +168,7 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
     const financialFeed = useAdminStore(s => s.financialFeed);
     const isFeedLoading = useAdminStore(s => s.isFeedLoading);
     const feedHasMore = useAdminStore(s => s.feedHasMore);
+    const feedTotal = useAdminStore(s => s.feedTotal);
     const feedFilters = useAdminStore(s => s.feedFilters);
     const fetchFinancialFeed = useAdminStore(s => s.fetchFinancialFeed);
     const setFeedFilters = useAdminStore(s => s.setFeedFilters);
@@ -211,24 +212,33 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
     const [expandedFeedIds, setExpandedFeedIds] = useState<Set<string>>(new Set());
     const [ledgerSearchInput, setLedgerSearchInput] = useState(feedFilters.search || '');
     
-    const observerTarget = React.useRef(null);
+    const observerTarget = React.useRef<HTMLDivElement | null>(null);
+
+    const loadMoreFeed = React.useCallback(() => {
+        if (activeTab !== 'TRANSACTIONS' || !feedHasMore || isFeedLoading || financialFeed.length === 0) return;
+        fetchFinancialFeed();
+    }, [activeTab, feedHasMore, isFeedLoading, financialFeed.length, fetchFinancialFeed]);
 
     React.useEffect(() => {
+        const node = observerTarget.current;
+        if (!node || activeTab !== 'TRANSACTIONS') return;
         const observer = new IntersectionObserver(
             (entries) => {
-                if (entries[0].isIntersecting && feedHasMore && !isFeedLoading && activeTab === 'TRANSACTIONS') {
-                    fetchFinancialFeed();
-                }
+                if (entries[0]?.isIntersecting) loadMoreFeed();
             },
-            { threshold: 0.1 }
+            { root: null, rootMargin: '600px 0px', threshold: 0 }
         );
-
-        if (observerTarget.current) {
-            observer.observe(observerTarget.current);
-        }
-
+        observer.observe(node);
         return () => observer.disconnect();
-    }, [feedHasMore, isFeedLoading, activeTab]);
+    }, [activeTab, loadMoreFeed, financialFeed.length]);
+
+    React.useEffect(() => {
+        if (activeTab !== 'TRANSACTIONS' || !feedHasMore || isFeedLoading) return;
+        const node = observerTarget.current;
+        if (!node) return;
+        const rect = node.getBoundingClientRect();
+        if (rect.top <= window.innerHeight + 600) loadMoreFeed();
+    }, [activeTab, feedHasMore, isFeedLoading, financialFeed.length, loadMoreFeed]);
     
     const [isTypeFilterOpen, setIsTypeFilterOpen] = useState(false);
     const [isRoleFilterOpen, setIsRoleFilterOpen] = useState(false);
@@ -832,16 +842,34 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
                         </div>
 
                         {/* Infinite Scroll Target */}
-                        <div ref={observerTarget} className="h-20 flex items-center justify-center">
+                        <div ref={observerTarget} className="min-h-20 py-6 flex flex-col items-center justify-center gap-3">
+                            {feedTotal > 0 && (
+                                <div className="w-48 h-1 rounded-full bg-white/10 overflow-hidden">
+                                    <div
+                                        className="h-full bg-cyan-400 transition-all duration-300"
+                                        style={{ width: `${Math.min(100, Math.round((financialFeed.length / feedTotal) * 100))}%` }}
+                                    />
+                                </div>
+                            )}
                             {isFeedLoading && (
                                 <div className="flex items-center gap-3 text-gold-500/50 font-black text-[10px] uppercase tracking-tighter animate-pulse">
                                     <RefreshCw size={14} className="animate-spin" />
                                     {t.admin.billing.ledger.scanningMore}
                                 </div>
                             )}
-                            {!feedHasMore && financialFeed.length > 0 && (
-                                <div className="text-white/10 font-black text-[10px] uppercase tracking-tighter">
+                            {feedHasMore && !isFeedLoading && financialFeed.length > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={loadMoreFeed}
+                                    className="px-5 py-2 rounded-xl border border-gold-500/30 text-gold-500 font-black text-[10px] uppercase tracking-widest hover:bg-gold-500/10"
+                                >
                                     {t.admin.billing.ledger.loadMore}
+                                </button>
+                            )}
+                            {!feedHasMore && financialFeed.length > 0 && !isFeedLoading && (
+                                <div className="text-white/40 font-black text-[10px] uppercase tracking-tighter">
+                                    {t.admin.billing.ledger.endOfLedger}
+                                    {feedTotal > 0 ? ` · ${financialFeed.length} / ${feedTotal}` : ''}
                                 </div>
                             )}
                         </div>

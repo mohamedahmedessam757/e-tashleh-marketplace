@@ -1355,8 +1355,9 @@ export const admin = {
           noRecords: 'لم يتم رصد سجلات مطابقة',
           viewAudit: 'عرض سجل التدقيق المالي'
         },
-        loadMore: 'تحميل المزيد من العمليات الموحدة',
+        loadMore: 'تحميل المزيد من العمليات',
         scanningMore: 'جاري تحميل المزيد من السجل...',
+        endOfLedger: 'تم عرض كل عمليات المنصة',
         financialImpact: 'التأثير المالي',
         expandDetails: 'عرض التفاصيل',
         collapseDetails: 'إخفاء التفاصيل',
@@ -2990,8 +2991,9 @@ export const admin = {
           noRecords: 'No matching records detected',
           viewAudit: 'View Financial Audit Trail'
         },
-        loadMore: 'Load More Unified Transactions',
+        loadMore: 'Load more transactions',
         scanningMore: 'Loading more ledger records...',
+        endOfLedger: 'All platform transactions are shown',
         financialImpact: 'Financial Impact',
         expandDetails: 'Show details',
         collapseDetails: 'Hide details',

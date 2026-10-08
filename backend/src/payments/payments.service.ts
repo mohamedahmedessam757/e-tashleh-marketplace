@@ -5836,11 +5836,13 @@ export class PaymentsService {
      * Aggregates events from Payments, Wallet, Escrow, and Withdrawals.
      */
     async getUnifiedFinancialFeed(filters: any) {
-        await this.completionFinance.syncEligibleEscrowReleases({ limit: 50 }).catch((err) => {
-            this.logger.warn(
-                `Admin feed escrow heal skipped: ${err instanceof Error ? err.message : String(err)}`,
-            );
-        });
+        if (!filters?.cursor) {
+            await this.completionFinance.syncEligibleEscrowReleases({ limit: 50 }).catch((err) => {
+                this.logger.warn(
+                    `Admin feed escrow heal skipped: ${err instanceof Error ? err.message : String(err)}`,
+                );
+            });
+        }
 
         const limit = Math.min(Math.max(Number(filters?.limit) || 50, 1), 100);
 

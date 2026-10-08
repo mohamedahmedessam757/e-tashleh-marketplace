@@ -427,6 +427,7 @@ export interface AdminState {
   financialFeed: UnifiedFinancialEvent[];
   isFeedLoading: boolean;
   feedHasMore: boolean;
+  feedTotal: number;
   feedCursor: string | null;
   feedFilters: { type: string; search: string; startDate?: string; endDate?: string; role?: string };
   fetchFinancialFeed: (reset?: boolean, silent?: boolean) => Promise<void>;
@@ -686,6 +687,7 @@ export const useAdminStore = create<AdminState>()(
       financialFeed: [],
       isFeedLoading: false,
       feedHasMore: true,
+      feedTotal: 0,
       feedCursor: null,
       feedFilters: { type: 'ALL', search: '', role: 'ALL' },
       newEventsCount: 0,
@@ -1612,8 +1614,6 @@ export const useAdminStore = create<AdminState>()(
           financialFilters: next,
           feedFilters: {
             ...get().feedFilters,
-            startDate: next.startDate,
-            endDate: next.endDate,
             search: next.search ?? get().feedFilters.search,
             role: next.role ?? get().feedFilters.role,
           },
@@ -1690,7 +1690,7 @@ export const useAdminStore = create<AdminState>()(
       },
 
       fetchFinancialFeed: async (reset = false, silent = false) => {
-        const { feedCursor, feedFilters, financialFeed, financialFilters } = get();
+        const { feedCursor, feedFilters, financialFeed } = get();
         const cursor = reset ? null : feedCursor;
 
         if (!silent) {
@@ -1701,15 +1701,11 @@ export const useAdminStore = create<AdminState>()(
         try {
           const token = getAccessToken();
           const queryParams = new URLSearchParams({
-            limit: '15',
+            limit: '50',
             type: feedFilters.type || 'ALL',
             search: feedFilters.search || '',
-            ...(feedFilters.startDate || financialFilters.startDate
-              ? { startDate: feedFilters.startDate || financialFilters.startDate || '' }
-              : {}),
-            ...(feedFilters.endDate || financialFilters.endDate
-              ? { endDate: feedFilters.endDate || financialFilters.endDate || '' }
-              : {}),
+            ...(feedFilters.startDate ? { startDate: feedFilters.startDate } : {}),
+            ...(feedFilters.endDate ? { endDate: feedFilters.endDate } : {}),
             ...(feedFilters.role && feedFilters.role !== 'ALL' ? { role: feedFilters.role } : {}),
             ...(cursor ? { cursor } : {}),
           } as Record<string, string>).toString();
@@ -1719,25 +1715,41 @@ export const useAdminStore = create<AdminState>()(
           });
 
           if (res.ok) {
-            const { data, hasMore, nextCursor } = await res.json();
+            const body = await res.json();
+            const data = Array.isArray(body?.data) ? body.data as UnifiedFinancialEvent[] : [];
+            const hasMore = Boolean(body?.hasMore);
+            const nextCursor = body?.nextCursor ? String(body.nextCursor) : null;
+            const total = Number(body?.total || 0);
             const current = get().financialFeed;
+            const keyOf = (event: UnifiedFinancialEvent) => `${event.source}:${event.id}`;
 
             // Silent realtime refresh must never drop rows already loaded via "load more".
             if (reset && silent && current.length > data.length) {
-              const freshIds = new Set((data as UnifiedFinancialEvent[]).map((e) => e.id));
+              const freshIds = new Set(data.map(keyOf));
               set({
-                financialFeed: [...data, ...current.filter((e) => !freshIds.has(e.id))],
+                financialFeed: [...data, ...current.filter((e) => !freshIds.has(keyOf(e)))],
+                feedTotal: total || get().feedTotal,
                 isFeedLoading: false,
               });
               return;
             }
 
-            const newFeed = reset ? data : [...financialFeed, ...data];
+            const merged = reset ? [] : financialFeed;
+            const seen = new Set(merged.map(keyOf));
+            const appended = data.filter((event) => {
+              const key = keyOf(event);
+              if (seen.has(key)) return false;
+              seen.add(key);
+              return true;
+            });
+            const newFeed = [...merged, ...appended];
+            const stalled = !reset && appended.length === 0;
 
             set({
               financialFeed: newFeed,
-              feedHasMore: hasMore,
-              feedCursor: nextCursor || null,
+              feedHasMore: !stalled && hasMore && Boolean(nextCursor),
+              feedCursor: stalled ? null : nextCursor,
+              feedTotal: total || newFeed.length,
               isFeedLoading: false,
             });
           } else {
@@ -2506,6 +2518,7 @@ export const useAdminStore = create<AdminState>()(
           financialFeed,
           feedCursor,
           feedHasMore,
+          feedTotal,
           feedFilters,
           financialFilters,
           ...rest 
