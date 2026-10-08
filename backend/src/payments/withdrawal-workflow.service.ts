@@ -21,6 +21,13 @@ import {
   loadStorePendingLiabilities,
   markSettledLiabilityLinesPaid,
 } from './store-settlement-liabilities.util';
+import {
+  balancesAfterCompletion,
+  holdTopUp,
+  releasableHold,
+  roundMoney,
+  withdrawalHasStripeMovement,
+} from './withdrawal-completion.util';
 
 export interface WithdrawalActionContext {
   adminId: string;
@@ -30,10 +37,6 @@ export interface WithdrawalActionContext {
   notes?: string;
   ip?: string | null;
   idempotencyKey?: string;
-}
-
-function roundMoney(value: number): number {
-  return Math.round(value * 100) / 100;
 }
 
 function maskAccount(value: string | null | undefined): string | null {
@@ -124,22 +127,37 @@ export class WithdrawalWorkflowService {
     amount: number,
   ) {
     if (request.role === 'CUSTOMER') {
+      await tx.$executeRaw`SELECT id FROM users WHERE id = ${request.userId!}::uuid FOR UPDATE`;
+      const user = await tx.user.findUnique({
+        where: { id: request.userId! },
+        select: { customerFrozenBalance: true },
+      });
+      const release = releasableHold(Number(user?.customerFrozenBalance || 0), amount);
+      if (release <= 0) return;
       await tx.user.update({
         where: { id: request.userId! },
         data: {
-          customerBalance: { increment: amount },
-          customerFrozenBalance: { decrement: amount },
+          customerBalance: { increment: release },
+          customerFrozenBalance: { decrement: release },
         },
       });
-    } else {
-      await tx.store.update({
-        where: { id: request.storeId! },
-        data: {
-          balance: { increment: amount },
-          frozenBalance: { decrement: amount },
-        },
-      });
+      return;
     }
+
+    await tx.$executeRaw`SELECT id FROM stores WHERE id = ${request.storeId!}::uuid FOR UPDATE`;
+    const store = await tx.store.findUnique({
+      where: { id: request.storeId! },
+      select: { frozenBalance: true },
+    });
+    const release = releasableHold(Number(store?.frozenBalance || 0), amount);
+    if (release <= 0) return;
+    await tx.store.update({
+      where: { id: request.storeId! },
+      data: {
+        balance: { increment: release },
+        frozenBalance: { decrement: release },
+      },
+    });
   }
 
   /** Moves any missing hold from available into frozen before a payout. Does not burn it. */
@@ -148,13 +166,6 @@ export class WithdrawalWorkflowService {
     request: WithdrawalWithRelations,
     amount: number,
   ): Promise<void> {
-    const needHold = (frozen: number, available: number) => {
-      if (frozen + 0.001 >= amount) return 0;
-      const need = roundMoney(amount - frozen);
-      if (available + 0.001 < need) return -1;
-      return need;
-    };
-
     if (request.role === 'CUSTOMER') {
       await tx.$executeRaw`SELECT id FROM users WHERE id = ${request.userId!}::uuid FOR UPDATE`;
       const user = await tx.user.findUnique({
@@ -163,7 +174,7 @@ export class WithdrawalWorkflowService {
       });
       const available = Number(user?.customerBalance || 0);
       const frozen = Number(user?.customerFrozenBalance || 0);
-      const need = needHold(frozen, available);
+      const need = holdTopUp(frozen, available, amount);
       if (need < 0) throw new BadRequestException('Held customer balance is insufficient');
       if (need > 0) {
         await tx.user.update({
@@ -184,7 +195,7 @@ export class WithdrawalWorkflowService {
     });
     const available = Number(store?.balance || 0);
     const frozen = Number(store?.frozenBalance || 0);
-    const need = needHold(frozen, available);
+    const need = holdTopUp(frozen, available, amount);
     if (need < 0) throw new BadRequestException('Held store balance is insufficient');
     if (need > 0) {
       await tx.store.update({
@@ -367,9 +378,8 @@ export class WithdrawalWorkflowService {
     const frozen = isCustomer
       ? Number(request.user?.customerFrozenBalance || 0)
       : Number(request.store?.frozenBalance || 0);
-    const shortfall = Math.max(0, roundMoney(amount - frozen));
-    const canFund = frozen + available + 0.001 >= amount;
-    if (!canFund && !blockedReason) {
+    const projected = balancesAfterCompletion(available, frozen, amount);
+    if (!projected.canFund && !blockedReason) {
       blockedReason = isCustomer
         ? 'Held customer balance is insufficient'
         : 'Held store balance is insufficient';
@@ -390,9 +400,9 @@ export class WithdrawalWorkflowService {
         : request.store?.name || '',
       availableBefore: roundMoney(available),
       frozenBefore: roundMoney(frozen),
-      availableAfter: canFund ? roundMoney(available - shortfall) : roundMoney(available),
-      frozenAfter: canFund ? roundMoney(frozen + shortfall - amount) : roundMoney(frozen),
-      canComplete: canFund && !blockedReason,
+      availableAfter: projected.availableAfter,
+      frozenAfter: projected.frozenAfter,
+      canComplete: projected.canFund && !blockedReason,
       blockedReason,
       bank:
         payoutMethod === 'BANK_TRANSFER'
@@ -550,12 +560,21 @@ export class WithdrawalWorkflowService {
             data: { stripeTransferId: transferId, stripeIdempotencyKey: stripeKey },
           });
         } catch (err) {
-          await this.prisma.withdrawalRequest
-            .updateMany({
-              where: { id: requestId, stripeTransferId: pendingMarker },
-              data: { stripeTransferId: null },
-            })
-            .catch(() => undefined);
+          if (transferId) {
+            await this.prisma.withdrawalRequest
+              .updateMany({
+                where: { id: requestId, stripeTransferId: pendingMarker },
+                data: { stripeTransferId: transferId, stripeIdempotencyKey: stripeKey },
+              })
+              .catch(() => undefined);
+          } else {
+            await this.prisma.withdrawalRequest
+              .updateMany({
+                where: { id: requestId, stripeTransferId: pendingMarker },
+                data: { stripeTransferId: null },
+              })
+              .catch(() => undefined);
+          }
           throw err;
         }
       }
@@ -753,9 +772,27 @@ export class WithdrawalWorkflowService {
     if (request.status !== WITHDRAWAL_STATUS.PROCESSING) {
       throw new BadRequestException('Only processing requests can be released');
     }
+    if (withdrawalHasStripeMovement(request.stripeTransferId)) {
+      throw new ConflictException(
+        'Stripe transfer already started. Finish the ledger from Mark Transfer Complete; do not release the hold.',
+      );
+    }
 
     const amount = Number(request.amount);
     const updated = await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT id FROM withdrawal_requests WHERE id = ${requestId}::uuid FOR UPDATE`;
+      const locked = await tx.withdrawalRequest.findUnique({
+        where: { id: requestId },
+        select: { status: true, stripeTransferId: true },
+      });
+      if (locked?.status !== WITHDRAWAL_STATUS.PROCESSING) {
+        throw new BadRequestException('Only processing requests can be released');
+      }
+      if (withdrawalHasStripeMovement(locked.stripeTransferId)) {
+        throw new ConflictException(
+          'Stripe transfer already started. Finish the ledger from Mark Transfer Complete; do not release the hold.',
+        );
+      }
       await this.unholdBalance(tx, request, amount);
       await this.auditLogs.logAction(
         {
@@ -869,8 +906,12 @@ export class WithdrawalWorkflowService {
       });
       if (!ledger) {
         if (!existing.stripeTransferId?.startsWith('tr_')) {
-          await this.prisma.withdrawalRequest.update({
-            where: { id: requestId },
+          await this.prisma.withdrawalRequest.updateMany({
+            where: {
+              id: requestId,
+              status: WITHDRAWAL_STATUS.PROCESSING,
+              OR: [{ stripeTransferId: null }, { stripeTransferId: { startsWith: 'pending_' } }],
+            },
             data: { stripeTransferId: transfer.id },
           });
         }
@@ -879,8 +920,8 @@ export class WithdrawalWorkflowService {
         );
         return;
       }
-      await this.prisma.withdrawalRequest.update({
-        where: { id: requestId },
+      await this.prisma.withdrawalRequest.updateMany({
+        where: { id: requestId, status: WITHDRAWAL_STATUS.PROCESSING },
         data: {
           status: WITHDRAWAL_STATUS.COMPLETED,
           stripeTransferId: transfer.id,

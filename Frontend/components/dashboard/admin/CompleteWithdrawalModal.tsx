@@ -229,7 +229,7 @@ export const CompleteWithdrawalModal: React.FC<CompleteWithdrawalModalProps> = (
           <button
             type="submit"
             form="complete-withdrawal-form"
-            disabled={isProcessing || previewLoading || preview?.canComplete === false}
+            disabled={isProcessing || previewLoading || !preview?.canComplete}
             className="flex-[2] py-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500 border border-emerald-500/20 text-emerald-500 hover:text-black text-sm font-black uppercase disabled:opacity-50 inline-flex items-center justify-center gap-2"
           >
             {isProcessing ? <Loader2 size={18} className="animate-spin" /> : <ShieldCheck size={18} />}

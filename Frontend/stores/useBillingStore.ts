@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Order } from '../types';
 import { getAccessToken } from '../utils/auth';
+import { invoiceRowAmount, invoiceRowPartName } from '../utils/invoiceList';
 
 interface Invoice extends Order {
     invoice_number: string;
@@ -82,8 +83,10 @@ export const useBillingStore = create<BillingState>((set, get) => ({
 
             // Preserve all invoice + order + relational data for the InvoiceModal
             const mappedInvoices = data.map((inv: any) => {
-                const partFromPayment =
-                    inv.payment?.offer?.orderPart?.name || inv.partNameSnapshot || null;
+                const partFromPayment = invoiceRowPartName({
+                    offerPartName: inv.payment?.offer?.orderPart?.name,
+                    partNameSnapshot: inv.partNameSnapshot,
+                });
                 const rawTotal = inv.total;
                 return ({
                 ...inv.order,
@@ -95,10 +98,7 @@ export const useBillingStore = create<BillingState>((set, get) => ({
                 partName: partFromPayment || inv.order?.partName || null,
                 paymentOfferId: inv.payment?.offerId || null,
                 payment: inv.payment || null,
-                invoiceTotal:
-                    rawTotal === null || rawTotal === undefined || rawTotal === ''
-                        ? null
-                        : Number(rawTotal),
+                invoiceTotal: invoiceRowAmount(rawTotal),
                 invoiceSubtotal: Number(inv.subtotal || 0),
                 invoiceCommission: Number(inv.commission || 0),
                 invoiceCurrency: inv.currency || 'AED',

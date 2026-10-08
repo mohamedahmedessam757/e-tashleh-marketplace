@@ -8,6 +8,7 @@ import { GlassCard } from '../../ui/GlassCard';
 import { InvoiceModal } from './InvoiceModal';
 import { SavedCards } from './SavedCards';
 import { Order } from '../../../types';
+import { invoiceRowPartName } from '../../../utils/invoiceList';
 
 interface BillingPageProps {
     onNavigate?: (path: string, id?: any) => void;
@@ -201,7 +202,10 @@ export const BillingPage: React.FC<BillingPageProps> = ({ onNavigate }) => {
 
                                     // Invoice rows use the payment's own part, never the order's first part.
                                     const partName = (isInvoice
-                                        ? (itemRecord.invoicePartName || linkedOffer?.orderPart?.name)
+                                        ? invoiceRowPartName({
+                                            offerPartName: itemRecord.invoicePartName || linkedOffer?.orderPart?.name,
+                                            partNameSnapshot: null,
+                                        })
                                         : (itemRecord.partName || itemRecord.parts?.[0]?.name || acceptedOffer?.partName)
                                     ) || (language === 'ar' ? 'قطعة غيار' : 'Spare Part');
 
