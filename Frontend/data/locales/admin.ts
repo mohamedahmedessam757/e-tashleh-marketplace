@@ -163,6 +163,9 @@ export const admin = {
       openOrder: 'فتح الطلب',
       openCustomer: 'فتح العميل',
       openStore: 'فتح المتجر',
+      partUnlinked: 'القطعة غير مربوطة بهذه الدفعة',
+      rowsSum: 'مجموع الصفوف المعروضة',
+      rowsSumPartial: 'مجموع الصفوف المحمّلة حتى الآن',
     },
     charts: {
       salesTrend: 'اتجاه المبيعات',
@@ -1898,6 +1901,9 @@ export const admin = {
       openOrder: 'Open order',
       openCustomer: 'Open customer',
       openStore: 'Open store',
+      partUnlinked: 'The part is not linked to this payment',
+      rowsSum: 'Sum of the rows shown',
+      rowsSumPartial: 'Sum of rows loaded so far',
     },
     charts: {
       salesTrend: 'Sales Trend',

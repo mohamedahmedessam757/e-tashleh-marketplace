@@ -22,6 +22,7 @@ interface BreakdownLine {
   reasonAr: string;
   reasonEn: string;
   metricId?: string;
+  sign?: 'plus' | 'minus';
 }
 
 interface BreakdownSource {
@@ -175,6 +176,14 @@ export const AdminKpiBreakdown: React.FC<AdminKpiBreakdownProps> = ({ metricId, 
   };
   const kindLabel = (line: BreakdownLine) =>
     line.requestType === 'multiple' ? copy.groupedOrder : line.requestType === 'single' ? copy.singleOrder : '';
+  const partLabel = (line: BreakdownLine) =>
+    line.partNames?.length ? line.partNames.join(' · ') : line.requestType === 'multiple' ? copy.partUnlinked : '—';
+  const amountText = (line: BreakdownLine) => {
+    const prefix = line.sign === 'minus' ? '− ' : line.sign === 'plus' ? '+ ' : '';
+    return `${prefix}${line.amount.toLocaleString()}`;
+  };
+  const amountClass = (line: BreakdownLine) =>
+    line.sign === 'minus' ? 'text-rose-300' : line.sign === 'plus' ? 'text-emerald-300' : '';
 
   const EntityLinks = ({ line }: { line: BreakdownLine }) => (
     <div className="flex flex-col gap-1">
@@ -187,6 +196,9 @@ export const AdminKpiBreakdown: React.FC<AdminKpiBreakdownProps> = ({ metricId, 
         <span className="font-mono text-gold-400">{line.orderNumber || '—'}</span>
       )}
       {!!line.partNames?.length && <span className="text-xs text-white/70">{line.partNames.join(' · ')}</span>}
+      {!line.partNames?.length && line.requestType === 'multiple' && (
+        <span className="text-xs text-amber-200/80">{copy.partUnlinked}</span>
+      )}
       {line.requestType && (
         <span className={`w-fit text-[10px] font-bold px-2 py-0.5 rounded-full ${line.requestType === 'multiple' ? 'bg-sky-500/15 text-sky-300' : 'bg-emerald-500/15 text-emerald-300'}`}>
           {kindLabel(line)}
@@ -231,8 +243,8 @@ export const AdminKpiBreakdown: React.FC<AdminKpiBreakdownProps> = ({ metricId, 
               {lines.map((line) => (
                 <tr key={line.id} className="border-t border-white/5 text-white/80">
                   <td className="py-3 px-2"><EntityLinks line={line} /></td>
-                  <td className="py-3 px-2 text-white/70">{line.partNames?.join(' · ') || '—'}</td>
-                  {isMoney && <td className="py-3 px-2 font-mono">{line.amount.toLocaleString()}</td>}
+                  <td className="py-3 px-2 text-white/70">{partLabel(line)}</td>
+                  {isMoney && <td className={`py-3 px-2 font-mono ${amountClass(line)}`}>{amountText(line)}</td>}
                   <td className="py-3 px-2">{line.status || '—'}</td>
                   <td className="py-3 px-2 whitespace-nowrap">{line.paidAt ? new Date(line.paidAt).toLocaleString(isAr ? 'ar' : 'en') : '—'}</td>
                   <td className="py-3 px-2 text-white/50">{reason(line)}</td>
@@ -246,7 +258,7 @@ export const AdminKpiBreakdown: React.FC<AdminKpiBreakdownProps> = ({ metricId, 
             <div key={line.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-1">
               <div className="flex items-start justify-between gap-3">
                 <EntityLinks line={line} />
-                {isMoney && <p className="font-mono text-white text-sm">{line.amount.toLocaleString()} AED</p>}
+                {isMoney && <p className={`font-mono text-sm ${amountClass(line) || 'text-white'}`}>{amountText(line)} AED</p>}
               </div>
               <p className="text-xs text-white/40">{line.status} · {line.paidAt ? new Date(line.paidAt).toLocaleString(isAr ? 'ar' : 'en') : '—'}</p>
               <p className="text-xs text-white/50">{reason(line)}</p>
@@ -366,6 +378,18 @@ export const AdminKpiBreakdown: React.FC<AdminKpiBreakdownProps> = ({ metricId, 
       <GlassCard className="p-4 sm:p-6">
         <h2 className="text-sm font-black text-white mb-3">{copy.included}</h2>
         {renderLines(included)}
+        {isMoney && included.some((line) => line.sign) && (
+          <p className="mt-4 text-sm font-mono text-gold-200">
+            {data?.includedHasMore ? copy.rowsSumPartial : copy.rowsSum}
+            {': '}
+            {Number(
+              included
+                .reduce((sum, line) => sum + (line.sign === 'minus' ? -line.amount : line.sign === 'plus' ? line.amount : 0), 0)
+                .toFixed(2),
+            ).toLocaleString()}{' '}
+            AED
+          </p>
+        )}
         {data?.includedHasMore && (
           <button
             type="button"

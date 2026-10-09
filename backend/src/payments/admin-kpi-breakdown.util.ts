@@ -68,6 +68,7 @@ export interface KpiBreakdownLine {
   reasonAr: string;
   reasonEn: string;
   metricId?: string;
+  sign?: 'plus' | 'minus';
 }
 
 export interface KpiBreakdownSource {
@@ -150,6 +151,17 @@ function orderFacts(order: OrderShape | null | undefined): Pick<
   };
 }
 
+function paidPartFacts(
+  order: OrderShape | null | undefined,
+  paidPartName?: string | null,
+): ReturnType<typeof orderFacts> {
+  const facts = orderFacts(order);
+  const paid = paidPartName?.trim();
+  if (paid) return { ...facts, partNames: [paid] };
+  if (facts.requestType === 'multiple') return { ...facts, partNames: [] };
+  return facts;
+}
+
 const paymentSelect = {
   id: true,
   status: true,
@@ -164,7 +176,7 @@ const paymentSelect = {
   transactionNumber: true,
   customer: { select: { id: true, name: true } },
   order: { select: orderShape },
-  offer: { select: { store: { select: { id: true, name: true } } } },
+  offer: { select: { orderPart: { select: { name: true } }, store: { select: { id: true, name: true } } } },
 } satisfies Prisma.PaymentTransactionSelect;
 
 type PaymentRow = Prisma.PaymentTransactionGetPayload<{ select: typeof paymentSelect }>;
@@ -198,6 +210,47 @@ function paidStamp(row: { paidAt: Date | null; createdAt: Date; refundedAt?: Dat
   return (row.refundedAt || row.paidAt || row.createdAt).toISOString();
 }
 
+function ledgerCursor(cursor?: string): { kind: 'payment' | 'loyalty' | 'referral'; raw?: string } {
+  if (!cursor) return { kind: 'payment' };
+  if (cursor.startsWith('loyalty:')) return { kind: 'loyalty', raw: cursor.slice('loyalty:'.length) || undefined };
+  if (cursor.startsWith('referral:')) return { kind: 'referral', raw: cursor.slice('referral:'.length) || undefined };
+  if (cursor.startsWith('payment:')) return { kind: 'payment', raw: cursor.slice('payment:'.length) || undefined };
+  return { kind: 'payment', raw: cursor };
+}
+
+function commissionAndFeeLines(row: PaymentRow): KpiBreakdownLine[] {
+  const lines: KpiBreakdownLine[] = [];
+  const commission = roundMoney(Number(row.commission));
+  const fee = roundMoney(Number(row.gatewayFee));
+  if (commission !== 0) {
+    lines.push({
+      ...paymentLine(
+        row,
+        commission,
+        'عمولة القطعة المدفوعة في هذه الدفعة',
+        'Commission of the part paid in this payment',
+      ),
+      id: `${row.id}:commission`,
+      sign: 'plus',
+      status: 'COMMISSION',
+    });
+  }
+  if (fee !== 0) {
+    lines.push({
+      ...paymentLine(
+        row,
+        fee,
+        'رسم البوابة المخزّن على نفس الدفعة، ويُطرح من العمولة',
+        'Stored gateway fee on the same payment, subtracted from the commission',
+      ),
+      id: `${row.id}:fee`,
+      sign: 'minus',
+      status: 'GATEWAY_FEE',
+    });
+  }
+  return lines;
+}
+
 function paymentLine(
   row: PaymentRow,
   amount: number,
@@ -207,7 +260,7 @@ function paymentLine(
   return {
     id: row.id,
     paymentId: row.id,
-    ...orderFacts(row.order),
+    ...paidPartFacts(row.order, row.offer?.orderPart?.name),
     orderNumber: row.order?.orderNumber || row.transactionNumber,
     customerId: row.customer?.id || row.order?.customerId,
     customerName: row.customer?.name || undefined,
@@ -284,7 +337,7 @@ function walletDate(range: AdminDateRange): Prisma.DateTimeFilter | undefined {
 async function sumPayments(
   prisma: PrismaService,
   where: Prisma.PaymentTransactionWhereInput,
-  field: 'totalAmount' | 'refundedAmount' | 'commission' | 'gatewayFee',
+  field: 'totalAmount' | 'refundedAmount' | 'commission' | 'gatewayFee' | 'unitPrice' | 'shippingCost',
 ): Promise<number> {
   const agg = await prisma.paymentTransaction.aggregate({
     where,
@@ -503,39 +556,67 @@ export async function buildAdminKpiBreakdown(
       refundedAmount: { gt: 0 },
       ...refundRecognizedWhere(range),
     };
-    const loyaltyCursor = decodeCursor(includedCursor);
-    const [commission, loyaltyAgg, referralAgg, fees, refunds, loyaltyRows] = await Promise.all([
-      sumPayments(prisma, salesWhere, 'commission'),
-      prisma.walletTransaction.aggregate({ where: loyaltyWhere, _sum: { amount: true } }),
-      prisma.walletTransaction.aggregate({ where: referralWhere, _sum: { amount: true } }),
-      sumPayments(prisma, salesWhere, 'gatewayFee'),
-      sumPayments(prisma, refundWhere, 'refundedAmount'),
-      prisma.walletTransaction.findMany({
-        where: {
-          AND: [
-            loyaltyWhere,
-            loyaltyCursor
-              ? {
-                  OR: [
-                    { createdAt: { lt: loyaltyCursor.sortAt } },
-                    { createdAt: loyaltyCursor.sortAt, id: { lt: loyaltyCursor.id } },
-                  ],
-                }
-              : {},
-          ],
-        },
-        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-        take: limit + 1,
+    const ledger = ledgerCursor(includedCursor);
+    const walletCursor = (raw?: string): Prisma.WalletTransactionWhereInput => {
+      const decoded = decodeCursor(raw);
+      if (!decoded) return {};
+      return {
+        OR: [
+          { createdAt: { lt: decoded.sortAt } },
+          { createdAt: decoded.sortAt, id: { lt: decoded.id } },
+        ],
+      };
+    };
+    const profitWalletSelect = {
+      id: true,
+      amount: true,
+      createdAt: true,
+      description: true,
+      metadata: true,
+      user: { select: { id: true, name: true, role: true, store: { select: { id: true, name: true } } } },
+      payment: {
         select: {
-          id: true,
-          amount: true,
-          createdAt: true,
-          description: true,
-          user: { select: { id: true, name: true, role: true, store: { select: { id: true, name: true } } } },
-          payment: { select: { order: { select: orderShape }, offer: { select: { store: { select: { id: true, name: true } } } } } },
+          order: { select: orderShape },
+          offer: { select: { orderPart: { select: { name: true } }, store: { select: { id: true, name: true } } } },
         },
-      }),
-    ]);
+      },
+    } satisfies Prisma.WalletTransactionSelect;
+    const includeDeductions = ledger.kind === 'payment' && !ledger.raw;
+    const [commission, loyaltyAgg, referralAgg, fees, refunds, customerPaid, merchantShare, shippingHeld, paymentRows, loyaltyRows, referralRows] =
+      await Promise.all([
+        sumPayments(prisma, salesWhere, 'commission'),
+        prisma.walletTransaction.aggregate({ where: loyaltyWhere, _sum: { amount: true } }),
+        prisma.walletTransaction.aggregate({ where: referralWhere, _sum: { amount: true } }),
+        sumPayments(prisma, salesWhere, 'gatewayFee'),
+        sumPayments(prisma, refundWhere, 'refundedAmount'),
+        sumPayments(prisma, salesWhere, 'totalAmount'),
+        sumPayments(prisma, salesWhere, 'unitPrice'),
+        sumPayments(prisma, salesWhere, 'shippingCost'),
+        ledger.kind === 'payment'
+          ? prisma.paymentTransaction.findMany({
+              where: { AND: [salesWhere, cursorWhere(ledger.raw)] },
+              select: paymentSelect,
+              orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+              take: limit + 1,
+            })
+          : Promise.resolve([]),
+        ledger.kind === 'loyalty' || includeDeductions
+          ? prisma.walletTransaction.findMany({
+              where: { AND: [loyaltyWhere, walletCursor(ledger.kind === 'loyalty' ? ledger.raw : undefined)] },
+              select: profitWalletSelect,
+              orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+              take: limit + 1,
+            })
+          : Promise.resolve([]),
+        ledger.kind === 'referral' || includeDeductions
+          ? prisma.walletTransaction.findMany({
+              where: { AND: [referralWhere, walletCursor(ledger.kind === 'referral' ? ledger.raw : undefined)] },
+              select: profitWalletSelect,
+              orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+              take: limit + 1,
+            })
+          : Promise.resolve([]),
+      ]);
     const loyalty = roundMoney(Number(loyaltyAgg._sum.amount || 0));
     const referral = roundMoney(Number(referralAgg._sum.amount || 0));
     const net = roundMoney(commission - loyalty - referral - fees);
@@ -557,7 +638,7 @@ export async function buildAdminKpiBreakdown(
     ];
     if (loyalty !== 0) {
       sources.push({
-        metricId: 'netCommission',
+        metricId: 'loyaltyCashback',
         labelAr: 'كاش باك الولاء',
         labelEn: 'Loyalty cashback',
         amount: loyalty,
@@ -566,7 +647,7 @@ export async function buildAdminKpiBreakdown(
     }
     if (referral !== 0) {
       sources.push({
-        metricId: 'netCommission',
+        metricId: 'referralPaidOut',
         labelAr: 'أرباح الإحالة',
         labelEn: 'Referral payouts',
         amount: referral,
@@ -605,35 +686,156 @@ export async function buildAdminKpiBreakdown(
       };
     }
 
+    const metaId = (metadata: Prisma.JsonValue | null, key: string): string | undefined => {
+      if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return undefined;
+      const value = (metadata as Record<string, unknown>)[key];
+      return typeof value === 'string' && /^[0-9a-f-]{36}$/i.test(value) ? value : undefined;
+    };
+    const walletRows = [...loyaltyRows, ...referralRows];
+    const paymentIds = [...new Set(walletRows.map((row) => metaId(row.metadata, 'paymentId')).filter((id): id is string => !!id))];
+    const offerIds = [...new Set(walletRows.map((row) => metaId(row.metadata, 'offerId')).filter((id): id is string => !!id))];
+    const orderIds = [...new Set(walletRows.map((row) => metaId(row.metadata, 'orderId')).filter((id): id is string => !!id))];
+    const [linkedPayments, linkedOffers, linkedOrders] = await Promise.all([
+      paymentIds.length
+        ? prisma.paymentTransaction.findMany({ where: { id: { in: paymentIds } }, select: paymentSelect })
+        : Promise.resolve([]),
+      offerIds.length
+        ? prisma.offer.findMany({
+            where: { id: { in: offerIds } },
+            select: {
+              id: true,
+              orderPart: { select: { name: true } },
+              store: { select: { id: true, name: true } },
+              order: { select: orderShape },
+            },
+          })
+        : Promise.resolve([]),
+      orderIds.length
+        ? prisma.order.findMany({ where: { id: { in: orderIds } }, select: orderShape })
+        : Promise.resolve([]),
+    ]);
+    const paymentById = new Map(linkedPayments.map((row) => [row.id, row]));
+    const offerById = new Map(linkedOffers.map((row) => [row.id, row]));
+    const orderById = new Map(linkedOrders.map((row) => [row.id, row]));
+    const paymentPage = paymentRows.slice(0, limit);
+    const paymentHasMore = paymentRows.length > limit;
     const loyaltyPage = loyaltyRows.slice(0, limit);
     const loyaltyHasMore = loyaltyRows.length > limit;
+    const referralPage = referralRows.slice(0, limit);
+    const referralHasMore = referralRows.length > limit;
+    const deductionLine = (
+      row: (typeof loyaltyRows)[number],
+      status: string,
+      reasonAr: string,
+      reasonEn: string,
+    ): KpiBreakdownLine => {
+      const linkedPayment = paymentById.get(metaId(row.metadata, 'paymentId') || '');
+      const linkedOffer = offerById.get(metaId(row.metadata, 'offerId') || '');
+      const linkedOrder = orderById.get(metaId(row.metadata, 'orderId') || '');
+      const facts = linkedPayment
+        ? paidPartFacts(linkedPayment.order, linkedPayment.offer?.orderPart?.name)
+        : linkedOffer
+          ? paidPartFacts(linkedOffer.order, linkedOffer.orderPart?.name)
+          : linkedOrder
+            ? paidPartFacts(linkedOrder, null)
+            : paidPartFacts(row.payment?.order, row.payment?.offer?.orderPart?.name);
+      return {
+        id: row.id,
+        paymentId: linkedPayment?.id,
+        ...facts,
+        orderNumber: facts.orderNumber || linkedPayment?.order?.orderNumber || linkedPayment?.transactionNumber,
+        customerId: row.user?.role === 'CUSTOMER' ? row.user.id : facts.customerId || row.payment?.order?.customerId,
+        customerName: row.user?.name || linkedPayment?.customer?.name || undefined,
+        storeId: linkedPayment?.offer?.store?.id || linkedOffer?.store?.id || row.payment?.offer?.store?.id || row.user?.store?.id,
+        storeName: linkedPayment?.offer?.store?.name || linkedOffer?.store?.name || row.payment?.offer?.store?.name || row.user?.store?.name,
+        amount: roundMoney(Number(row.amount)),
+        paidAt: row.createdAt.toISOString(),
+        status,
+        sign: 'minus',
+        reasonAr: row.description || reasonAr,
+        reasonEn: row.description || reasonEn,
+      };
+    };
+    const included: KpiBreakdownLine[] = [];
+    if (ledger.kind === 'payment') {
+      included.push(...paymentPage.flatMap(commissionAndFeeLines));
+      if (!paymentHasMore && includeDeductions) {
+        included.push(
+          ...loyaltyPage.map((row) =>
+            deductionLine(row, 'ORDER_PROFIT', 'كاش باك ولاء دُفع للعميل', 'Loyalty cashback credited to the customer'),
+          ),
+        );
+        if (!loyaltyHasMore) {
+          included.push(
+            ...referralPage.map((row) =>
+              deductionLine(row, 'REFERRAL_PROFIT', 'ربح إحالة دُفع من عمولة المنصة', 'Referral payout paid from platform commission'),
+            ),
+          );
+        }
+      }
+    } else if (ledger.kind === 'loyalty') {
+      included.push(
+        ...loyaltyPage.map((row) =>
+          deductionLine(row, 'ORDER_PROFIT', 'كاش باك ولاء دُفع للعميل', 'Loyalty cashback credited to the customer'),
+        ),
+      );
+    } else {
+      included.push(
+        ...referralPage.map((row) =>
+          deductionLine(row, 'REFERRAL_PROFIT', 'ربح إحالة دُفع من عمولة المنصة', 'Referral payout paid from platform commission'),
+        ),
+      );
+    }
+    const lastPayment = paymentPage[paymentPage.length - 1];
     const lastLoyalty = loyaltyPage[loyaltyPage.length - 1];
+    const lastReferral = referralPage[referralPage.length - 1];
+    let includedHasMore = false;
+    let nextIncludedCursor: string | undefined;
+    if (ledger.kind === 'payment' && paymentHasMore && lastPayment) {
+      includedHasMore = true;
+      nextIncludedCursor = `payment:${encodeCursor(lastPayment.createdAt, lastPayment.id)}`;
+    } else if (ledger.kind === 'payment' && paymentHasMore === false && ledger.raw && (loyalty !== 0 || referral !== 0)) {
+      includedHasMore = true;
+      nextIncludedCursor = loyalty !== 0 ? 'loyalty:' : 'referral:';
+    } else if ((includeDeductions || ledger.kind === 'loyalty') && loyaltyHasMore && lastLoyalty) {
+      includedHasMore = true;
+      nextIncludedCursor = `loyalty:${encodeCursor(lastLoyalty.createdAt, lastLoyalty.id)}`;
+    } else if (ledger.kind === 'loyalty' && !loyaltyHasMore && referral !== 0) {
+      includedHasMore = true;
+      nextIncludedCursor = 'referral:';
+    } else if ((includeDeductions || ledger.kind === 'referral') && referralHasMore && lastReferral) {
+      includedHasMore = true;
+      nextIncludedCursor = `referral:${encodeCursor(lastReferral.createdAt, lastReferral.id)}`;
+    }
+    const stripeNoteAr = [
+      `صافي الربح ${net} هو مجموع الصفوف الموقعة: عمولة القطع ${commission} ناقص رسم البوابة المخزّن ${fees} ناقص كاش باك الولاء ${loyalty}${referral ? ` ناقص الإحالة ${referral}` : ''}.`,
+      `العميل دفع ${customerPaid} على نفس الدفعات. منها ${merchantShare} سعر القطعة ويُحوَّل للتاجر، و${shippingHeld} شحن ويُحمَّل على التزام الشحن. الاثنان داخل تحصيل Stripe وخارج صافي الربح.`,
+      `المرتجعات ${refunds} رجعت للعملاء وخرجت من رصيد Stripe، ولا تُخصم من هذا الرقم. خصمها يظهر في صافي موقف المنصة.`,
+      'رسم Stripe الفعلي ورسوم تحويل العملة قد يزيدان عن الرسم المخزّن، والفرق يخرج من رصيد Stripe ولا يُحسب عمولة. الرصيد المتاح أو الوارد في Stripe كاش بعد الاسترداد والتحويل والرسوم، وليس صافي عمولة المنصة.',
+    ].join(' ');
+    const stripeNoteEn = [
+      `Net profit ${net} is the signed rows below: part commission ${commission} minus the stored gateway fee ${fees} minus loyalty cashback ${loyalty}${referral ? ` minus referral payouts ${referral}` : ''}.`,
+      `Customers paid ${customerPaid} on those same payments. ${merchantShare} is the part price and is transferred to the merchant, and ${shippingHeld} is shipping held as a shipping liability. Both sit inside the Stripe charge and outside net profit.`,
+      `Refunds of ${refunds} went back to customers and left the Stripe balance. They are not subtracted from this figure. That subtraction is the net platform position.`,
+      'Stripe’s actual fee and currency-conversion charges can exceed the stored fee. That gap leaves the Stripe balance and is not booked as commission. Stripe available or incoming cash is what remains after refunds, transfers, and fees, not platform net commission.',
+    ].join(' ');
     return {
       metricId,
       total: net,
-      formulaAr: 'عمولة الدفعات الناجحة ناقص كاش باك الولاء وأرباح الإحالة ورسوم البوابة المخزّنة. هذا صافي العمولة وليس رصيد Stripe.',
-      formulaEn: 'Commission on successful payments minus loyalty cashback, referral payouts, and stored gateway fees. This is net commission, not the Stripe balance.',
+      formulaAr:
+        'كل صف موقع يدخل في الرقم: عمولة القطعة تُضاف، ورسم بوابتها وكاش باك الولاء والإحالة تُطرح. المجموع صافي العمولة وليس رصيد Stripe.',
+      formulaEn:
+        'Every signed row is part of the figure: the part commission is added, and its gateway fee, loyalty cashback, and referral payout are subtracted. The sum is net commission, not the Stripe balance.',
       notStripeCash: true,
       outside: OUTSIDE_SALES_FORMULA,
+      stripeNoteAr,
+      stripeNoteEn,
       sources,
-      included: loyaltyPage.map((row) => ({
-        id: row.id,
-        ...orderFacts(row.payment?.order),
-        customerId: row.user?.role === 'CUSTOMER' ? row.user.id : row.payment?.order?.customerId,
-        customerName: row.user?.name || undefined,
-        storeId: row.payment?.offer?.store?.id || row.user?.store?.id,
-        storeName: row.payment?.offer?.store?.name || row.user?.store?.name,
-        amount: roundMoney(Number(row.amount)),
-        paidAt: row.createdAt.toISOString(),
-        status: 'ORDER_PROFIT',
-        reasonAr: row.description || 'كاش باك ولاء دُفع للعميل',
-        reasonEn: row.description || 'Loyalty cashback credited to the customer',
-      })),
+      included,
       excluded: [],
-      includedHasMore: loyaltyHasMore,
+      includedHasMore,
       excludedHasMore: false,
-      nextIncludedCursor:
-        loyaltyHasMore && lastLoyalty ? encodeCursor(lastLoyalty.createdAt, lastLoyalty.id) : undefined,
+      nextIncludedCursor,
     };
   }
 
@@ -936,7 +1138,7 @@ async function pageWalletCredits(
       description: true,
       transactionType: true,
       user: { select: { id: true, name: true, role: true, store: { select: { id: true, name: true } } } },
-      payment: { select: { order: { select: orderShape }, offer: { select: { store: { select: { id: true, name: true } } } } } },
+      payment: { select: { order: { select: orderShape }, offer: { select: { orderPart: { select: { name: true } }, store: { select: { id: true, name: true } } } } } },
     },
   });
   const hasMore = rows.length > limit;
@@ -945,7 +1147,7 @@ async function pageWalletCredits(
   return {
     lines: page.map((row) => ({
       id: row.id,
-      ...orderFacts(row.payment?.order),
+      ...paidPartFacts(row.payment?.order, row.payment?.offer?.orderPart?.name),
       customerId: row.user?.role === 'CUSTOMER' ? row.user.id : row.payment?.order?.customerId,
       customerName: row.user?.role === 'CUSTOMER' ? row.user.name || undefined : undefined,
       storeId: row.payment?.offer?.store?.id || row.user?.store?.id,
