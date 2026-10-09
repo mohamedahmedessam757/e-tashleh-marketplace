@@ -1372,6 +1372,8 @@ model EscrowTransaction {
 model PlatformWallet {
   id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   commissionBalance Decimal  @default(0) @map("commission_balance") @db.Decimal(14, 2)
+  /// Customer shipping collected by the platform. Separate from commissionBalance.
+  shippingBalance   Decimal  @default(0) @map("shipping_balance") @db.Decimal(14, 2)
   feesBalance       Decimal  @default(0) @map("fees_balance") @db.Decimal(14, 2)
   totalRevenue      Decimal  @default(0) @map("total_revenue") @db.Decimal(14, 2)
   /// Outstanding shipping-company obligations (carrier owes platform)

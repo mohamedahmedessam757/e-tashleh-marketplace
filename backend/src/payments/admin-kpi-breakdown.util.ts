@@ -374,6 +374,182 @@ function sliceByCursor<T extends { createdAt: Date; id: string }>(
   };
 }
 
+async function buildNetPlatformPositionBreakdown(
+  prisma: PrismaService,
+  range: AdminDateRange,
+  limit: number,
+  netCommission: number,
+  customerRefunds: number,
+  customerPaid: number,
+  merchantShare: number,
+): Promise<KpiBreakdownResult> {
+  const salesWhere = buildGrossSalesPaymentWhere(range);
+  const datedWallet = walletDate(range);
+  const walletWindow = datedWallet ? { createdAt: datedWallet } : {};
+  const walletSelect = {
+    id: true,
+    amount: true,
+    createdAt: true,
+    description: true,
+    transactionType: true,
+    role: true,
+    paymentId: true,
+    metadata: true,
+    user: { select: { id: true, name: true, role: true, store: { select: { id: true, name: true } } } },
+  } satisfies Prisma.WalletTransactionSelect;
+  const [payments, loyaltyCredits, loyaltyDebits, referralCredits, merchantFees, carrierRows, shippingAgg, merchantFeeAgg, carrierAgg, loyaltyBackAgg, platformWallet] =
+    await Promise.all([
+      prisma.paymentTransaction.findMany({
+        where: salesWhere,
+        select: paymentSelect,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: limit + 1,
+      }),
+      prisma.walletTransaction.findMany({
+        where: { role: 'CUSTOMER', type: 'CREDIT', transactionType: 'ORDER_PROFIT', ...walletWindow },
+        select: walletSelect,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: limit + 1,
+      }),
+      prisma.walletTransaction.findMany({
+        where: { role: 'CUSTOMER', type: 'DEBIT', transactionType: 'ORDER_PROFIT', ...walletWindow },
+        select: walletSelect,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: limit + 1,
+      }),
+      prisma.walletTransaction.findMany({
+        where: { type: 'CREDIT', transactionType: 'REFERRAL_PROFIT', ...walletWindow },
+        select: walletSelect,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: limit + 1,
+      }),
+      prisma.walletTransaction.findMany({
+        where: {
+          role: 'VENDOR',
+          type: 'DEBIT',
+          transactionType: { in: ['ADJUDICATION_FEE', 'SHIPPING_FEE', 'PENALTY'] },
+          ...walletWindow,
+        },
+        select: walletSelect,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: limit + 1,
+      }),
+      prisma.walletTransaction.findMany({
+        where: { role: 'SHIPPING_COMPANY', type: 'DEBIT', transactionType: 'SHIPPING_COMPANY_SETTLEMENT', ...walletWindow },
+        select: walletSelect,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: limit + 1,
+      }),
+      prisma.paymentTransaction.aggregate({ where: salesWhere, _sum: { shippingCost: true } }),
+      prisma.walletTransaction.aggregate({
+        where: {
+          role: 'VENDOR',
+          type: 'DEBIT',
+          transactionType: { in: ['ADJUDICATION_FEE', 'SHIPPING_FEE', 'PENALTY'] },
+          ...walletWindow,
+        },
+        _sum: { amount: true },
+      }),
+      prisma.walletTransaction.aggregate({
+        where: { role: 'SHIPPING_COMPANY', type: 'DEBIT', transactionType: 'SHIPPING_COMPANY_SETTLEMENT', ...walletWindow },
+        _sum: { amount: true },
+      }),
+      prisma.walletTransaction.aggregate({
+        where: { role: 'CUSTOMER', type: 'DEBIT', transactionType: 'ORDER_PROFIT', ...walletWindow },
+        _sum: { amount: true },
+      }),
+      prisma.platformWallet.findFirst(),
+    ]);
+  const shippingRetained = roundMoney(Number(shippingAgg._sum.shippingCost || 0));
+  const merchantFeeIncome = roundMoney(Number(merchantFeeAgg._sum.amount || 0));
+  const carrierCollected = roundMoney(Number(carrierAgg._sum.amount || 0));
+  const loyaltyReversed = roundMoney(Number(loyaltyBackAgg._sum.amount || 0));
+  const total = roundMoney(netCommission + shippingRetained + merchantFeeIncome + carrierCollected + loyaltyReversed);
+  const paymentHasMore = payments.length > limit;
+  const paymentPage = paymentHasMore ? payments.slice(0, limit) : payments;
+  const linkedIds = [...loyaltyCredits, ...loyaltyDebits, ...referralCredits, ...merchantFees, ...carrierRows]
+    .map((row) => row.paymentId)
+    .filter((id): id is string => !!id);
+  const linked = linkedIds.length
+    ? await prisma.paymentTransaction.findMany({ where: { id: { in: linkedIds } }, select: paymentSelect })
+    : [];
+  const paymentById = new Map(linked.map((row) => [row.id, row]));
+  const walletLine = (
+    row: (typeof merchantFees)[number],
+    sign: 'plus' | 'minus',
+    reasonAr: string,
+    reasonEn: string,
+  ): KpiBreakdownLine => {
+    const payment = row.paymentId ? paymentById.get(row.paymentId) : undefined;
+    return {
+      id: row.id,
+      paymentId: payment?.id,
+      ...(payment ? paidPartFacts(payment.order, payment.offer?.orderPart?.name) : {}),
+      orderNumber: payment?.order?.orderNumber || payment?.transactionNumber,
+      customerId: row.role === 'CUSTOMER' ? row.user?.id : payment?.customer?.id,
+      customerName: row.role === 'CUSTOMER' ? row.user?.name || undefined : payment?.customer?.name || undefined,
+      storeId: payment?.offer?.store?.id || row.user?.store?.id,
+      storeName: payment?.offer?.store?.name || row.user?.store?.name,
+      amount: roundMoney(Number(row.amount)),
+      paidAt: row.createdAt.toISOString(),
+      status: row.transactionType,
+      sign,
+      reasonAr: row.description || reasonAr,
+      reasonEn: row.description || reasonEn,
+    };
+  };
+  const included: KpiBreakdownLine[] = [
+    ...paymentPage.flatMap((row) => {
+      const lines = commissionAndFeeLines(row);
+      const shipping = roundMoney(Number(row.shippingCost));
+      if (shipping > 0) {
+        lines.push({
+          ...paymentLine(row, shipping, 'شحن هذه القطعة دخل حساب الشحن في المنصة، منفصلًا عن العمولة', 'This part’s shipping entered the platform shipping account, separate from commission'),
+          id: `${row.id}:shipping`,
+          sign: 'plus',
+          status: 'SHIPPING',
+        });
+      }
+      return lines;
+    }),
+    ...loyaltyCredits.slice(0, limit).map((row) => walletLine(row, 'minus', 'كاش باك ولاء دُفع للعميل', 'Loyalty cashback credited to the customer')),
+    ...referralCredits.slice(0, limit).map((row) => walletLine(row, 'minus', 'ربح إحالة دُفع من عمولة المنصة', 'Referral payout paid from platform commission')),
+    ...loyaltyDebits.slice(0, limit).map((row) => walletLine(row, 'plus', 'كاش باك رجع إلى المنصة', 'Loyalty cashback returned to the platform')),
+    ...merchantFees.slice(0, limit).map((row) => walletLine(row, 'plus', 'رسم محصّل من التاجر لحساب المنصة', 'Fee collected from the merchant into the platform account')),
+    ...carrierRows.slice(0, limit).map((row) => walletLine(row, 'plus', 'مبلغ سددته شركة الشحن للمنصة', 'Amount the carrier paid to the platform')),
+  ];
+  const openCarrier = roundMoney(Number(platformWallet?.shippingCompanyLiabilityBalance || 0));
+  return {
+    metricId: 'netPlatformPosition',
+    total,
+    formulaAr: 'صافي العمولة على الدفعات الباقية، زائد شحن تلك الدفعات في حساب مستقل، زائد الرسوم المحصّلة من التاجر وما سددته شركة الشحن، زائد كاش باك الولاء الذي رجع. مبلغ الاسترداد الكامل للعميل لا يُطرح مرة ثانية.',
+    formulaEn: 'Net commission on the payments that remain, plus their shipping in a separate account, plus fees collected from the merchant and cash the carrier has paid, plus loyalty cashback that came back. The customer’s full refund is not subtracted again.',
+    notStripeCash: true,
+    outside: [
+      ...OUTSIDE_SALES_FORMULA,
+      {
+        labelAr: `المرتجعات ${customerRefunds} رجعت للعملاء. عمولتها وشحنها خارج صافي العمولة أصلًا، وسعر القطعة ${merchantShare} من أصل ${customerPaid} للتاجر. طرح مبلغ الاسترداد كاملًا كان يسحب مال التاجر من ربح المنصة.`,
+        labelEn: `Refunds of ${customerRefunds} went back to customers. Their commission and shipping are already outside net commission, and the part price ${merchantShare} of ${customerPaid} belongs to the merchant. Subtracting the full refund was taking the merchant’s money out of platform profit.`,
+      },
+      {
+        labelAr: `ما زال على شركة الشحن ${openCarrier} لم يُحصَّل بعد، لذلك ليس داخل هذا الرقم. سحب التاجر يخرج من محفظته ولا يُنقص ربح المنصة.`,
+        labelEn: `The carrier still owes ${openCarrier}, so that amount is not inside this figure. A merchant withdrawal leaves their wallet and does not reduce platform profit.`,
+      },
+    ],
+    sources: ([
+      { metricId: 'netCommission', labelAr: 'صافي العمولة', labelEn: 'Net commission', amount: netCommission, sign: 'plus' },
+      { metricId: 'netPlatformPosition', labelAr: 'شحن الدفعات الباقية', labelEn: 'Shipping on remaining payments', amount: shippingRetained, sign: 'plus' },
+      { metricId: 'netPlatformPosition', labelAr: 'رسوم محصّلة من التاجر', labelEn: 'Fees collected from the merchant', amount: merchantFeeIncome, sign: 'plus' },
+      { metricId: 'netPlatformPosition', labelAr: 'ما سددته شركة الشحن', labelEn: 'Collected from the carrier', amount: carrierCollected, sign: 'plus' },
+      { metricId: 'netPlatformPosition', labelAr: 'ولاء رجع للمنصة', labelEn: 'Loyalty returned to the platform', amount: loyaltyReversed, sign: 'plus' },
+    ] as KpiBreakdownSource[]).filter((source) => source.amount !== 0 || source.metricId === 'netCommission'),
+    included,
+    excluded: [],
+    includedHasMore: paymentHasMore || [loyaltyCredits, loyaltyDebits, referralCredits, merchantFees, carrierRows].some((rows) => rows.length > limit),
+    excludedHasMore: false,
+  };
+}
+
 export async function buildAdminKpiBreakdown(
   prisma: PrismaService,
   filters: {
@@ -656,34 +832,7 @@ export async function buildAdminKpiBreakdown(
     }
 
     if (metricId === 'netPlatformPosition') {
-      return {
-        metricId,
-        total: roundMoney(net - refunds),
-        formulaAr: 'صافي العمولة ناقص إجمالي المرتجعات. هذا ليس رصيد Stripe.',
-        formulaEn: 'Net commission minus total refunds. This is not the Stripe balance.',
-        notStripeCash: true,
-        outside: OUTSIDE_SALES_FORMULA,
-        sources: [
-          {
-            metricId: 'netCommission',
-            labelAr: 'صافي العمولة',
-            labelEn: 'Net commission',
-            amount: net,
-            sign: 'plus',
-          },
-          {
-            metricId: 'totalRefunds',
-            labelAr: 'إجمالي المرتجعات',
-            labelEn: 'Total refunds',
-            amount: refunds,
-            sign: 'minus',
-          },
-        ],
-        included: [],
-        excluded: [],
-        includedHasMore: false,
-        excludedHasMore: false,
-      };
+      return buildNetPlatformPositionBreakdown(prisma, range, limit, net, refunds, customerPaid, merchantShare);
     }
 
     const metaId = (metadata: Prisma.JsonValue | null, key: string): string | undefined => {
@@ -809,13 +958,13 @@ export async function buildAdminKpiBreakdown(
     }
     const stripeNoteAr = [
       `صافي الربح ${net} هو مجموع الصفوف الموقعة: عمولة القطع ${commission} ناقص رسم البوابة المخزّن ${fees} ناقص كاش باك الولاء ${loyalty}${referral ? ` ناقص الإحالة ${referral}` : ''}.`,
-      `العميل دفع ${customerPaid} على نفس الدفعات. منها ${merchantShare} سعر القطعة ويُحوَّل للتاجر، و${shippingHeld} شحن ويُحمَّل على التزام الشحن. الاثنان داخل تحصيل Stripe وخارج صافي الربح.`,
+      `العميل دفع ${customerPaid} على نفس الدفعات. منها ${merchantShare} سعر القطعة ويُحوَّل للتاجر، و${shippingHeld} شحن يدخل حساب الشحن في المنصة منفصلًا عن العمولة. هذا الرقم لا يضم الشحن ولا الرسوم المحصّلة من التاجر أو شركة الشحن.`,
       `المرتجعات ${refunds} رجعت للعملاء وخرجت من رصيد Stripe، ولا تُخصم من هذا الرقم. خصمها يظهر في صافي موقف المنصة.`,
       'رسم Stripe الفعلي ورسوم تحويل العملة قد يزيدان عن الرسم المخزّن، والفرق يخرج من رصيد Stripe ولا يُحسب عمولة. الرصيد المتاح أو الوارد في Stripe كاش بعد الاسترداد والتحويل والرسوم، وليس صافي عمولة المنصة.',
     ].join(' ');
     const stripeNoteEn = [
       `Net profit ${net} is the signed rows below: part commission ${commission} minus the stored gateway fee ${fees} minus loyalty cashback ${loyalty}${referral ? ` minus referral payouts ${referral}` : ''}.`,
-      `Customers paid ${customerPaid} on those same payments. ${merchantShare} is the part price and is transferred to the merchant, and ${shippingHeld} is shipping held as a shipping liability. Both sit inside the Stripe charge and outside net profit.`,
+      `Customers paid ${customerPaid} on those same payments. ${merchantShare} is the part price and is transferred to the merchant, and ${shippingHeld} enters the platform shipping account, separate from commission. This figure does not include that shipping or fees collected from the merchant or the carrier.`,
       `Refunds of ${refunds} went back to customers and left the Stripe balance. They are not subtracted from this figure. That subtraction is the net platform position.`,
       'Stripe’s actual fee and currency-conversion charges can exceed the stored fee. That gap leaves the Stripe balance and is not booked as commission. Stripe available or incoming cash is what remains after refunds, transfers, and fees, not platform net commission.',
     ].join(' ');
@@ -1303,7 +1452,7 @@ async function buildFinanceCenterBreakdown(
       }),
       sumPayments(prisma, salesWhere, 'commission'),
       prisma.paymentTransaction.aggregate({
-        where: { refundedAmount: { gt: 0 }, ...refundRecognizedWhere(range) },
+        where: { ...buildGrossSalesPaymentWhere(range), refundedAmount: { gt: 0 } },
         _sum: { commission: true },
       }),
       prisma.platformWallet.findFirst(),

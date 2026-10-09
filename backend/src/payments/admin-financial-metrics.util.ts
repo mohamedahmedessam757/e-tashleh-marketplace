@@ -232,6 +232,10 @@ export async function computeAdminFinancialKpis(
     grossSalesAgg,
     commissionAgg,
     shippingAgg,
+    shippingOnSalesAgg,
+    merchantFeeAgg,
+    carrierCollectedAgg,
+    loyaltyReversalAgg,
     scShippingAgg,
     referralAgg,
     referralCountResult,
@@ -269,6 +273,37 @@ export async function computeAdminFinancialKpis(
       where: shippingWhere,
       _sum: { shippingCost: true },
       _count: { id: true },
+    }),
+    prisma.paymentTransaction.aggregate({
+      where: grossSalesWhere,
+      _sum: { shippingCost: true },
+    }),
+    prisma.walletTransaction.aggregate({
+      where: {
+        role: 'VENDOR',
+        type: 'DEBIT',
+        transactionType: { in: ['ADJUDICATION_FEE', 'SHIPPING_FEE', 'PENALTY'] },
+        ...walletDate,
+      },
+      _sum: { amount: true },
+    }),
+    prisma.walletTransaction.aggregate({
+      where: {
+        role: 'SHIPPING_COMPANY',
+        type: 'DEBIT',
+        transactionType: 'SHIPPING_COMPANY_SETTLEMENT',
+        ...walletDate,
+      },
+      _sum: { amount: true },
+    }),
+    prisma.walletTransaction.aggregate({
+      where: {
+        role: 'CUSTOMER',
+        type: 'DEBIT',
+        transactionType: 'ORDER_PROFIT',
+        ...walletDate,
+      },
+      _sum: { amount: true },
     }),
     // Return / adjudication shipping owed to carrier (obligation ledger)
     (prisma as any).shippingCompanyObligation.aggregate({
@@ -409,6 +444,13 @@ export async function computeAdminFinancialKpis(
     },
     _sum: { commission: true },
   });
+  const commissionRefundsInSalesAgg = await prisma.paymentTransaction.aggregate({
+    where: {
+      ...grossSalesWhere,
+      refundedAmount: { gt: 0 },
+    },
+    _sum: { commission: true },
+  });
 
     const grossSales = Number(grossSalesAgg._sum.totalAmount || 0);
   const grossCommission = Number(commissionAgg._sum.commission || 0);
@@ -431,7 +473,15 @@ export async function computeAdminFinancialKpis(
   // Net profit deducts payment-time Stripe fees only (never adjudication retention).
   const netCommission =
     grossCommission - totalReferralPaid - totalLoyaltyPaid - paymentGatewayFees;
-  const netPlatformPosition = netCommission - totalRefunds;
+  const successShipping = Number(shippingOnSalesAgg._sum.shippingCost || 0);
+  const merchantFeeIncome = Number(merchantFeeAgg._sum.amount || 0);
+  const carrierCollected = Number(carrierCollectedAgg._sum.amount || 0);
+  const loyaltyReversed = Number(loyaltyReversalAgg._sum.amount || 0);
+  // Refunded orders are already outside gross commission. Subtracting the
+  // customer's full refund would remove the merchant's part price as well.
+  const netPlatformPosition =
+    netCommission + successShipping + merchantFeeIncome + carrierCollected + loyaltyReversed;
+  const commissionRefundsInSales = Number(commissionRefundsInSalesAgg._sum.commission || 0);
 
   const platformCommissionBal = Number(platformWallet?.commissionBalance || 0);
   const platformFeesBal = Number(platformWallet?.feesBalance || 0);
@@ -510,7 +560,7 @@ export async function computeAdminFinancialKpis(
     netPlatformRevenue: roundMoney(
       grossCommission -
         (totalLoyaltyPaid + totalReferralPaid) -
-        Number(commissionRefundsAgg._sum.commission || 0) -
+        commissionRefundsInSales -
         paymentGatewayFees,
     ),
   };

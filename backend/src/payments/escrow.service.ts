@@ -111,8 +111,10 @@ export class EscrowService {
             }
         });
 
-        // 3. Accrue platform commission & fees at payment time (visible in admin financials immediately)
+        // 3. Accrue platform commission & fees at payment time (visible in admin financials immediately).
+        // Shipping is a separate platform account and a separate ledger row.
         const commissionTotal = Number(amounts.commissionAmount) + Number(amounts.gatewayFee);
+        const shippingAmount = Number(amounts.shippingAmount);
         if (commissionTotal > 0) {
             await prisma.platformWallet.updateMany({
                 data: {
@@ -121,6 +123,44 @@ export class EscrowService {
                     totalRevenue: { increment: commissionTotal },
                 },
             });
+        }
+        if (shippingAmount > 0) {
+            const credited = await prisma.$queryRaw<Array<{ shipping_balance: unknown }>>`
+                UPDATE platform_wallet
+                SET shipping_balance = shipping_balance + ${shippingAmount}, updated_at = NOW()
+                RETURNING shipping_balance
+            `;
+            const existingShipping = await prisma.walletTransaction.findFirst({
+                where: { paymentId, role: 'ADMIN', type: 'CREDIT', transactionType: 'SHIPPING' },
+                select: { id: true },
+            });
+            if (!existingShipping) {
+                const adminUser = await prisma.user.findFirst({
+                    where: { role: { in: ['SUPER_ADMIN', 'ADMIN'] } },
+                    select: { id: true },
+                    orderBy: { createdAt: 'asc' },
+                });
+                const paymentOwner = await prisma.paymentTransaction.findUnique({
+                    where: { id: paymentId },
+                    select: { customerId: true },
+                });
+                if (adminUser?.id || paymentOwner?.customerId) {
+                    await prisma.walletTransaction.create({
+                        data: {
+                            userId: adminUser?.id ?? paymentOwner!.customerId,
+                            role: 'ADMIN',
+                            paymentId,
+                            type: 'CREDIT',
+                            transactionType: 'SHIPPING',
+                            amount: shippingAmount,
+                            currency: 'AED',
+                            description: 'تحصيل شحن لحساب المنصة — منفصل عن العمولة',
+                            balanceAfter: Number(credited[0]?.shipping_balance ?? shippingAmount),
+                            metadata: { account: 'SHIPPING' },
+                        },
+                    });
+                }
+            }
         }
     }
 
@@ -1054,6 +1094,36 @@ export class EscrowService {
         // Sync sale invoice documents for this payment (safe for combined SHIPPING)
         if (totalRefunded >= ctx.paymentTotalAmount) {
             await this.invoiceSnapshot.markPaymentInvoicesRefunded(tx, ctx.paymentId);
+            const shippingCredit = await tx.walletTransaction.findFirst({
+                where: { paymentId: ctx.paymentId, role: 'ADMIN', type: 'CREDIT', transactionType: 'SHIPPING' },
+                select: { id: true, amount: true, userId: true },
+            });
+            const shippingDebit = await tx.walletTransaction.findFirst({
+                where: { paymentId: ctx.paymentId, role: 'ADMIN', type: 'DEBIT', transactionType: 'SHIPPING' },
+                select: { id: true },
+            });
+            const shippingAmount = Number(shippingCredit?.amount || 0);
+            if (shippingCredit && !shippingDebit && shippingAmount > 0) {
+                const credited = await tx.$queryRaw<Array<{ shipping_balance: unknown }>>`
+                    UPDATE platform_wallet
+                    SET shipping_balance = GREATEST(shipping_balance - ${shippingAmount}, 0), updated_at = NOW()
+                    RETURNING shipping_balance
+                `;
+                await tx.walletTransaction.create({
+                    data: {
+                        userId: shippingCredit.userId,
+                        role: 'ADMIN',
+                        paymentId: ctx.paymentId,
+                        type: 'DEBIT',
+                        transactionType: 'SHIPPING',
+                        amount: shippingAmount,
+                        currency: 'AED',
+                        description: 'عكس شحن مرتجع من حساب الشحن في المنصة',
+                        balanceAfter: Number(credited[0]?.shipping_balance ?? 0),
+                        metadata: { account: 'SHIPPING', reverses: shippingCredit.id },
+                    },
+                });
+            }
         }
 
         const paymentRow = await tx.paymentTransaction.findUnique({
