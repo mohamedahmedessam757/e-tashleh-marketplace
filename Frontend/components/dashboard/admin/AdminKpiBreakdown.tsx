@@ -8,9 +8,14 @@ import { getAccessToken } from '../../../utils/auth';
 interface BreakdownLine {
   id: string;
   paymentId?: string;
+  orderId?: string;
   orderNumber?: string;
+  customerId?: string;
   customerName?: string;
+  storeId?: string;
   storeName?: string;
+  partNames?: string[];
+  requestType?: 'single' | 'multiple';
   amount: number;
   status?: string;
   paidAt?: string;
@@ -164,6 +169,45 @@ export const AdminKpiBreakdown: React.FC<AdminKpiBreakdownProps> = ({ metricId, 
     isMoney ? `${amount.toLocaleString()} AED` : amount.toLocaleString();
 
   const reason = (line: BreakdownLine) => (isAr ? line.reasonAr : line.reasonEn);
+  const openRecord = (path: 'admin-order-details' | 'customer-profile' | 'store-profile', id?: string) => {
+    if (!id || !/^[0-9a-f-]{36}$/i.test(id)) return;
+    onNavigate?.(path, id);
+  };
+  const kindLabel = (line: BreakdownLine) =>
+    line.requestType === 'multiple' ? copy.groupedOrder : line.requestType === 'single' ? copy.singleOrder : '';
+
+  const EntityLinks = ({ line }: { line: BreakdownLine }) => (
+    <div className="flex flex-col gap-1">
+      {line.orderId ? (
+        <button type="button" onClick={() => openRecord('admin-order-details', line.orderId)} className="inline-flex items-center gap-1 font-mono text-gold-300 hover:text-white text-start" title={copy.openOrder}>
+          {line.orderNumber || copy.openOrder}
+          <ArrowUpRight size={12} className="rtl:-scale-x-100 shrink-0" />
+        </button>
+      ) : (
+        <span className="font-mono text-gold-400">{line.orderNumber || '—'}</span>
+      )}
+      {!!line.partNames?.length && <span className="text-xs text-white/70">{line.partNames.join(' · ')}</span>}
+      {line.requestType && (
+        <span className={`w-fit text-[10px] font-bold px-2 py-0.5 rounded-full ${line.requestType === 'multiple' ? 'bg-sky-500/15 text-sky-300' : 'bg-emerald-500/15 text-emerald-300'}`}>
+          {kindLabel(line)}
+        </span>
+      )}
+      {line.customerId && (
+        <button type="button" onClick={() => openRecord('customer-profile', line.customerId)} className="inline-flex items-center gap-1 text-xs text-white/80 hover:text-gold-300 text-start" title={copy.openCustomer}>
+          {line.customerName || copy.openCustomer}
+          <ArrowUpRight size={12} className="rtl:-scale-x-100 shrink-0" />
+        </button>
+      )}
+      {!line.customerId && line.customerName && <span className="text-xs text-white/70">{line.customerName}</span>}
+      {line.storeId && (
+        <button type="button" onClick={() => openRecord('store-profile', line.storeId)} className="inline-flex items-center gap-1 text-xs text-white/80 hover:text-gold-300 text-start" title={copy.openStore}>
+          {line.storeName || copy.openStore}
+          <ArrowUpRight size={12} className="rtl:-scale-x-100 shrink-0" />
+        </button>
+      )}
+      {!line.storeId && line.storeName && <span className="text-xs text-white/70">{line.storeName}</span>}
+    </div>
+  );
 
   const renderLines = (lines: BreakdownLine[]) => {
     if (!lines.length) {
@@ -176,8 +220,7 @@ export const AdminKpiBreakdown: React.FC<AdminKpiBreakdownProps> = ({ metricId, 
             <thead>
               <tr className="text-[10px] uppercase tracking-widest text-gold-500/70 bg-gold-500/[0.06]">
                 <th className="text-start font-bold py-2 px-2">{copy.order}</th>
-                <th className="text-start font-bold py-2 px-2">{copy.customer}</th>
-                <th className="text-start font-bold py-2 px-2">{copy.store}</th>
+                <th className="text-start font-bold py-2 px-2">{copy.parts}</th>
                 {isMoney && <th className="text-start font-bold py-2 px-2">{copy.amount}</th>}
                 <th className="text-start font-bold py-2 px-2">{copy.status}</th>
                 <th className="text-start font-bold py-2 px-2">{copy.date}</th>
@@ -187,9 +230,8 @@ export const AdminKpiBreakdown: React.FC<AdminKpiBreakdownProps> = ({ metricId, 
             <tbody>
               {lines.map((line) => (
                 <tr key={line.id} className="border-t border-white/5 text-white/80">
-                  <td className="py-3 px-2 font-mono text-gold-400">{line.orderNumber || '—'}</td>
-                  <td className="py-3 px-2">{line.customerName || '—'}</td>
-                  <td className="py-3 px-2">{line.storeName || '—'}</td>
+                  <td className="py-3 px-2"><EntityLinks line={line} /></td>
+                  <td className="py-3 px-2 text-white/70">{line.partNames?.join(' · ') || '—'}</td>
                   {isMoney && <td className="py-3 px-2 font-mono">{line.amount.toLocaleString()}</td>}
                   <td className="py-3 px-2">{line.status || '—'}</td>
                   <td className="py-3 px-2 whitespace-nowrap">{line.paidAt ? new Date(line.paidAt).toLocaleString(isAr ? 'ar' : 'en') : '—'}</td>
@@ -202,12 +244,10 @@ export const AdminKpiBreakdown: React.FC<AdminKpiBreakdownProps> = ({ metricId, 
         <div className="md:hidden space-y-3">
           {lines.map((line) => (
             <div key={line.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-1">
-              <div className="flex items-center justify-between gap-3">
-                <p className="font-mono text-gold-400 text-sm">{line.orderNumber || line.customerName || '—'}</p>
+              <div className="flex items-start justify-between gap-3">
+                <EntityLinks line={line} />
                 {isMoney && <p className="font-mono text-white text-sm">{line.amount.toLocaleString()} AED</p>}
               </div>
-              <p className="text-sm text-white">{line.customerName || '—'}</p>
-              {line.storeName && <p className="text-xs text-white/50">{line.storeName}</p>}
               <p className="text-xs text-white/40">{line.status} · {line.paidAt ? new Date(line.paidAt).toLocaleString(isAr ? 'ar' : 'en') : '—'}</p>
               <p className="text-xs text-white/50">{reason(line)}</p>
             </div>

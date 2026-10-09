@@ -54,9 +54,14 @@ const OPEN_CASE_WHERE = {
 export interface KpiBreakdownLine {
   id: string;
   paymentId?: string;
+  orderId?: string;
   orderNumber?: string;
+  customerId?: string;
   customerName?: string;
+  storeId?: string;
   storeName?: string;
+  partNames?: string[];
+  requestType?: 'single' | 'multiple';
   amount: number;
   status?: string;
   paidAt?: string;
@@ -114,6 +119,37 @@ export interface KpiBreakdownResult {
   nextExcludedCursor?: string;
 }
 
+const orderShape = {
+  id: true,
+  orderNumber: true,
+  partName: true,
+  requestType: true,
+  customerId: true,
+  parts: { select: { name: true }, orderBy: { createdAt: 'asc' as const }, take: 20 },
+} satisfies Prisma.OrderSelect;
+
+type OrderShape = Prisma.OrderGetPayload<{ select: typeof orderShape }>;
+
+function orderFacts(order: OrderShape | null | undefined): Pick<
+  KpiBreakdownLine,
+  'orderId' | 'orderNumber' | 'partNames' | 'requestType' | 'customerId'
+> {
+  if (!order) return {};
+  const fromParts = order.parts.map((part) => part.name.trim()).filter(Boolean);
+  const partNames = fromParts.length ? fromParts : order.partName?.trim() ? [order.partName.trim()] : [];
+  const requestType: 'single' | 'multiple' =
+    String(order.requestType || '').toLowerCase() === 'multiple' || partNames.length > 1
+      ? 'multiple'
+      : 'single';
+  return {
+    orderId: order.id,
+    orderNumber: order.orderNumber,
+    partNames,
+    requestType,
+    customerId: order.customerId,
+  };
+}
+
 const paymentSelect = {
   id: true,
   status: true,
@@ -126,9 +162,9 @@ const paymentSelect = {
   createdAt: true,
   refundedAt: true,
   transactionNumber: true,
-  customer: { select: { name: true } },
-  order: { select: { orderNumber: true, status: true } },
-  offer: { select: { store: { select: { name: true } } } },
+  customer: { select: { id: true, name: true } },
+  order: { select: orderShape },
+  offer: { select: { store: { select: { id: true, name: true } } } },
 } satisfies Prisma.PaymentTransactionSelect;
 
 type PaymentRow = Prisma.PaymentTransactionGetPayload<{ select: typeof paymentSelect }>;
@@ -171,8 +207,11 @@ function paymentLine(
   return {
     id: row.id,
     paymentId: row.id,
+    ...orderFacts(row.order),
     orderNumber: row.order?.orderNumber || row.transactionNumber,
+    customerId: row.customer?.id || row.order?.customerId,
     customerName: row.customer?.name || undefined,
+    storeId: row.offer?.store?.id,
     storeName: row.offer?.store?.name || undefined,
     amount: roundMoney(amount),
     status: row.status,
@@ -492,7 +531,8 @@ export async function buildAdminKpiBreakdown(
           amount: true,
           createdAt: true,
           description: true,
-          user: { select: { name: true } },
+          user: { select: { id: true, name: true, role: true, store: { select: { id: true, name: true } } } },
+          payment: { select: { order: { select: orderShape }, offer: { select: { store: { select: { id: true, name: true } } } } } },
         },
       }),
     ]);
@@ -578,7 +618,11 @@ export async function buildAdminKpiBreakdown(
       sources,
       included: loyaltyPage.map((row) => ({
         id: row.id,
+        ...orderFacts(row.payment?.order),
+        customerId: row.user?.role === 'CUSTOMER' ? row.user.id : row.payment?.order?.customerId,
         customerName: row.user?.name || undefined,
+        storeId: row.payment?.offer?.store?.id || row.user?.store?.id,
+        storeName: row.payment?.offer?.store?.name || row.user?.store?.name,
         amount: roundMoney(Number(row.amount)),
         paidAt: row.createdAt.toISOString(),
         status: 'ORDER_PROFIT',
@@ -616,7 +660,12 @@ export async function buildAdminKpiBreakdown(
         status: true,
         totalAmount: true,
         createdAt: true,
-        customer: { select: { name: true } },
+        partName: true,
+        requestType: true,
+        customerId: true,
+        parts: { select: { name: true }, orderBy: { createdAt: 'asc' as const }, take: 20 },
+        customer: { select: { id: true, name: true } },
+        store: { select: { id: true, name: true } },
       },
     });
     const hasMore = rows.length > limit;
@@ -633,8 +682,11 @@ export async function buildAdminKpiBreakdown(
       notStripeCash: false,
       included: page.map((row) => ({
         id: row.id,
-        orderNumber: row.orderNumber,
+        ...orderFacts(row),
+        customerId: row.customer?.id,
         customerName: row.customer?.name || undefined,
+        storeId: row.store?.id || undefined,
+        storeName: row.store?.name || undefined,
         amount: roundMoney(Number(row.totalAmount || 0)),
         status: row.status,
         paidAt: row.createdAt.toISOString(),
@@ -679,6 +731,7 @@ export async function buildAdminKpiBreakdown(
         notStripeCash: false,
         included: page.map((row) => ({
           id: row.id,
+          customerId: row.id,
           customerName: row.name,
           amount: 0,
           paidAt: row.createdAt.toISOString(),
@@ -722,6 +775,7 @@ export async function buildAdminKpiBreakdown(
       notStripeCash: false,
       included: page.map((row) => ({
         id: row.id,
+        storeId: row.id,
         storeName: row.name,
         orderNumber: row.storeCode || undefined,
         amount: 0,
@@ -747,8 +801,9 @@ export async function buildAdminKpiBreakdown(
         status: true,
         createdAt: true,
         caseReference: true,
-        customer: { select: { name: true } },
-        order: { select: { orderNumber: true } },
+        customer: { select: { id: true, name: true } },
+        store: { select: { id: true, name: true } },
+        order: { select: orderShape },
       },
     }),
     prisma.dispute.findMany({
@@ -760,8 +815,9 @@ export async function buildAdminKpiBreakdown(
         status: true,
         createdAt: true,
         caseReference: true,
-        customer: { select: { name: true } },
-        order: { select: { orderNumber: true } },
+        customer: { select: { id: true, name: true } },
+        store: { select: { id: true, name: true } },
+        order: { select: orderShape },
       },
     }),
     prisma.returnRequest.count({ where: OPEN_CASE_WHERE }),
@@ -780,8 +836,12 @@ export async function buildAdminKpiBreakdown(
     notStripeCash: false,
     included: paged.page.map((row) => ({
       id: row.id,
+      ...orderFacts(row.order),
       orderNumber: row.order?.orderNumber || row.caseReference || undefined,
+      customerId: row.customer?.id,
       customerName: row.customer?.name || undefined,
+      storeId: row.store?.id || undefined,
+      storeName: row.store?.name || undefined,
       amount: 0,
       status: row.status,
       paidAt: row.createdAt.toISOString(),
@@ -875,7 +935,8 @@ async function pageWalletCredits(
       createdAt: true,
       description: true,
       transactionType: true,
-      user: { select: { name: true } },
+      user: { select: { id: true, name: true, role: true, store: { select: { id: true, name: true } } } },
+      payment: { select: { order: { select: orderShape }, offer: { select: { store: { select: { id: true, name: true } } } } } },
     },
   });
   const hasMore = rows.length > limit;
@@ -884,7 +945,11 @@ async function pageWalletCredits(
   return {
     lines: page.map((row) => ({
       id: row.id,
-      customerName: row.user?.name || undefined,
+      ...orderFacts(row.payment?.order),
+      customerId: row.user?.role === 'CUSTOMER' ? row.user.id : row.payment?.order?.customerId,
+      customerName: row.user?.role === 'CUSTOMER' ? row.user.name || undefined : undefined,
+      storeId: row.payment?.offer?.store?.id || row.user?.store?.id,
+      storeName: row.payment?.offer?.store?.name || row.user?.store?.name || (row.user?.role !== 'CUSTOMER' ? row.user?.name || undefined : undefined),
       amount: roundMoney(Number(row.amount)),
       status: row.transactionType,
       paidAt: row.createdAt.toISOString(),
@@ -944,6 +1009,7 @@ async function buildFinanceCenterBreakdown(
       'Sum of pending and frozen balances across stores. This is merchant escrow, not the payment-gateway balance.',
       page.map((row) => ({
         id: row.id,
+        storeId: row.id,
         storeName: row.name,
         amount: roundMoney(Number(row.pendingBalance) + Number(row.frozenBalance)),
         status: 'ESCROW',
@@ -980,8 +1046,9 @@ async function buildFinanceCenterBreakdown(
         amount: true,
         status: true,
         createdAt: true,
-        user: { select: { name: true } },
-        store: { select: { name: true } },
+        role: true,
+        user: { select: { id: true, name: true } },
+        store: { select: { id: true, name: true } },
       },
     });
     const agg = await prisma.withdrawalRequest.aggregate({ where, _sum: { amount: true } });
@@ -999,8 +1066,10 @@ async function buildFinanceCenterBreakdown(
         : 'Completed withdrawals inside the window. The net reached the owner’s account after any liabilities were settled.',
       page.map((row) => ({
         id: row.id,
-        customerName: row.user?.name || undefined,
-        storeName: row.store?.name || undefined,
+        customerId: row.role === 'CUSTOMER' ? row.user?.id || undefined : undefined,
+        customerName: row.role === 'CUSTOMER' ? row.user?.name || undefined : undefined,
+        storeId: row.store?.id || undefined,
+        storeName: row.store?.name || (row.role !== 'CUSTOMER' ? row.user?.name || undefined : undefined),
         amount: roundMoney(Number(row.amount)),
         status: row.status,
         paidAt: row.createdAt.toISOString(),
@@ -1173,7 +1242,13 @@ async function buildFinanceCenterBreakdown(
         },
         orderBy: [{ releasedAt: 'desc' }],
         take: limit + 1,
-        select: { id: true, merchantAmount: true, releasedAt: true, createdAt: true, order: { select: { orderNumber: true } } },
+        select: {
+          id: true,
+          merchantAmount: true,
+          releasedAt: true,
+          createdAt: true,
+          order: { select: { ...orderShape, customer: { select: { id: true, name: true } }, store: { select: { id: true, name: true } } } },
+        },
       }),
     ]);
     const releasedSum = roundMoney(Number(released._sum.merchantAmount || 0));
@@ -1185,7 +1260,11 @@ async function buildFinanceCenterBreakdown(
       'Escrow released to stores inside the window, after clawing back released earnings that were refunded.',
       rows.map((row) => ({
         id: row.id,
-        orderNumber: row.order?.orderNumber,
+        ...orderFacts(row.order),
+        customerId: row.order?.customer?.id,
+        customerName: row.order?.customer?.name || undefined,
+        storeId: row.order?.store?.id || undefined,
+        storeName: row.order?.store?.name || undefined,
         amount: roundMoney(Number(row.merchantAmount)),
         status: 'RELEASED',
         paidAt: (row.releasedAt || row.createdAt).toISOString(),
@@ -1224,7 +1303,19 @@ async function buildFinanceCenterBreakdown(
         where: orderWhere,
         orderBy: [{ updatedAt: 'desc' }],
         take: limit,
-        select: { id: true, orderNumber: true, status: true, totalAmount: true, updatedAt: true, customer: { select: { name: true } } },
+        select: {
+          id: true,
+          orderNumber: true,
+          status: true,
+          totalAmount: true,
+          updatedAt: true,
+          partName: true,
+          requestType: true,
+          customerId: true,
+          parts: { select: { name: true }, orderBy: { createdAt: 'asc' as const }, take: 20 },
+          customer: { select: { id: true, name: true } },
+          store: { select: { id: true, name: true } },
+        },
       }),
       prisma.dispute.count({ where: dateFilter ? { createdAt: dateFilter } : {} }),
       prisma.order.aggregate({ where: orderWhere, _sum: { totalAmount: true }, _count: { id: true } }),
@@ -1234,8 +1325,11 @@ async function buildFinanceCenterBreakdown(
       'Orders marked disputed or return-requested inside the window, plus disputes opened in that same window.',
       orders.map((row) => ({
         id: row.id,
-        orderNumber: row.orderNumber,
+        ...orderFacts(row),
+        customerId: row.customer?.id,
         customerName: row.customer?.name || undefined,
+        storeId: row.store?.id || undefined,
+        storeName: row.store?.name || undefined,
         amount: roundMoney(Number(row.totalAmount || 0)),
         status: row.status,
         paidAt: row.updatedAt.toISOString(),
