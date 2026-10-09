@@ -8,6 +8,7 @@ export interface OverviewStatItem {
   subValue?: string;
   icon: LucideIcon;
   color: string;
+  onClick?: () => void;
 }
 
 interface OverviewKpiSectionProps {
@@ -23,11 +24,15 @@ function StatCard({
   subValue,
   icon: Icon,
   color,
+  onClick,
   renderValue,
 }: OverviewStatItem & { renderValue?: (item: OverviewStatItem) => React.ReactNode }) {
   const item = { label, value, subValue, icon: Icon, color };
   return (
-    <GlassCard className="p-6 relative overflow-hidden group hover:scale-[1.01] transition-all duration-300 bg-gradient-to-br from-white/[0.04] to-transparent border-white/5">
+    <GlassCard
+      onClick={onClick}
+      className={`p-6 relative overflow-hidden group hover:scale-[1.01] transition-all duration-300 bg-gradient-to-br from-white/[0.04] to-transparent border-white/5 ${onClick ? 'cursor-pointer' : ''}`}
+    >
       <div
         className="absolute top-0 right-0 w-24 h-24 blur-3xl opacity-10 rounded-full -mr-12 -mt-12 group-hover:opacity-20 transition-opacity duration-700"
         style={{ backgroundColor: color }}

@@ -106,8 +106,22 @@ export function buildPaymentDateFilter(range: AdminDateRange): Prisma.DateTimeFi
   return filter;
 }
 
+/** Refunds count on the refund timestamp, falling back to the payment row date. */
+export function refundRecognizedWhere(
+  range: AdminDateRange,
+): Prisma.PaymentTransactionWhereInput {
+  const dateFilter = buildPaymentDateFilter(range);
+  if (!dateFilter) return {};
+  return {
+    OR: [
+      { refundedAt: dateFilter },
+      { refundedAt: null, createdAt: dateFilter },
+    ],
+  };
+}
+
 /** SUCCESS payments on non-cancelled/refunded orders — audit-grade GMV base. */
-function buildGrossSalesPaymentWhere(
+export function buildGrossSalesPaymentWhere(
   range: AdminDateRange,
 ): Prisma.PaymentTransactionWhereInput {
   const dateFilter = buildPaymentDateFilter(range);
@@ -286,7 +300,7 @@ export async function computeAdminFinancialKpis(
     prisma.paymentTransaction.aggregate({
       where: {
         status: 'REFUNDED',
-        ...(dateFilter ? { createdAt: dateFilter } : {}),
+        ...refundRecognizedWhere(range),
       },
       _sum: { refundedAmount: true },
     }),
@@ -294,7 +308,7 @@ export async function computeAdminFinancialKpis(
       where: {
         status: 'SUCCESS',
         refundedAmount: { gt: 0 },
-        ...(dateFilter ? { createdAt: dateFilter } : {}),
+        ...refundRecognizedWhere(range),
       },
       _sum: { refundedAmount: true },
     }),
@@ -391,14 +405,7 @@ export async function computeAdminFinancialKpis(
   const commissionRefundsAgg = await prisma.paymentTransaction.aggregate({
     where: {
       refundedAmount: { gt: 0 },
-      ...(buildPaymentDateFilter(range)
-        ? {
-            OR: [
-              { paidAt: buildPaymentDateFilter(range) },
-              { paidAt: null, createdAt: buildPaymentDateFilter(range)! },
-            ],
-          }
-        : {}),
+      ...refundRecognizedWhere(range),
     },
     _sum: { commission: true },
   });

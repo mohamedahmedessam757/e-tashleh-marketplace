@@ -434,6 +434,20 @@ export class PaymentsController {
 
     // --- Admin Financial Hub Endpoints ---
 
+    @Get('admin/kpi-breakdown')
+    @UseGuards(PermissionsGuard)
+    @Permissions('billing', 'view')
+    getKpiBreakdown(@Query() filters: {
+        metric?: string;
+        startDate?: string;
+        endDate?: string;
+        includedCursor?: string;
+        excludedCursor?: string;
+        limit?: number;
+    }) {
+        return this.adminFinancialService.getKpiBreakdown(filters);
+    }
+
     @Get('admin/financials')
     @UseGuards(PermissionsGuard)
     @Permissions('billing', 'view')

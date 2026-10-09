@@ -112,10 +112,10 @@ interface AdminBillingProps {
     onNavigate?: (path: string, id: any) => void;
 }
 
-const BillingStatCard = React.memo(({ label, value, subValue, icon: Icon, color, trend }: any) => {
+const BillingStatCard = React.memo(({ label, value, subValue, icon: Icon, color, trend, onClick }: any) => {
     const amountsBlurred = useAdminPermissionsStore(s => s.isSectionBlurred('billing_amounts'));
     return (
-        <GlassCard className="p-6 relative overflow-hidden group hover:scale-[1.02] transition-all duration-500 bg-gradient-to-br from-white/[0.04] to-transparent border-white/5">
+        <GlassCard onClick={onClick} className={`p-6 relative overflow-hidden group hover:scale-[1.02] transition-all duration-500 bg-gradient-to-br from-white/[0.04] to-transparent border-white/5 ${onClick ? 'cursor-pointer' : ''}`}>
             <div className={`absolute top-0 right-0 w-24 h-24 blur-3xl opacity-10 rounded-full -mr-12 -mt-12 group-hover:opacity-20 transition-opacity duration-700`} style={{ backgroundColor: color }} />
             <div className="relative z-10 flex flex-col justify-between h-full">
                 <div className="flex justify-between items-start">
@@ -160,6 +160,18 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
     const isLoadingFinancials = useAdminStore(s => s.isLoadingFinancials);
     const financialFilters = useAdminStore(s => s.financialFilters);
     const setFinancialFilters = useAdminStore(s => s.setFinancialFilters);
+    const openKpi = (metricId: string) => {
+        try {
+            sessionStorage.setItem('admin-kpi-range', JSON.stringify({
+                startDate: financialFilters.startDate,
+                endDate: financialFilters.endDate,
+                back: 'billing',
+            }));
+        } catch {
+            /* the breakdown page falls back to the last 30 days */
+        }
+        onNavigate?.('finance-kpi', metricId);
+    };
     const fetchAdminFinancials = useAdminStore(s => s.fetchAdminFinancials);
     const subscribeToFinancials = useAdminStore(s => s.subscribeToFinancials);
     const unsubscribeFromFinancials = useAdminStore(s => s.unsubscribeFromFinancials);
@@ -385,27 +397,27 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
         { label: t.admin.billing.kpis.platformCommissions || 'Platform Commissions', value: `${((kpis.platformCommissions ?? kpis.grossCommission) || 0).toLocaleString()} AED`, icon: Percent, color: '#d4af37' },
         { label: t.admin.billing.kpis.loyaltyReferralExpenses || 'Loyalty & Referral Expenses', value: `${(kpis.loyaltyReferralExpenses ?? ((kpis.loyaltyCashbackPaid || 0) + (kpis.referralPaidOut || 0))).toLocaleString()} AED`, icon: Users, color: '#a855f7' },
         { label: t.admin.billing.kpis.commissionRefunds || 'Commission Refunds', value: `${(kpis.commissionRefunds || 0).toLocaleString()} AED`, icon: ArrowDownLeft, color: '#f87171' },
-        { label: t.admin.billing.kpis.paymentGatewayFees || t.admin.billing.kpis.gatewayFees, value: `${(kpis.paymentGatewayFees ?? 0).toLocaleString()} AED`, icon: CreditCard, color: '#f97316' },
+        { label: t.admin.billing.kpis.paymentGatewayFees || t.admin.billing.kpis.gatewayFees, value: `${(kpis.paymentGatewayFees ?? 0).toLocaleString()} AED`, icon: CreditCard, color: '#f97316', onClick: () => openKpi('paymentGatewayFees') },
         { label: t.admin.billing.kpis.netPlatformRevenue || 'Net Platform Revenue', value: `${((kpis.netPlatformRevenue ?? kpis.netPlatformPosition) || 0).toLocaleString()} AED`, icon: ShieldCheck, color: '#22d3ee' },
-    ], [kpis, t]);
+    ], [kpis, t, financialFilters.startDate, financialFilters.endDate, onNavigate]);
 
     const revenueKpis = useMemo(() => [
         { label: t.admin.billing.kpis.logisticsRevenue, value: `${(kpis.shippingCollected ?? kpis.shippingProfit ?? 0).toLocaleString()} AED`, subValue: t.admin.billing.kpis.logisticsSub, icon: Activity, color: '#10b981' },
         { label: t.admin.billing.kpis.referralEcosystem, value: `${(kpis.referralPaidOut ?? kpis.referralEarnings ?? 0).toLocaleString()} AED`, subValue: `${kpis.referralCount || 0} ${t.admin.billing.kpis.activeReferrals} · ${t.admin.billing.kpis.referralSub}`, icon: Users, color: '#8b5cf6' },
         { label: t.admin.billing.kpis.loyaltyCashback, value: `${(kpis.loyaltyCashbackPaid || 0).toLocaleString()} AED`, subValue: t.admin.billing.kpis.loyaltySub, icon: TrendingUp, color: '#a855f7' },
-        { label: t.admin.billing.kpis.grossCommission, value: `${(kpis.grossCommission || 0).toLocaleString()} AED`, subValue: t.admin.billing.kpis.grossCommissionSub, icon: Percent, color: '#d4af37' },
+        { label: t.admin.billing.kpis.grossCommission, value: `${(kpis.grossCommission || 0).toLocaleString()} AED`, subValue: t.admin.billing.kpis.grossCommissionSub, icon: Percent, color: '#d4af37', onClick: () => openKpi('grossCommission') },
         { label: t.admin.billing.kpis.gatewayFees, value: `${(kpis.gatewayFees || 0).toLocaleString()} AED`, subValue: t.admin.billing.kpis.gatewayFeesSub, icon: CreditCard, color: '#6366f1' },
-    ], [kpis, t]);
+    ], [kpis, t, financialFilters.startDate, financialFilters.endDate, onNavigate]);
 
     const riskKpis = useMemo(() => [
-        { label: t.admin.billing.kpis.totalRefunds, value: `${(kpis.totalRefunds || 0).toLocaleString()} AED`, icon: ArrowDownLeft, color: '#f87171' },
+        { label: t.admin.billing.kpis.totalRefunds, value: `${(kpis.totalRefunds || 0).toLocaleString()} AED`, icon: ArrowDownLeft, color: '#f87171', onClick: () => openKpi('totalRefunds') },
         { label: t.admin.billing.kpis.failedUnsettled, value: String(kpis.failedUnsettledCount ?? 0), subValue: `${(kpis.failedUnsettledAmount ?? 0).toLocaleString()} AED · ${t.admin.billing.kpis.failedUnsettledSub}`, icon: RefreshCw, color: '#64748b' },
         { label: t.admin.billing.kpis.financialDisputes, value: String(kpis.financialDisputesCount ?? 0), subValue: `${(kpis.financialDisputesAmount ?? 0).toLocaleString()} AED · ${t.admin.billing.kpis.financialDisputesSub}`, icon: Scale, color: '#f97316' },
         { label: t.admin.billing.kpis.totalPenalties, value: `${(kpis.totalPenalties || 0).toLocaleString()} AED`, subValue: t.admin.billing.kpis.totalPenaltiesSub, icon: AlertOctagon, color: '#ea580c' },
         { label: t.admin.billing.kpis.dailyTxCount, value: String(kpis.dailyTxCount ?? 0), subValue: t.admin.billing.kpis.dailyTxSub, icon: Activity, color: '#38bdf8' },
         { label: t.admin.billing.kpis.monthlyTxCount, value: String(kpis.monthlyTxCount ?? 0), subValue: t.admin.billing.kpis.monthlyTxSub, icon: Calendar, color: '#a78bfa' },
         { label: t.admin.billing.kpis.activityLoad, value: String(kpis.opsLast24h ?? kpis.todayTransactionsCount ?? 0), subValue: t.admin.billing.kpis.realtimeOps, icon: RefreshCw, color: '#ffffff' },
-    ], [kpis, t]);
+    ], [kpis, t, financialFilters.startDate, financialFilters.endDate, onNavigate]);
 
     const handleFeedRowClick = useCallback((item: UnifiedFinancialEvent) => {
         markFeedItemAsSeen(item.id);
@@ -557,6 +569,7 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
                             value={`${(kpis.totalSales || 0).toLocaleString()} AED`}
                             icon={TrendingUp}
                             color="#3b82f6"
+                            onClick={() => openKpi('totalSales')}
                         />
                         <StatCard 
                             label={t.admin.billing.kpis.netProfit}
@@ -564,6 +577,7 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
                             subValue={t.admin.billing.kpis.netProfitSub}
                             icon={DollarSign}
                             color="#d4af37"
+                            onClick={() => openKpi('netCommission')}
                         />
                         <StatCard 
                             label={t.admin.billing.kpis.escrowLocked}
@@ -578,6 +592,7 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
                             subValue={t.admin.billing.kpis.netPlatformSub}
                             icon={ShieldCheck}
                             color="#22d3ee"
+                            onClick={() => openKpi('netPlatformPosition')}
                         />
                     </div>
 

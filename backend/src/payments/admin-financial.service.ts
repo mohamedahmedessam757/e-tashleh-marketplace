@@ -19,6 +19,7 @@ import {
   computeTopEarners,
   roundMoney,
 } from './admin-financial-metrics.util';
+import { buildAdminKpiBreakdown } from './admin-kpi-breakdown.util';
 import {
   computeMerchantGrossSales,
   computeMerchantEscrowBalances,
@@ -106,6 +107,17 @@ export class AdminFinancialService {
     private readonly financialConfig: FinancialConfigService,
     private readonly notifications: NotificationsService,
   ) {}
+
+  getKpiBreakdown(filters?: {
+    metric?: string;
+    startDate?: string;
+    endDate?: string;
+    includedCursor?: string;
+    excludedCursor?: string;
+    limit?: number;
+  }) {
+    return buildAdminKpiBreakdown(this.prisma, filters || {});
+  }
 
   async getSellerAccounts(filters?: { search?: string; page?: number; limit?: number }) {
     const page = Math.max(1, Number(filters?.page) || 1);

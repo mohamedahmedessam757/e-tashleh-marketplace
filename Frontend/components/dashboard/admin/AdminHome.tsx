@@ -24,6 +24,7 @@ import { ReviewsControl } from './ReviewsControl';
 import { AdminResolutionPage } from './AdminResolutionPage';
 import { AdminDisputeDetails } from './AdminDisputeDetails';
 import { AdminBilling } from './AdminBilling';
+import { AdminKpiBreakdown } from './AdminKpiBreakdown';
 import { AdminInvoicesHub } from './AdminInvoicesHub';
 import { AdminOrderInvoicePage } from './AdminOrderInvoicePage';
 import { AdminOrderFinancialAuditPage } from './AdminOrderFinancialAuditPage';
@@ -98,11 +99,12 @@ const AdminHomeSkeleton = () => (
 );
 
 // --- KPI CARD COMPONENT (MEMOIZED & ANIMATED) ---
-const KPICard = React.memo(({ label, value, icon: Icon, color, trend, loading, children }: any) => {
+const KPICard = React.memo(({ label, value, icon: Icon, color, trend, loading, children, onClick }: any) => {
     const [displayValue, setDisplayValue] = useState(0);
     const hasAnimatedRef = React.useRef(false);
     const targetValue = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.]/g, '')) : value;
     const unit = typeof value === 'string' ? value.replace(/[0-9.,\s]/g, '') : '';
+    const keepsCents = Number.isFinite(targetValue) && Math.abs(targetValue - Math.trunc(targetValue)) > 0.001;
 
     useEffect(() => {
         if (loading) return;
@@ -143,7 +145,8 @@ const KPICard = React.memo(({ label, value, icon: Icon, color, trend, loading, c
     return (
         <GlassCard
             enableBlur={false}
-            className="relative overflow-hidden group p-5 border-white/5 hover:border-gold-500/30 transition-[border-color,background-color] duration-300 min-h-[140px] bg-[#1A1814]/90 contain-paint no-entrance-anim [content-visibility:auto] [contain-intrinsic-size:auto_140px]"
+            onClick={onClick}
+            className={`relative overflow-hidden group p-5 border-white/5 hover:border-gold-500/30 transition-[border-color,background-color] duration-300 min-h-[140px] bg-[#1A1814]/90 contain-paint no-entrance-anim [content-visibility:auto] [contain-intrinsic-size:auto_140px] ${onClick ? 'cursor-pointer' : ''}`}
         >
             {loading ? (
                 <div className="space-y-4">
@@ -164,7 +167,7 @@ const KPICard = React.memo(({ label, value, icon: Icon, color, trend, loading, c
                         <div>
                             <p className="text-xs font-bold text-white/40 uppercase tracking-widest mb-2">{label}</p>
                             <h3 className="text-2xl lg:text-3xl font-bold text-white font-mono tracking-tight">
-                                {displayValue.toLocaleString()} <span className="text-xs text-white/40">{unit}</span>
+                                {(keepsCents ? targetValue : displayValue).toLocaleString(undefined, keepsCents ? { minimumFractionDigits: 2, maximumFractionDigits: 2 } : undefined)} <span className="text-xs text-white/40">{unit}</span>
                             </h3>
                             {children}
                         </div>
@@ -172,13 +175,15 @@ const KPICard = React.memo(({ label, value, icon: Icon, color, trend, loading, c
                             <Icon size={20} />
                         </div>
                     </div>
+                    {typeof trend === 'number' && (
                     <div className="relative z-10 mt-4 flex items-center gap-2">
-                        <span className={`text-xs font-bold flex items-center gap-1 ${trend > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        <span className={`text-xs font-bold flex items-center gap-1 ${trend > 0 ? 'text-green-400' : trend < 0 ? 'text-red-400' : 'text-white/40'}`}>
                             {trend > 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
                             {Math.abs(trend)}%
                         </span>
                         <span className="text-[10px] text-white/30">vs last period</span>
                     </div>
+                    )}
                 </div>
             )}
         </GlassCard>
@@ -277,6 +282,19 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
         }
     };
 
+    const openKpi = (metricId: string) => {
+        try {
+            sessionStorage.setItem('admin-kpi-range', JSON.stringify({
+                startDate: localDateRange.startDate,
+                endDate: localDateRange.endDate,
+                back: 'home',
+            }));
+        } catch {
+            /* range still defaults to the last 30 days inside the breakdown page */
+        }
+        navigate('finance-kpi', metricId);
+    };
+
     // --- ANALYTICS ENGINE (KPIs) ---
     const stats = useMemo(() => {
         if (!dashboardStats) return {
@@ -365,6 +383,13 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
         return { salesTrend, salesLabels, donutData, donutTotal, barData, salesTrendData };
     }, [dashboardStats, language, t]);
 
+    if (subPath === 'finance-kpi' && viewId) {
+        return (
+            <PermissionGuard page="billing" action="view">
+                <AdminKpiBreakdown metricId={String(viewId)} onNavigate={navigate} />
+            </PermissionGuard>
+        );
+    }
     if (subPath === 'billing') {
         return (
             <PermissionGuard page="billing" action="view">
@@ -568,21 +593,21 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
 
             {/* KPI GRID */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-                <KPICard label={t.admin.kpi.totalSales} value={`${stats.totalSales.toLocaleString()} AED`} icon={DollarSign} color="text-gold-400" trend={stats.totalSalesTrend} loading={isLoadingStats} />
+                <KPICard label={t.admin.kpi.totalSales} value={`${stats.totalSales.toLocaleString()} AED`} icon={DollarSign} color="text-gold-400" trend={stats.totalSalesTrend} loading={isLoadingStats} onClick={() => openKpi('totalSales')} />
                 <KPICard 
                     label={t.admin.kpi.commission} 
                     value={`${stats.totalCommission.toLocaleString()} AED`} 
                     icon={TrendingUp} 
                     color="text-green-400" 
-                    trend={8.2} 
                     loading={isLoadingStats}
+                    onClick={() => openKpi('netCommission')}
                 >
                     <p className="text-[10px] text-white/40 mt-1">{t.admin.kpi.profitSub}</p>
                 </KPICard>
-                <KPICard label={t.admin.kpi.orders} value={stats.totalOrders} icon={Package} color="text-blue-400" trend={-2.1} loading={isLoadingStats} />
-                <KPICard label={t.admin.kpi.customers} value={stats.activeCustomers.toLocaleString()} icon={Users} color="text-purple-400" trend={5.4} loading={isLoadingStats} />
-                <KPICard label={t.admin.kpi.stores} value={stats.activeVendors} icon={Store} color="text-pink-400" trend={0} loading={isLoadingStats} />
-                <KPICard label={t.admin.kpi.disputes} value={stats.openDisputes} icon={AlertTriangle} color="text-red-400" trend={15} loading={isLoadingStats} />
+                <KPICard label={t.admin.kpi.orders} value={stats.totalOrders} icon={Package} color="text-blue-400" loading={isLoadingStats} onClick={() => openKpi('totalOrders')} />
+                <KPICard label={t.admin.kpi.customers} value={stats.activeCustomers.toLocaleString()} icon={Users} color="text-purple-400" loading={isLoadingStats} onClick={() => openKpi('activeCustomers')} />
+                <KPICard label={t.admin.kpi.stores} value={stats.activeVendors} icon={Store} color="text-pink-400" loading={isLoadingStats} onClick={() => openKpi('activeStores')} />
+                <KPICard label={t.admin.kpi.disputes} value={stats.openDisputes} icon={AlertTriangle} color="text-red-400" loading={isLoadingStats} onClick={() => openKpi('openDisputes')} />
             </div>
 
             {/* MAIN ANALYTICS SECTION */}
@@ -616,7 +641,6 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
 
                         <div className="text-right">
                             <span className="block text-2xl font-bold text-gold-400 font-mono">{stats.totalSales.toLocaleString()} AED</span>
-                            <span className="block text-[10px] text-green-400">+12.5% vs prev week</span>
                         </div>
                     </div>
 

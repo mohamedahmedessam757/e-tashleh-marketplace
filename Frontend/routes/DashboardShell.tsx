@@ -244,7 +244,10 @@ const DashboardShell: React.FC<DashboardShellProps> = ({
       onBack={onBack}
     >
       <AccountAccessGuard audience="admin">
-      {dashboardPath === 'home' && <AdminHome />}
+      {dashboardPath === 'home' && <AdminHome onNavigate={onNavigate} />}
+      {dashboardPath === 'finance-kpi' && (
+        <AdminHome subPath="finance-kpi" viewId={viewId} onNavigate={onNavigate} />
+      )}
       {dashboardPath === 'users' && <AdminHome subPath="users" />}
       {dashboardPath === 'store-profile' && <AdminHome subPath="store-profile" viewId={viewId} />}
       {dashboardPath === 'customers' && <AdminHome subPath="customers" />}
