@@ -15,6 +15,11 @@ function toNumber(value: unknown): number {
     return Number(value);
 }
 
+function percentChange(current: number, previous: number): number {
+    if (!(previous > 0)) return 0;
+    return Number((((current - previous) / previous) * 100).toFixed(1));
+}
+
 @Injectable()
 export class DashboardService {
     private readonly logger = new Logger(DashboardService.name);
@@ -57,6 +62,11 @@ export class DashboardService {
             stalledVerificationCount,
             pendingContractChangesCount,
             shippingClassMismatchCount,
+            prevOrders,
+            customersBefore,
+            storesBefore,
+            casesInRange,
+            casesInPrev,
             lastOrders,
         ] = await Promise.all([
             this.prisma.order.count({ where: orderDateFilter }),
@@ -164,6 +174,43 @@ export class DashboardService {
                     order: { status: 'COLLECTING_OFFERS' },
                 },
             }),
+            this.prisma.order.count({
+                where: prevRange.startDate && prevRange.endDate
+                    ? { createdAt: { gte: prevRange.startDate, lte: prevRange.endDate } }
+                    : { id: 'none' },
+            }),
+            this.prisma.user.count({
+                where: {
+                    role: UserRole.CUSTOMER,
+                    ...(range.startDate ? { createdAt: { lt: range.startDate } } : {}),
+                },
+            }),
+            this.prisma.store.count({
+                where: {
+                    status: StoreStatus.ACTIVE,
+                    ...(range.startDate ? { createdAt: { lt: range.startDate } } : {}),
+                },
+            }),
+            (async () => {
+                const createdAt = range.startDate && range.endDate
+                    ? { gte: range.startDate, lte: range.endDate }
+                    : undefined;
+                const where = createdAt ? { createdAt } : {};
+                const [returns, disputes] = await Promise.all([
+                    this.prisma.returnRequest.count({ where }),
+                    this.prisma.dispute.count({ where }),
+                ]);
+                return returns + disputes;
+            })(),
+            (async () => {
+                if (!prevRange.startDate || !prevRange.endDate) return 0;
+                const createdAt = { gte: prevRange.startDate, lte: prevRange.endDate };
+                const [returns, disputes] = await Promise.all([
+                    this.prisma.returnRequest.count({ where: { createdAt } }),
+                    this.prisma.dispute.count({ where: { createdAt } }),
+                ]);
+                return returns + disputes;
+            })(),
             this.prisma.order.findMany({
                 take: 5,
                 orderBy: { createdAt: 'desc' },
@@ -285,6 +332,11 @@ export class DashboardService {
             totalCommission,
             grossCommission: kpis.grossCommission,
             salesTrendPercent: Number(salesTrendPercent.toFixed(1)),
+            commissionTrendPercent: percentChange(kpis.netCommission, prevKpis.netCommission),
+            ordersTrendPercent: percentChange(totalOrders, prevOrders),
+            customersTrendPercent: percentChange(activeCustomers, customersBefore),
+            storesTrendPercent: percentChange(activeStores, storesBefore),
+            disputesTrendPercent: percentChange(casesInRange, casesInPrev),
             totalOrders,
             activeCustomers,
             activeStores,

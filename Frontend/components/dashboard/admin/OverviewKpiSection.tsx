@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, LucideIcon } from 'lucide-react';
+import { ArrowUpRight, ChevronDown, LucideIcon } from 'lucide-react';
 import { GlassCard } from '../../ui/GlassCard';
 
 export interface OverviewStatItem {
@@ -40,11 +40,14 @@ function StatCard({
       <div className="relative z-10 flex flex-col justify-between h-full">
         <div className="flex justify-between items-start gap-3">
           <p className="text-[10px] font-black text-white/30 uppercase leading-relaxed">{label}</p>
-          <div
-            className="p-2.5 rounded-xl bg-white/5 border border-white/10 group-hover:border-white/20 transition-colors shrink-0"
-            style={{ color }}
-          >
-            <Icon size={18} />
+          <div className="flex items-center gap-2">
+            {onClick && <ArrowUpRight size={16} className="text-gold-400 rtl:-scale-x-100" />}
+            <div
+              className="p-2.5 rounded-xl bg-white/5 border border-white/10 group-hover:border-white/20 transition-colors shrink-0"
+              style={{ color }}
+            >
+              <Icon size={18} />
+            </div>
           </div>
         </div>
         <div className="mt-4">

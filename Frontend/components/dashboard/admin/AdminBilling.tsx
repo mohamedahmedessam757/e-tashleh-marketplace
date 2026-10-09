@@ -120,8 +120,11 @@ const BillingStatCard = React.memo(({ label, value, subValue, icon: Icon, color,
             <div className="relative z-10 flex flex-col justify-between h-full">
                 <div className="flex justify-between items-start">
                     <p className="text-[10px] font-black text-white/30 uppercase ">{label}</p>
-                    <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 group-hover:border-white/20 transition-colors" style={{ color: color }}>
-                        <Icon size={18} />
+                    <div className="flex items-center gap-2">
+                        {onClick && <ArrowUpRight size={16} className="text-gold-400 rtl:-scale-x-100" />}
+                        <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 group-hover:border-white/20 transition-colors" style={{ color: color }}>
+                            <Icon size={18} />
+                        </div>
                     </div>
                 </div>
                 <div className="mt-4">
@@ -387,36 +390,36 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
     }, [salesTrendFromApi, isAr]);
 
     const liquidityKpis = useMemo(() => [
-        { label: t.admin.billing.kpis.withdrawalQueue, value: `${(kpis.pendingWithdrawals || 0).toLocaleString()} AED`, subValue: `${kpis.pendingWithdrawalsCount || 0} ${t.admin.billing.kpis.pendingRequests}`, icon: RefreshCw, color: '#f59e0b' },
-        { label: t.admin.billing.kpis.userLiabilities, value: `${(kpis.pendingLiabilities || 0).toLocaleString()} AED`, subValue: `${t.admin.billing.kpis.netPlatformProfitLabel}: ${(kpis.netPlatformPosition || 0).toLocaleString()} AED`, icon: AlertOctagon, color: '#eab308' },
-        { label: t.admin.billing.kpis.totalReleasedToMerchants, value: `${(kpis.totalReleasedToMerchants || 0).toLocaleString()} AED`, subValue: t.admin.billing.kpis.totalReleasedSub, icon: ArrowUpRight, color: '#22c55e' },
-        { label: t.admin.billing.kpis.completedWithdrawals, value: `${(kpis.completedWithdrawals || 0).toLocaleString()} AED`, subValue: `${kpis.completedWithdrawalsCount || 0} ${t.admin.billing.kpis.completedWithdrawalsSub}`, icon: CheckCircle2, color: '#10b981' },
-    ], [kpis, t]);
+        { label: t.admin.billing.kpis.withdrawalQueue, value: `${(kpis.pendingWithdrawals || 0).toLocaleString()} AED`, subValue: `${kpis.pendingWithdrawalsCount || 0} ${t.admin.billing.kpis.pendingRequests}`, icon: RefreshCw, color: '#f59e0b', onClick: () => openKpi('pendingWithdrawals') },
+        { label: t.admin.billing.kpis.userLiabilities, value: `${(kpis.pendingLiabilities || 0).toLocaleString()} AED`, subValue: `${t.admin.billing.kpis.netPlatformProfitLabel}: ${(kpis.netPlatformPosition || 0).toLocaleString()} AED`, icon: AlertOctagon, color: '#eab308', onClick: () => openKpi('pendingLiabilities') },
+        { label: t.admin.billing.kpis.totalReleasedToMerchants, value: `${(kpis.totalReleasedToMerchants || 0).toLocaleString()} AED`, subValue: t.admin.billing.kpis.totalReleasedSub, icon: ArrowUpRight, color: '#22c55e', onClick: () => openKpi('totalReleasedToMerchants') },
+        { label: t.admin.billing.kpis.completedWithdrawals, value: `${(kpis.completedWithdrawals || 0).toLocaleString()} AED`, subValue: `${kpis.completedWithdrawalsCount || 0} ${t.admin.billing.kpis.completedWithdrawalsSub}`, icon: CheckCircle2, color: '#10b981', onClick: () => openKpi('completedWithdrawals') },
+    ], [kpis, t, financialFilters.startDate, financialFilters.endDate, onNavigate]);
 
     const platformRevenueKpis = useMemo(() => [
-        { label: t.admin.billing.kpis.platformCommissions || 'Platform Commissions', value: `${((kpis.platformCommissions ?? kpis.grossCommission) || 0).toLocaleString()} AED`, icon: Percent, color: '#d4af37' },
-        { label: t.admin.billing.kpis.loyaltyReferralExpenses || 'Loyalty & Referral Expenses', value: `${(kpis.loyaltyReferralExpenses ?? ((kpis.loyaltyCashbackPaid || 0) + (kpis.referralPaidOut || 0))).toLocaleString()} AED`, icon: Users, color: '#a855f7' },
-        { label: t.admin.billing.kpis.commissionRefunds || 'Commission Refunds', value: `${(kpis.commissionRefunds || 0).toLocaleString()} AED`, icon: ArrowDownLeft, color: '#f87171' },
+        { label: t.admin.billing.kpis.platformCommissions || 'Platform Commissions', value: `${((kpis.platformCommissions ?? kpis.grossCommission) || 0).toLocaleString()} AED`, icon: Percent, color: '#d4af37', onClick: () => openKpi('grossCommission') },
+        { label: t.admin.billing.kpis.loyaltyReferralExpenses || 'Loyalty & Referral Expenses', value: `${(kpis.loyaltyReferralExpenses ?? ((kpis.loyaltyCashbackPaid || 0) + (kpis.referralPaidOut || 0))).toLocaleString()} AED`, icon: Users, color: '#a855f7', onClick: () => openKpi('loyaltyReferralExpenses') },
+        { label: t.admin.billing.kpis.commissionRefunds || 'Commission Refunds', value: `${(kpis.commissionRefunds || 0).toLocaleString()} AED`, icon: ArrowDownLeft, color: '#f87171', onClick: () => openKpi('commissionRefunds') },
         { label: t.admin.billing.kpis.paymentGatewayFees || t.admin.billing.kpis.gatewayFees, value: `${(kpis.paymentGatewayFees ?? 0).toLocaleString()} AED`, icon: CreditCard, color: '#f97316', onClick: () => openKpi('paymentGatewayFees') },
-        { label: t.admin.billing.kpis.netPlatformRevenue || 'Net Platform Revenue', value: `${((kpis.netPlatformRevenue ?? kpis.netPlatformPosition) || 0).toLocaleString()} AED`, icon: ShieldCheck, color: '#22d3ee' },
+        { label: t.admin.billing.kpis.netPlatformRevenue || 'Net Platform Revenue', value: `${((kpis.netPlatformRevenue ?? kpis.netPlatformPosition) || 0).toLocaleString()} AED`, icon: ShieldCheck, color: '#22d3ee', onClick: () => openKpi('netPlatformRevenue') },
     ], [kpis, t, financialFilters.startDate, financialFilters.endDate, onNavigate]);
 
     const revenueKpis = useMemo(() => [
-        { label: t.admin.billing.kpis.logisticsRevenue, value: `${(kpis.shippingCollected ?? kpis.shippingProfit ?? 0).toLocaleString()} AED`, subValue: t.admin.billing.kpis.logisticsSub, icon: Activity, color: '#10b981' },
-        { label: t.admin.billing.kpis.referralEcosystem, value: `${(kpis.referralPaidOut ?? kpis.referralEarnings ?? 0).toLocaleString()} AED`, subValue: `${kpis.referralCount || 0} ${t.admin.billing.kpis.activeReferrals} · ${t.admin.billing.kpis.referralSub}`, icon: Users, color: '#8b5cf6' },
-        { label: t.admin.billing.kpis.loyaltyCashback, value: `${(kpis.loyaltyCashbackPaid || 0).toLocaleString()} AED`, subValue: t.admin.billing.kpis.loyaltySub, icon: TrendingUp, color: '#a855f7' },
+        { label: t.admin.billing.kpis.logisticsRevenue, value: `${(kpis.shippingCollected ?? kpis.shippingProfit ?? 0).toLocaleString()} AED`, subValue: t.admin.billing.kpis.logisticsSub, icon: Activity, color: '#10b981', onClick: () => openKpi('shippingCollected') },
+        { label: t.admin.billing.kpis.referralEcosystem, value: `${(kpis.referralPaidOut ?? kpis.referralEarnings ?? 0).toLocaleString()} AED`, subValue: `${kpis.referralCount || 0} ${t.admin.billing.kpis.activeReferrals} · ${t.admin.billing.kpis.referralSub}`, icon: Users, color: '#8b5cf6', onClick: () => openKpi('referralPaidOut') },
+        { label: t.admin.billing.kpis.loyaltyCashback, value: `${(kpis.loyaltyCashbackPaid || 0).toLocaleString()} AED`, subValue: t.admin.billing.kpis.loyaltySub, icon: TrendingUp, color: '#a855f7', onClick: () => openKpi('loyaltyCashback') },
         { label: t.admin.billing.kpis.grossCommission, value: `${(kpis.grossCommission || 0).toLocaleString()} AED`, subValue: t.admin.billing.kpis.grossCommissionSub, icon: Percent, color: '#d4af37', onClick: () => openKpi('grossCommission') },
-        { label: t.admin.billing.kpis.gatewayFees, value: `${(kpis.gatewayFees || 0).toLocaleString()} AED`, subValue: t.admin.billing.kpis.gatewayFeesSub, icon: CreditCard, color: '#6366f1' },
+        { label: t.admin.billing.kpis.gatewayFees, value: `${(kpis.gatewayFees || 0).toLocaleString()} AED`, subValue: t.admin.billing.kpis.gatewayFeesSub, icon: CreditCard, color: '#6366f1', onClick: () => openKpi('gatewayFees') },
     ], [kpis, t, financialFilters.startDate, financialFilters.endDate, onNavigate]);
 
     const riskKpis = useMemo(() => [
         { label: t.admin.billing.kpis.totalRefunds, value: `${(kpis.totalRefunds || 0).toLocaleString()} AED`, icon: ArrowDownLeft, color: '#f87171', onClick: () => openKpi('totalRefunds') },
-        { label: t.admin.billing.kpis.failedUnsettled, value: String(kpis.failedUnsettledCount ?? 0), subValue: `${(kpis.failedUnsettledAmount ?? 0).toLocaleString()} AED · ${t.admin.billing.kpis.failedUnsettledSub}`, icon: RefreshCw, color: '#64748b' },
-        { label: t.admin.billing.kpis.financialDisputes, value: String(kpis.financialDisputesCount ?? 0), subValue: `${(kpis.financialDisputesAmount ?? 0).toLocaleString()} AED · ${t.admin.billing.kpis.financialDisputesSub}`, icon: Scale, color: '#f97316' },
-        { label: t.admin.billing.kpis.totalPenalties, value: `${(kpis.totalPenalties || 0).toLocaleString()} AED`, subValue: t.admin.billing.kpis.totalPenaltiesSub, icon: AlertOctagon, color: '#ea580c' },
-        { label: t.admin.billing.kpis.dailyTxCount, value: String(kpis.dailyTxCount ?? 0), subValue: t.admin.billing.kpis.dailyTxSub, icon: Activity, color: '#38bdf8' },
-        { label: t.admin.billing.kpis.monthlyTxCount, value: String(kpis.monthlyTxCount ?? 0), subValue: t.admin.billing.kpis.monthlyTxSub, icon: Calendar, color: '#a78bfa' },
-        { label: t.admin.billing.kpis.activityLoad, value: String(kpis.opsLast24h ?? kpis.todayTransactionsCount ?? 0), subValue: t.admin.billing.kpis.realtimeOps, icon: RefreshCw, color: '#ffffff' },
+        { label: t.admin.billing.kpis.failedUnsettled, value: String(kpis.failedUnsettledCount ?? 0), subValue: `${(kpis.failedUnsettledAmount ?? 0).toLocaleString()} AED · ${t.admin.billing.kpis.failedUnsettledSub}`, icon: RefreshCw, color: '#64748b', onClick: () => openKpi('failedUnsettled') },
+        { label: t.admin.billing.kpis.financialDisputes, value: String(kpis.financialDisputesCount ?? 0), subValue: `${(kpis.financialDisputesAmount ?? 0).toLocaleString()} AED · ${t.admin.billing.kpis.financialDisputesSub}`, icon: Scale, color: '#f97316', onClick: () => openKpi('financialDisputes') },
+        { label: t.admin.billing.kpis.totalPenalties, value: `${(kpis.totalPenalties || 0).toLocaleString()} AED`, subValue: t.admin.billing.kpis.totalPenaltiesSub, icon: AlertOctagon, color: '#ea580c', onClick: () => openKpi('totalPenalties') },
+        { label: t.admin.billing.kpis.dailyTxCount, value: String(kpis.dailyTxCount ?? 0), subValue: t.admin.billing.kpis.dailyTxSub, icon: Activity, color: '#38bdf8', onClick: () => openKpi('dailyTxCount') },
+        { label: t.admin.billing.kpis.monthlyTxCount, value: String(kpis.monthlyTxCount ?? 0), subValue: t.admin.billing.kpis.monthlyTxSub, icon: Calendar, color: '#a78bfa', onClick: () => openKpi('monthlyTxCount') },
+        { label: t.admin.billing.kpis.activityLoad, value: String(kpis.opsLast24h ?? kpis.todayTransactionsCount ?? 0), subValue: t.admin.billing.kpis.realtimeOps, icon: RefreshCw, color: '#ffffff', onClick: () => openKpi('activityLoad') },
     ], [kpis, t, financialFilters.startDate, financialFilters.endDate, onNavigate]);
 
     const handleFeedRowClick = useCallback((item: UnifiedFinancialEvent) => {
@@ -585,6 +588,7 @@ export const AdminBilling: React.FC<AdminBillingProps> = ({ onNavigate }) => {
                             subValue={t.admin.billing.kpis.escrowLockedSub}
                             icon={Lock}
                             color="#ef4444"
+                            onClick={() => openKpi('frozenFunds')}
                         />
                         <StatCard 
                             label={t.admin.billing.kpis.netPlatformPosition}

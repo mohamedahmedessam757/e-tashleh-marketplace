@@ -22,6 +22,24 @@ export const ADMIN_KPI_METRIC_IDS = [
   'activeCustomers',
   'activeStores',
   'openDisputes',
+  'frozenFunds',
+  'pendingWithdrawals',
+  'pendingLiabilities',
+  'totalReleasedToMerchants',
+  'completedWithdrawals',
+  'loyaltyReferralExpenses',
+  'commissionRefunds',
+  'netPlatformRevenue',
+  'shippingCollected',
+  'referralPaidOut',
+  'loyaltyCashback',
+  'gatewayFees',
+  'failedUnsettled',
+  'financialDisputes',
+  'totalPenalties',
+  'dailyTxCount',
+  'monthlyTxCount',
+  'activityLoad',
 ] as const;
 
 export type AdminKpiMetricId = (typeof ADMIN_KPI_METRIC_IDS)[number];
@@ -81,6 +99,7 @@ export interface KpiBreakdownResult {
   formulaAr: string;
   formulaEn: string;
   notStripeCash: boolean;
+  unit?: 'money' | 'count';
   outside?: KpiOutsideFlow[];
   stripeNoteAr?: string;
   stripeNoteEn?: string;
@@ -102,6 +121,7 @@ const paymentSelect = {
   refundedAmount: true,
   commission: true,
   gatewayFee: true,
+  shippingCost: true,
   paidAt: true,
   createdAt: true,
   refundedAt: true,
@@ -291,6 +311,10 @@ export async function buildAdminKpiBreakdown(
   const limit = Math.min(Math.max(Number(filters.limit) || 50, 1), 50);
   const includedCursor = filters.includedCursor;
   const excludedCursor = filters.excludedCursor;
+
+  if (isFinanceCenterMetric(metricId)) {
+    return buildFinanceCenterBreakdown(prisma, metricId, range, limit, includedCursor);
+  }
 
   if (metricId === 'totalSales' || metricId === 'grossCommission' || metricId === 'paymentGatewayFees') {
     const includedWhere = buildGrossSalesPaymentWhere(range);
@@ -769,4 +793,483 @@ export async function buildAdminKpiBreakdown(
     excludedHasMore: false,
     nextIncludedCursor: paged.nextCursor,
   };
+}
+
+const FINANCE_CENTER_METRICS = new Set<AdminKpiMetricId>([
+  'frozenFunds',
+  'pendingWithdrawals',
+  'pendingLiabilities',
+  'totalReleasedToMerchants',
+  'completedWithdrawals',
+  'loyaltyReferralExpenses',
+  'commissionRefunds',
+  'netPlatformRevenue',
+  'shippingCollected',
+  'referralPaidOut',
+  'loyaltyCashback',
+  'gatewayFees',
+  'failedUnsettled',
+  'financialDisputes',
+  'totalPenalties',
+  'dailyTxCount',
+  'monthlyTxCount',
+  'activityLoad',
+]);
+
+function isFinanceCenterMetric(metricId: AdminKpiMetricId): boolean {
+  return FINANCE_CENTER_METRICS.has(metricId);
+}
+
+function dated(range: AdminDateRange): Prisma.DateTimeFilter | undefined {
+  return buildPaymentDateFilter(range);
+}
+
+function packLines(
+  metricId: AdminKpiMetricId,
+  total: number,
+  formulaAr: string,
+  formulaEn: string,
+  lines: KpiBreakdownLine[],
+  hasMore: boolean,
+  nextCursor: string | undefined,
+  extra: Partial<KpiBreakdownResult> = {},
+): KpiBreakdownResult {
+  return {
+    metricId,
+    total,
+    formulaAr,
+    formulaEn,
+    notStripeCash: false,
+    included: lines,
+    excluded: [],
+    includedHasMore: hasMore,
+    excludedHasMore: false,
+    nextIncludedCursor: nextCursor,
+    ...extra,
+  };
+}
+
+async function pageWalletCredits(
+  prisma: PrismaService,
+  where: Prisma.WalletTransactionWhereInput,
+  cursor: string | undefined,
+  limit: number,
+  reasonAr: string,
+  reasonEn: string,
+) {
+  const decoded = decodeCursor(cursor);
+  const rows = await prisma.walletTransaction.findMany({
+    where: {
+      AND: [
+        where,
+        decoded
+          ? { OR: [{ createdAt: { lt: decoded.sortAt } }, { createdAt: decoded.sortAt, id: { lt: decoded.id } }] }
+          : {},
+      ],
+    },
+    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    take: limit + 1,
+    select: {
+      id: true,
+      amount: true,
+      createdAt: true,
+      description: true,
+      transactionType: true,
+      user: { select: { name: true } },
+    },
+  });
+  const hasMore = rows.length > limit;
+  const page = hasMore ? rows.slice(0, limit) : rows;
+  const last = page[page.length - 1];
+  return {
+    lines: page.map((row) => ({
+      id: row.id,
+      customerName: row.user?.name || undefined,
+      amount: roundMoney(Number(row.amount)),
+      status: row.transactionType,
+      paidAt: row.createdAt.toISOString(),
+      reasonAr: row.description || reasonAr,
+      reasonEn: row.description || reasonEn,
+    })),
+    hasMore,
+    nextCursor: hasMore && last ? encodeCursor(last.createdAt, last.id) : undefined,
+  };
+}
+
+async function countLedgersSince(prisma: PrismaService, since: Date) {
+  const createdAt = { gte: since };
+  const [payments, wallet, escrow, withdrawals] = await Promise.all([
+    prisma.paymentTransaction.count({ where: { createdAt } }),
+    prisma.walletTransaction.count({ where: { createdAt } }),
+    prisma.escrowTransaction.count({ where: { createdAt } }),
+    prisma.withdrawalRequest.count({ where: { createdAt } }),
+  ]);
+  return { payments, wallet, escrow, withdrawals, total: payments + wallet + escrow + withdrawals };
+}
+
+async function buildFinanceCenterBreakdown(
+  prisma: PrismaService,
+  metricId: AdminKpiMetricId,
+  range: AdminDateRange,
+  limit: number,
+  cursor: string | undefined,
+): Promise<KpiBreakdownResult> {
+  const dateFilter = dated(range);
+  const walletDate = dateFilter ? { createdAt: dateFilter } : {};
+
+  if (metricId === 'frozenFunds') {
+    const decoded = decodeCursor(cursor);
+    const where: Prisma.StoreWhereInput = {
+      OR: [{ pendingBalance: { gt: 0 } }, { frozenBalance: { gt: 0 } }],
+      ...(decoded
+        ? { AND: [{ OR: [{ createdAt: { lt: decoded.sortAt } }, { createdAt: decoded.sortAt, id: { lt: decoded.id } }] }] }
+        : {}),
+    };
+    const [rows, sums] = await Promise.all([
+      prisma.store.findMany({
+        where,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: limit + 1,
+        select: { id: true, name: true, pendingBalance: true, frozenBalance: true, createdAt: true },
+      }),
+      prisma.store.aggregate({ _sum: { pendingBalance: true, frozenBalance: true } }),
+    ]);
+    const hasMore = rows.length > limit;
+    const page = hasMore ? rows.slice(0, limit) : rows;
+    const last = page[page.length - 1];
+    return packLines(
+      metricId,
+      roundMoney(Number(sums._sum.pendingBalance || 0) + Number(sums._sum.frozenBalance || 0)),
+      'مجموع الرصيد المعلّق والمجمّد في كل المتاجر. هذا ضمان التجار وليس رصيد بوابة الدفع.',
+      'Sum of pending and frozen balances across stores. This is merchant escrow, not the payment-gateway balance.',
+      page.map((row) => ({
+        id: row.id,
+        storeName: row.name,
+        amount: roundMoney(Number(row.pendingBalance) + Number(row.frozenBalance)),
+        status: 'ESCROW',
+        paidAt: row.createdAt.toISOString(),
+        reasonAr: 'رصيد معلّق أو مجمّد لدى المتجر',
+        reasonEn: 'Pending or frozen store balance',
+      })),
+      hasMore,
+      hasMore && last ? encodeCursor(last.createdAt, last.id) : undefined,
+    );
+  }
+
+  if (metricId === 'pendingWithdrawals' || metricId === 'completedWithdrawals') {
+    const decoded = decodeCursor(cursor);
+    const where: Prisma.WithdrawalRequestWhereInput = metricId === 'pendingWithdrawals'
+      ? { status: 'PENDING' }
+      : {
+          status: { in: ['TRANSFERRED', 'COMPLETED'] },
+          ...(dateFilter ? { updatedAt: dateFilter } : {}),
+        };
+    const rows = await prisma.withdrawalRequest.findMany({
+      where: {
+        AND: [
+          where,
+          decoded
+            ? { OR: [{ createdAt: { lt: decoded.sortAt } }, { createdAt: decoded.sortAt, id: { lt: decoded.id } }] }
+            : {},
+        ],
+      },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      take: limit + 1,
+      select: {
+        id: true,
+        amount: true,
+        status: true,
+        createdAt: true,
+        user: { select: { name: true } },
+        store: { select: { name: true } },
+      },
+    });
+    const agg = await prisma.withdrawalRequest.aggregate({ where, _sum: { amount: true } });
+    const hasMore = rows.length > limit;
+    const page = hasMore ? rows.slice(0, limit) : rows;
+    const last = page[page.length - 1];
+    return packLines(
+      metricId,
+      roundMoney(Number(agg._sum.amount || 0)),
+      metricId === 'pendingWithdrawals'
+        ? 'طلبات السحب التي ما زالت قيد الانتظار. المبلغ لم يخرج بعد، وينقص من الرصيد المتاح لا من عمولة المنصة.'
+        : 'السحوبات المكتملة داخل النافذة. الصافي وصل لحساب صاحبه بعد خصم الالتزامات إن وُجدت.',
+      metricId === 'pendingWithdrawals'
+        ? 'Withdrawal requests still waiting. The amount has not left yet, and it reduces available balance rather than platform commission.'
+        : 'Completed withdrawals inside the window. The net reached the owner’s account after any liabilities were settled.',
+      page.map((row) => ({
+        id: row.id,
+        customerName: row.user?.name || undefined,
+        storeName: row.store?.name || undefined,
+        amount: roundMoney(Number(row.amount)),
+        status: row.status,
+        paidAt: row.createdAt.toISOString(),
+        reasonAr: metricId === 'pendingWithdrawals' ? 'طلب سحب لم يكتمل' : 'سحب اكتمل وخرج من المحفظة',
+        reasonEn: metricId === 'pendingWithdrawals' ? 'Withdrawal still pending' : 'Withdrawal completed and left the wallet',
+      })),
+      hasMore,
+      hasMore && last ? encodeCursor(last.createdAt, last.id) : undefined,
+    );
+  }
+
+  if (metricId === 'pendingLiabilities' || metricId === 'gatewayFees' || metricId === 'netPlatformRevenue' || metricId === 'loyaltyReferralExpenses') {
+    const salesWhere = buildGrossSalesPaymentWhere(range);
+    const [customerAgg, storeAgg, gateway, adjudication, loyaltyAgg, referralAgg, commission, refundsAgg, wallet] = await Promise.all([
+      prisma.user.aggregate({ _sum: { customerBalance: true } }),
+      prisma.store.aggregate({ _sum: { balance: true } }),
+      sumPayments(prisma, salesWhere, 'gatewayFee'),
+      prisma.walletTransaction.aggregate({
+        where: { role: 'ADMIN', type: 'CREDIT', transactionType: 'PLATFORM_FEE_RETENTION', ...walletDate },
+        _sum: { amount: true },
+      }),
+      prisma.walletTransaction.aggregate({
+        where: { role: 'CUSTOMER', type: 'CREDIT', transactionType: 'ORDER_PROFIT', ...walletDate },
+        _sum: { amount: true },
+      }),
+      prisma.walletTransaction.aggregate({
+        where: { type: 'CREDIT', transactionType: 'REFERRAL_PROFIT', ...walletDate },
+        _sum: { amount: true },
+      }),
+      sumPayments(prisma, salesWhere, 'commission'),
+      prisma.paymentTransaction.aggregate({
+        where: { refundedAmount: { gt: 0 }, ...refundRecognizedWhere(range) },
+        _sum: { commission: true },
+      }),
+      prisma.platformWallet.findFirst(),
+    ]);
+    const customers = roundMoney(Number(customerAgg._sum.customerBalance || 0));
+    const stores = roundMoney(Number(storeAgg._sum.balance || 0));
+    const adjudicationFees = roundMoney(Number(adjudication._sum.amount || 0));
+    const loyalty = roundMoney(Number(loyaltyAgg._sum.amount || 0));
+    const referral = roundMoney(Number(referralAgg._sum.amount || 0));
+    const commissionRefunds = roundMoney(Number(refundsAgg._sum.commission || 0));
+    const shippingLiability = roundMoney(Number(wallet?.shippingCompanyLiabilityBalance || 0));
+
+    if (metricId === 'pendingLiabilities') {
+      return packLines(metricId, roundMoney(customers + stores + gateway + shippingLiability),
+        'أرصدة العملاء + أرصدة المتاجر المتاحة + رسوم البوابة على المبيعات الناجحة + التزام شركة الشحن.',
+        'Customer balances + available store balances + gateway fees on successful sales + the carrier liability.',
+        [], false, undefined, {
+          sources: [
+            { metricId: 'pendingLiabilities', labelAr: 'أرصدة العملاء', labelEn: 'Customer balances', amount: customers, sign: 'plus' },
+            { metricId: 'pendingLiabilities', labelAr: 'أرصدة المتاجر', labelEn: 'Store balances', amount: stores, sign: 'plus' },
+            { metricId: 'paymentGatewayFees', labelAr: 'رسوم البوابة', labelEn: 'Gateway fees', amount: gateway, sign: 'plus' },
+            { metricId: 'shippingCollected', labelAr: 'التزام شركة الشحن', labelEn: 'Carrier liability', amount: shippingLiability, sign: 'plus' },
+          ],
+        });
+    }
+    if (metricId === 'gatewayFees') {
+      return packLines(metricId, roundMoney(gateway + adjudicationFees),
+        'رسوم البوابة المخزّنة على الدفعات الناجحة، مضافًا إليها رسوم الحكم المحتجزة. لا تُخصم مرتين من صافي العمولة.',
+        'Stored gateway fees on successful payments, plus retained adjudication fees. They are not deducted twice from net commission.',
+        [], false, undefined, {
+          sources: [
+            { metricId: 'paymentGatewayFees', labelAr: 'رسوم بوابة الدفع', labelEn: 'Payment gateway fees', amount: gateway, sign: 'plus' },
+            { metricId: 'gatewayFees', labelAr: 'رسوم الحكم المحتجزة', labelEn: 'Retained adjudication fees', amount: adjudicationFees, sign: 'plus' },
+          ],
+        });
+    }
+    if (metricId === 'loyaltyReferralExpenses') {
+      const page = await pageWalletCredits(
+        prisma,
+        { type: 'CREDIT', transactionType: { in: ['ORDER_PROFIT', 'REFERRAL_PROFIT'] }, ...walletDate },
+        cursor, limit, 'مصروف ولاء أو إحالة', 'Loyalty or referral expense',
+      );
+      return packLines(metricId, roundMoney(loyalty + referral),
+        'كاش باك الولاء المدفوع للعملاء مضافًا إليه أرباح الإحالة.',
+        'Loyalty cashback paid to customers plus referral payouts.',
+        page.lines, page.hasMore, page.nextCursor, {
+          sources: [
+            { metricId: 'loyaltyCashback', labelAr: 'كاش باك الولاء', labelEn: 'Loyalty cashback', amount: loyalty, sign: 'plus' },
+            { metricId: 'referralPaidOut', labelAr: 'أرباح الإحالة', labelEn: 'Referral payouts', amount: referral, sign: 'plus' },
+          ],
+        });
+    }
+    return packLines(metricId, roundMoney(commission - loyalty - referral - commissionRefunds - gateway),
+      'عمولة المبيعات الناجحة ناقص الولاء والإحالة والعمولة المستردة ورسوم البوابة.',
+      'Commission on successful sales minus loyalty, referrals, refunded commission, and gateway fees.',
+      [], false, undefined, {
+        notStripeCash: true,
+        sources: [
+          { metricId: 'grossCommission', labelAr: 'عمولة المبيعات', labelEn: 'Sales commission', amount: commission, sign: 'plus' },
+          { metricId: 'loyaltyReferralExpenses', labelAr: 'الولاء والإحالة', labelEn: 'Loyalty and referrals', amount: roundMoney(loyalty + referral), sign: 'minus' },
+          { metricId: 'commissionRefunds', labelAr: 'عمولة مستردة', labelEn: 'Refunded commission', amount: commissionRefunds, sign: 'minus' },
+          { metricId: 'paymentGatewayFees', labelAr: 'رسوم البوابة', labelEn: 'Gateway fees', amount: gateway, sign: 'minus' },
+        ],
+      });
+  }
+
+  if (metricId === 'commissionRefunds') {
+    const where: Prisma.PaymentTransactionWhereInput = { refundedAmount: { gt: 0 }, ...refundRecognizedWhere(range) };
+    const [total, page] = await Promise.all([
+      sumPayments(prisma, where, 'commission'),
+      pagePayments(prisma, where, cursor, limit, (row) => Number(row.commission), () => ({ ar: 'عمولة خرجت مع الاسترداد', en: 'Commission reversed with the refund' })),
+    ]);
+    return packLines(metricId, total, 'مجموع عمولة الدفعات التي لها مبلغ مسترد، بتاريخ الاسترداد.', 'Sum of commission on payments that have a refunded amount, dated by the refund.', page.lines, page.hasMore, page.nextCursor);
+  }
+
+  if (metricId === 'shippingCollected') {
+    const where: Prisma.PaymentTransactionWhereInput = {
+      status: 'SUCCESS',
+      shippingCost: { gt: 0 },
+      order: { status: { not: 'CANCELLED' } },
+      ...(dateFilter ? { OR: [{ paidAt: dateFilter }, { paidAt: null, createdAt: dateFilter }] } : {}),
+    };
+    const [outbound, carrier, page] = await Promise.all([
+      prisma.paymentTransaction.aggregate({ where, _sum: { shippingCost: true } }),
+      (prisma as any).shippingCompanyObligation.aggregate({
+        where: dateFilter ? { createdAt: dateFilter } : {},
+        _sum: { shippingAmount: true },
+      }).catch(() => ({ _sum: { shippingAmount: 0 } })),
+      pagePayments(prisma, where, cursor, limit, (row) => Number(row.shippingCost || 0), () => ({ ar: 'شحن طلب ناجح مستحق لشركة الشحن', en: 'Outbound shipping owed to the carrier' })),
+    ]);
+    const outboundSum = roundMoney(Number(outbound._sum.shippingCost || 0));
+    const carrierSum = roundMoney(Number(carrier?._sum?.shippingAmount || 0));
+    return packLines(metricId, roundMoney(outboundSum + carrierSum),
+      'شحن الطلبات الناجحة مضافًا إليه شحن الذهاب والعودة المسجّل على التزام شركة الشحن. هذا ليس ربح المنصة.',
+      'Shipping on successful orders plus round-trip shipping recorded on the carrier liability. This is not platform profit.',
+      page.lines, page.hasMore, page.nextCursor, {
+        sources: [
+          { metricId: 'shippingCollected', labelAr: 'شحن الطلبات', labelEn: 'Order shipping', amount: outboundSum, sign: 'plus' },
+          { metricId: 'shippingCollected', labelAr: 'شحن الذهاب والعودة', labelEn: 'Round-trip shipping', amount: carrierSum, sign: 'plus' },
+        ],
+      });
+  }
+
+  if (metricId === 'referralPaidOut' || metricId === 'loyaltyCashback' || metricId === 'totalPenalties') {
+    const where: Prisma.WalletTransactionWhereInput = metricId === 'loyaltyCashback'
+      ? { role: 'CUSTOMER', type: 'CREDIT', transactionType: 'ORDER_PROFIT', ...walletDate }
+      : metricId === 'referralPaidOut'
+        ? { type: 'CREDIT', transactionType: 'REFERRAL_PROFIT', ...walletDate }
+        : { transactionType: { equals: 'penalty', mode: 'insensitive' }, ...walletDate };
+    const [agg, page] = await Promise.all([
+      prisma.walletTransaction.aggregate({ where, _sum: { amount: true } }),
+      pageWalletCredits(prisma, where, cursor, limit,
+        metricId === 'totalPenalties' ? 'غرامة محصّلة' : 'حركة محفظة داخلة في الرقم',
+        metricId === 'totalPenalties' ? 'Collected penalty' : 'Wallet movement included in the figure'),
+    ]);
+    const formulas = {
+      referralPaidOut: ['أرباح الإحالة التي دُفعت من المنصة داخل النافذة.', 'Referral payouts the platform paid inside the window.'],
+      loyaltyCashback: ['كاش باك الولاء المضاف لمحافظ العملاء داخل النافذة.', 'Loyalty cashback credited to customer wallets inside the window.'],
+      totalPenalties: ['الغرامات المسجّلة في دفتر المحفظة داخل النافذة.', 'Penalties recorded on the wallet ledger inside the window.'],
+    } as const;
+    return packLines(metricId, roundMoney(Number(agg._sum.amount || 0)), formulas[metricId][0], formulas[metricId][1], page.lines, page.hasMore, page.nextCursor);
+  }
+
+  if (metricId === 'totalReleasedToMerchants') {
+    const [released, clawback, page] = await Promise.all([
+      prisma.escrowTransaction.aggregate({
+        where: { status: 'RELEASED', ...(dateFilter ? { releasedAt: dateFilter } : {}) },
+        _sum: { merchantAmount: true },
+      }),
+      prisma.walletTransaction.aggregate({
+        where: { role: 'VENDOR', type: 'DEBIT', transactionType: { in: ['REFUND', 'refund'] }, metadata: { path: ['clawback'], equals: true }, ...walletDate },
+        _sum: { amount: true },
+      }),
+      prisma.escrowTransaction.findMany({
+        where: {
+          status: 'RELEASED',
+          ...(dateFilter ? { releasedAt: dateFilter } : {}),
+        },
+        orderBy: [{ releasedAt: 'desc' }],
+        take: limit + 1,
+        select: { id: true, merchantAmount: true, releasedAt: true, createdAt: true, order: { select: { orderNumber: true } } },
+      }),
+    ]);
+    const releasedSum = roundMoney(Number(released._sum.merchantAmount || 0));
+    const clawbackSum = roundMoney(Number(clawback._sum.amount || 0));
+    const hasMore = page.length > limit;
+    const rows = hasMore ? page.slice(0, limit) : page;
+    return packLines(metricId, roundMoney(Math.max(0, releasedSum - clawbackSum)),
+      'ما حُرّر من الضمان للمتاجر داخل النافذة، بعد طرح المبالغ المستردة من أرباح مُحرّرة.',
+      'Escrow released to stores inside the window, after clawing back released earnings that were refunded.',
+      rows.map((row) => ({
+        id: row.id,
+        orderNumber: row.order?.orderNumber,
+        amount: roundMoney(Number(row.merchantAmount)),
+        status: 'RELEASED',
+        paidAt: (row.releasedAt || row.createdAt).toISOString(),
+        reasonAr: 'مبلغ تاجر حُرّر من الضمان',
+        reasonEn: 'Merchant amount released from escrow',
+      })),
+      hasMore,
+      undefined,
+      { sources: [
+        { metricId: 'totalReleasedToMerchants', labelAr: 'المُحرّر من الضمان', labelEn: 'Released from escrow', amount: releasedSum, sign: 'plus' },
+        { metricId: 'totalReleasedToMerchants', labelAr: 'مسترد من أرباح مُحرّرة', labelEn: 'Clawed back', amount: clawbackSum, sign: 'minus' },
+      ] },
+    );
+  }
+
+  if (metricId === 'failedUnsettled') {
+    const where: Prisma.PaymentTransactionWhereInput = { status: 'FAILED', refundedAmount: { lte: 0 } };
+    const [count, amount, page] = await Promise.all([
+      prisma.paymentTransaction.count({ where }),
+      sumPayments(prisma, where, 'totalAmount'),
+      pagePayments(prisma, where, cursor, limit, (row) => Number(row.totalAmount), () => ({ ar: 'دفعة فشلت ولم يُسترد مبلغها', en: 'Payment failed and nothing was refunded' })),
+    ]);
+    return packLines(metricId, count,
+      `عدد الدفعات الفاشلة التي لم يُسترد مبلغها. إجمالي مبالغها ${amount.toFixed(2)} درهم، والرقم على الكارت هو العدد.`,
+      `Count of failed payments with nothing refunded. Their amount is ${amount.toFixed(2)} AED. The card shows the count.`,
+      page.lines, page.hasMore, page.nextCursor, { unit: 'count' });
+  }
+
+  if (metricId === 'financialDisputes') {
+    const orderWhere: Prisma.OrderWhereInput = {
+      status: { in: ['DISPUTED', 'RETURN_REQUESTED'] },
+      ...(dateFilter ? { updatedAt: dateFilter } : {}),
+    };
+    const [orders, disputes, orderAmount] = await Promise.all([
+      prisma.order.findMany({
+        where: orderWhere,
+        orderBy: [{ updatedAt: 'desc' }],
+        take: limit,
+        select: { id: true, orderNumber: true, status: true, totalAmount: true, updatedAt: true, customer: { select: { name: true } } },
+      }),
+      prisma.dispute.count({ where: dateFilter ? { createdAt: dateFilter } : {} }),
+      prisma.order.aggregate({ where: orderWhere, _sum: { totalAmount: true }, _count: { id: true } }),
+    ]);
+    return packLines(metricId, orderAmount._count.id + disputes,
+      'طلبات حالتها نزاع أو إرجاع داخل النافذة، مضافًا إليها النزاعات التي فُتحت في النافذة نفسها.',
+      'Orders marked disputed or return-requested inside the window, plus disputes opened in that same window.',
+      orders.map((row) => ({
+        id: row.id,
+        orderNumber: row.orderNumber,
+        customerName: row.customer?.name || undefined,
+        amount: roundMoney(Number(row.totalAmount || 0)),
+        status: row.status,
+        paidAt: row.updatedAt.toISOString(),
+        reasonAr: 'طلب داخل دائرة النزاع أو الإرجاع',
+        reasonEn: 'Order in a dispute or return state',
+      })),
+      false,
+      undefined,
+      { unit: 'count' },
+    );
+  }
+
+  if (metricId !== 'dailyTxCount' && metricId !== 'monthlyTxCount' && metricId !== 'activityLoad') {
+    throw new BadRequestException('Unknown financial metric');
+  }
+  const since = metricId === 'monthlyTxCount'
+    ? (() => { const d = new Date(); d.setDate(1); d.setHours(0, 0, 0, 0); return d; })()
+    : metricId === 'activityLoad'
+      ? new Date(Date.now() - 24 * 60 * 60 * 1000)
+      : (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })();
+  const counts = await countLedgersSince(prisma, since);
+  const formulas = {
+    dailyTxCount: ['عدد حركات الدفع والمحفظة والضمان والسحب منذ بداية اليوم.', 'Payment, wallet, escrow, and withdrawal rows since the start of today.'],
+    monthlyTxCount: ['عدد الحركات نفسها منذ بداية الشهر.', 'The same rows since the start of the month.'],
+    activityLoad: ['عدد الحركات نفسها خلال آخر 24 ساعة.', 'The same rows during the last 24 hours.'],
+  } as const;
+  const copy = formulas[metricId];
+  return packLines(metricId, counts.total, copy[0], copy[1], [], false, undefined, {
+    unit: 'count',
+    sources: [
+      { metricId, labelAr: 'مدفوعات', labelEn: 'Payments', amount: counts.payments, sign: 'plus' },
+      { metricId, labelAr: 'محفظة', labelEn: 'Wallet', amount: counts.wallet, sign: 'plus' },
+      { metricId, labelAr: 'ضمان', labelEn: 'Escrow', amount: counts.escrow, sign: 'plus' },
+      { metricId, labelAr: 'سحوبات', labelEn: 'Withdrawals', amount: counts.withdrawals, sign: 'plus' },
+    ],
+  });
 }

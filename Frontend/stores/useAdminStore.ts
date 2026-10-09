@@ -97,6 +97,11 @@ export interface DashboardStats {
   totalSales: number;
   totalCommission: number;
   salesTrendPercent?: number;
+  commissionTrendPercent?: number;
+  ordersTrendPercent?: number;
+  customersTrendPercent?: number;
+  storesTrendPercent?: number;
+  disputesTrendPercent?: number;
   totalOrders: number;
   activeCustomers: number;
   activeStores: number;

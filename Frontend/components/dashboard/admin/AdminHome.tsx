@@ -171,8 +171,11 @@ const KPICard = React.memo(({ label, value, icon: Icon, color, trend, loading, c
                             </h3>
                             {children}
                         </div>
-                        <div className={`p-3 rounded-xl bg-white/5 border border-white/5 ${color} shadow-lg`}>
-                            <Icon size={20} />
+                        <div className="flex items-center gap-2">
+                            {onClick && <ArrowUpRight size={16} className="text-gold-400 rtl:-scale-x-100" />}
+                            <div className={`p-3 rounded-xl bg-white/5 border border-white/5 ${color} shadow-lg`}>
+                                <Icon size={20} />
+                            </div>
                         </div>
                     </div>
                     {typeof trend === 'number' && (
@@ -310,6 +313,11 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
             totalSales: dashboardStats.totalSales || 0,
             totalCommission: dashboardStats.totalCommission || 0,
             totalSalesTrend: dashboardStats.salesTrendPercent || 0,
+            commissionTrend: dashboardStats.commissionTrendPercent || 0,
+            ordersTrend: dashboardStats.ordersTrendPercent || 0,
+            customersTrend: dashboardStats.customersTrendPercent || 0,
+            storesTrend: dashboardStats.storesTrendPercent || 0,
+            disputesTrend: dashboardStats.disputesTrendPercent || 0,
             totalOrders: dashboardStats.totalOrders || 0,
             openDisputes: dashboardStats.openDisputes || 0,
             activeVendors: dashboardStats.activeStores || 0,
@@ -598,16 +606,17 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
                     label={t.admin.kpi.commission} 
                     value={`${stats.totalCommission.toLocaleString()} AED`} 
                     icon={TrendingUp} 
-                    color="text-green-400" 
+                    color="text-green-400"
+                    trend={stats.commissionTrend}
                     loading={isLoadingStats}
                     onClick={() => openKpi('netCommission')}
                 >
                     <p className="text-[10px] text-white/40 mt-1">{t.admin.kpi.profitSub}</p>
                 </KPICard>
-                <KPICard label={t.admin.kpi.orders} value={stats.totalOrders} icon={Package} color="text-blue-400" loading={isLoadingStats} onClick={() => openKpi('totalOrders')} />
-                <KPICard label={t.admin.kpi.customers} value={stats.activeCustomers.toLocaleString()} icon={Users} color="text-purple-400" loading={isLoadingStats} onClick={() => openKpi('activeCustomers')} />
-                <KPICard label={t.admin.kpi.stores} value={stats.activeVendors} icon={Store} color="text-pink-400" loading={isLoadingStats} onClick={() => openKpi('activeStores')} />
-                <KPICard label={t.admin.kpi.disputes} value={stats.openDisputes} icon={AlertTriangle} color="text-red-400" loading={isLoadingStats} onClick={() => openKpi('openDisputes')} />
+                <KPICard label={t.admin.kpi.orders} value={stats.totalOrders} icon={Package} color="text-blue-400" trend={stats.ordersTrend} loading={isLoadingStats} onClick={() => openKpi('totalOrders')} />
+                <KPICard label={t.admin.kpi.customers} value={stats.activeCustomers.toLocaleString()} icon={Users} color="text-purple-400" trend={stats.customersTrend} loading={isLoadingStats} onClick={() => openKpi('activeCustomers')} />
+                <KPICard label={t.admin.kpi.stores} value={stats.activeVendors} icon={Store} color="text-pink-400" trend={stats.storesTrend} loading={isLoadingStats} onClick={() => openKpi('activeStores')} />
+                <KPICard label={t.admin.kpi.disputes} value={stats.openDisputes} icon={AlertTriangle} color="text-red-400" trend={stats.disputesTrend} loading={isLoadingStats} onClick={() => openKpi('openDisputes')} />
             </div>
 
             {/* MAIN ANALYTICS SECTION */}
@@ -641,6 +650,9 @@ export const AdminHome: React.FC<AdminHomeProps> = ({ subPath, viewId, onNavigat
 
                         <div className="text-right">
                             <span className="block text-2xl font-bold text-gold-400 font-mono">{stats.totalSales.toLocaleString()} AED</span>
+                            <span className={`block text-[10px] font-bold ${stats.totalSalesTrend > 0 ? 'text-green-400' : stats.totalSalesTrend < 0 ? 'text-red-400' : 'text-white/40'}`}>
+                                {stats.totalSalesTrend > 0 ? '+' : ''}{stats.totalSalesTrend}% vs last period
+                            </span>
                         </div>
                     </div>
 
